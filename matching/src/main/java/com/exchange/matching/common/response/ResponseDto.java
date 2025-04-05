@@ -1,4 +1,4 @@
-package com.exchange.matching.common.exception;
+package com.exchange.matching.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
