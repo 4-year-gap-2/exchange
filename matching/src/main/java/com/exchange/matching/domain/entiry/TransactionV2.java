@@ -26,7 +26,7 @@ public class TransactionV2 {
     private UUID transactionId;
 
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private UUID userId;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;

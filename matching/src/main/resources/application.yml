@@ -13,6 +13,8 @@ spring:
       hibernate:
         show-sql: true
         format-sql: true
+    hibernate:
+      ddl-auto: create
 
   kafka:
     host: ${KAFKA_HOST}

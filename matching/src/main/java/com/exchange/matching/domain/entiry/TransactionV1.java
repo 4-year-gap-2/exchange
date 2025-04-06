@@ -22,7 +22,7 @@ import java.util.UUID;
 public class TransactionV1 {
 
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
-    private String userId;
+    private UUID userId;
 
     @PrimaryKeyColumn(name = "transaction_date", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
     private LocalDateTime transactionDate;

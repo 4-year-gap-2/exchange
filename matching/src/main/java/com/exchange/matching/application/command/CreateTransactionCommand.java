@@ -1,4 +1,4 @@
-package com.exchange.matching.application.dto;
+package com.exchange.matching.application.command;
 
 
 import com.exchange.matching.presentation.dto.CreateTransactionRequest;
@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record CreateTransactionCommand(String userId,
+public record CreateTransactionCommand(UUID userId,
                                        LocalDateTime transactionDate,
                                        UUID transactionId,
                                        BigDecimal price,

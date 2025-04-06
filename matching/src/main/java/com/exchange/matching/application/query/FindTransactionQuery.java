@@ -1,4 +1,4 @@
-package com.exchange.matching.application.dto;
+package com.exchange.matching.application.query;
 
 import com.exchange.matching.presentation.dto.FindTransactionRequest;
 
