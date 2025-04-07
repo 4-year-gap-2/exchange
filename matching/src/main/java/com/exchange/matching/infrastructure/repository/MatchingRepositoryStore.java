@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface MatchingRepository extends JpaRepository<MatchingTest, UUID>, MatchingRepositoryCustom, MatchingReader, MatchingStore {
+public interface MatchingRepositoryStore extends JpaRepository<MatchingTest, UUID>, MatchingStore {
 }

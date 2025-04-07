@@ -5,7 +5,8 @@ import com.exchange.matching.application.query.FindTransactionQuery;
 import com.exchange.matching.application.response.TransactionResponse;
 import com.exchange.matching.application.response.ListTransactionResponse;
 import com.exchange.matching.domain.entiry.TransactionV1;
-import com.exchange.matching.infrastructure.repository.TransactionRepositoryV1;
+import com.exchange.matching.domain.repository.TransactionReaderV1;
+import com.exchange.matching.domain.repository.TransactionStoreV1;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -18,7 +19,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TransactionServiceV1 implements TransactionService {
 
-    private final TransactionRepositoryV1 transactionRepositoryV1;
+    private final TransactionStoreV1 transactionStoreV1;
+    private final TransactionReaderV1 transactionReaderV1;
 
     @Override
     public TransactionResponse saveTransaction(CreateTransactionCommand command) {
@@ -31,14 +33,14 @@ public class TransactionServiceV1 implements TransactionService {
         transactionV1.setTransactionType(command.transactionType());
         transactionV1.setPair(command.pair());
 
-        TransactionV1 save = transactionRepositoryV1.save(transactionV1);
+        TransactionV1 save = transactionStoreV1.saveWithConsistencyLevel(transactionV1);
 
         return TransactionResponse.from(save);
     }
 
     @Override
     public ListTransactionResponse findTransactionsByUserId(FindTransactionQuery query, Pageable pageable) {
-        Slice<TransactionV1> sliceList = transactionRepositoryV1.findByUserId(query.userId(), pageable);
+        Slice<TransactionV1> sliceList = transactionReaderV1.findByUserIdWithConsistencyLevel(query.userId(), pageable);
         return ListTransactionResponse.fromSlice(sliceList);
     }
 }

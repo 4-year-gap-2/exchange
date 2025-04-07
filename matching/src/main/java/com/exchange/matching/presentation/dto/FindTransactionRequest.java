@@ -1,5 +1,7 @@
 package com.exchange.matching.presentation.dto;
 
-public record FindTransactionRequest(String userId,
+import java.util.UUID;
+
+public record FindTransactionRequest(UUID userId,
                                      String dataBaseType) {
 }

@@ -1,4 +1,4 @@
 package com.exchange.matching.domain.repository;
 
-public interface TransactionStore {
+public interface TransactionStoreV2 {
 }
