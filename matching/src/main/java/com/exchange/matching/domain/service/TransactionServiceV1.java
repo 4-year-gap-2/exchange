@@ -13,6 +13,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service("cassandra")
@@ -25,7 +26,14 @@ public class TransactionServiceV1 implements TransactionService {
     @Override
     public TransactionResponse saveTransaction(CreateTransactionCommand command) {
         TransactionV1 transactionV1 = new TransactionV1();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        //파티션 스큐를 막기위한 월정보 추가
+        String yearMonth = now.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+
         transactionV1.setUserId(command.userId());
+        transactionV1.setYearMonth(yearMonth);
         transactionV1.setTransactionId(UUID.randomUUID());
         transactionV1.setTransactionDate(LocalDateTime.now());
         transactionV1.setPrice(command.price());

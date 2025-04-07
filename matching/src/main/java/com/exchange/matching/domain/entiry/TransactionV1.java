@@ -24,6 +24,9 @@ public class TransactionV1 {
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
+    @PrimaryKeyColumn(name = "year_month", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private String yearMonth;
+
     @PrimaryKeyColumn(name = "transaction_date", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
     private LocalDateTime transactionDate;
 
