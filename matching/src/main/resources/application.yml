@@ -13,6 +13,8 @@ spring:
       hibernate:
         show-sql: true
         format-sql: true
+    hibernate:
+      ddl-auto: create
 
   kafka:
     host: ${KAFKA_HOST}
@@ -25,6 +27,25 @@ spring:
       port: 6379
       username: ${REDIS_NAME}
       password: ${REDIS_PASSWORD}
+
+  cassandra:
+    contact-points: ${CASSANDRA_HOST}
+    port: 9042
+    keyspace-name: exchange
+    username: ${CASSANDRA_NAME}
+    password: ${CASSANDRA_PASSWORD}
+    schema-action: CREATE_IF_NOT_EXISTS
+    local-datacenter: DC1
+    request:
+      timeout: 10s
+    connection:
+      connect-timeout: 10s
+      init-query-timeout: 10s
+    # SSL 설정 (필요한 경우)
+    # ssl: true
+    # 인증서 관련 설정 (필요한 경우)
+    # ssl-options:
+    #   enabled: true
 
 server:
   port: 19091
@@ -43,6 +64,17 @@ eureka:
 #    homePageUrl: https://${eureka.instance.hostname}/
 #    preferIpAddress: false
 #    secureVirtualHostName: ${spring.application.name}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*" # 모든 Actuator 엔드포인트를 노출
+
+  endpoint:
+    health:
+      show-details: always # 헬스 체크 엔드포인트에서 상세 정보 표시
+
 
 kafka:
   topic: 4yearGap.order.orderEvent.match

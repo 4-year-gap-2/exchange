@@ -1,5 +1,6 @@
 package com.exchange.matching.common.exception;
 
+import com.exchange.matching.common.response.ResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

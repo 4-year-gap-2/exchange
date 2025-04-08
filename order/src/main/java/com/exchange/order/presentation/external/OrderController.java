@@ -1,6 +1,6 @@
 package com.exchange.order.presentation.external;
 
-import com.exchange.matching.common.exception.ResponseDto;
+import com.exchange.order.common.response.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

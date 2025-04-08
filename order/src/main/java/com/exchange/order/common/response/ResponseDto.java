@@ -1,4 +1,4 @@
-package com.exchange.order.common.exception;
+package com.exchange.order.common.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
