@@ -28,28 +28,24 @@ public class RedisConfig {
     @Value("${spring.data.redis.password}")
     private String password;
 
-//    @Bean
-//    public RedisConnectionFactory redisConnectionFactory() {
-//        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-//        config.setUsername(username);
-//        config.setPassword(password);
-//        return new LettuceConnectionFactory(config);
-//    }
-//
-//    @Bean
-//    public RedisTemplate<String, List<GetHubRouteQuery>> hubRouteTemplate() {
-//        RedisTemplate<String, List<GetHubRouteQuery>> template = new RedisTemplate<>();
-//        template.setConnectionFactory(redisConnectionFactory());
-//
-//        template.setKeySerializer(RedisSerializer.string());
-//        template.setHashKeySerializer(RedisSerializer.string());
-//
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        Jackson2JsonRedisSerializer<List<GetHubRouteQuery>> serializer =
-//                new Jackson2JsonRedisSerializer<>(objectMapper.getTypeFactory().constructCollectionType(List.class, GetHubRouteQuery.class));
-//
-//        template.setHashValueSerializer(serializer);
-//
-//        return template;
-//    }
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+        config.setUsername(username);
+        config.setPassword(password);
+        return new LettuceConnectionFactory(config);
+    }
+
+    @Bean
+    public RedisTemplate<String,String> hubRouteTemplate() {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+
+        template.setKeySerializer(RedisSerializer.string());
+        template.setHashKeySerializer(RedisSerializer.string());
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        return template;
+    }
 }

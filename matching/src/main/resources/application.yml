@@ -43,3 +43,6 @@ eureka:
 #    homePageUrl: https://${eureka.instance.hostname}/
 #    preferIpAddress: false
 #    secureVirtualHostName: ${spring.application.name}
+
+kafka:
+  topic: 4yearGap.order.orderEvent.match
