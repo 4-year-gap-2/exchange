@@ -1,8 +1,5 @@
 package com.exchange.order.common.exception;
 
-import com.exchange.matching.common.exception.CustomConflictException;
-import com.exchange.matching.common.exception.CustomForbiddenException;
-import com.exchange.matching.common.exception.CustomNotFoundException;
 import com.exchange.order.common.response.ResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
