@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service("mysql")
@@ -27,8 +28,14 @@ public class TransactionServiceV2 implements TransactionService {
 
     @Override
     public TransactionResponse saveTransaction(CreateTransactionCommand command) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        String yearMonth = now.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+
         TransactionV2 transactionV2 = new TransactionV2();
         transactionV2.setUserId(command.userId());
+        transactionV2.setYearMonth(yearMonth);
         transactionV2.setTransactionId(UUID.randomUUID());
         transactionV2.setTransactionDate(LocalDateTime.now());
         transactionV2.setPrice(command.price());
@@ -43,7 +50,7 @@ public class TransactionServiceV2 implements TransactionService {
 
     @Override
     public ListTransactionResponse findTransactionsByUserId(FindTransactionQuery query, Pageable pageable) {
-        Page<TransactionV2> pageList = transactionRepositoryReaderV2.findByUserId(query.userId(), pageable);
+        Page<TransactionV2> pageList = transactionRepositoryReaderV2.findByUserIdAndYearMonth(query.userId(), query.yearMonth(), pageable);
         return ListTransactionResponse.fromPage(pageList);
     }
 }

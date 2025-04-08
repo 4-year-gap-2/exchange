@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.UUID;
 
 public interface TransactionRepositoryReaderV2 extends JpaRepository<TransactionV2, UUID> {
-    Page<TransactionV2> findByUserId(UUID userId, Pageable pageable);
+    Page<TransactionV2> findByUserIdAndYearMonth(UUID userId, String yearMonth, Pageable pageable);
 }

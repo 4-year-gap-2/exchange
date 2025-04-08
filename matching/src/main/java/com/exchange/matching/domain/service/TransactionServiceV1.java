@@ -48,7 +48,7 @@ public class TransactionServiceV1 implements TransactionService {
 
     @Override
     public ListTransactionResponse findTransactionsByUserId(FindTransactionQuery query, Pageable pageable) {
-        Slice<TransactionV1> sliceList = transactionReaderV1.findByUserIdWithConsistencyLevel(query.userId(), pageable);
+        Slice<TransactionV1> sliceList = transactionReaderV1.findByUserIdWithConsistencyLevel(query, pageable);
         return ListTransactionResponse.fromSlice(sliceList);
     }
 }

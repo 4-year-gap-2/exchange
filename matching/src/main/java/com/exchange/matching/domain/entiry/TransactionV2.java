@@ -16,10 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "transactions",
-        indexes = {
-                @Index(name = "idx_user_date", columnList = "user_id, transaction_date")
-        })
+@Table(name = "transactions")
 public class TransactionV2 {
     @Id
     @Column(name = "transaction_id")
@@ -27,6 +24,9 @@ public class TransactionV2 {
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+
+    @Column(name = "ym", nullable = false)
+    private String yearMonth;
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDateTime transactionDate;

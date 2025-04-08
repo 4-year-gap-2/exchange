@@ -6,6 +6,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
+import com.exchange.matching.application.query.FindTransactionQuery;
 import com.exchange.matching.domain.entiry.TransactionV1;
 import com.exchange.matching.domain.repository.TransactionReaderV1;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,10 @@ public class TransactionRepositoryReaderImplV1 implements TransactionReaderV1 {
 
     private final CassandraOperations cassandraTemplate;
 
-    public Slice<TransactionV1> findByUserIdWithConsistencyLevel(UUID userId, Pageable pageable) {
+    public Slice<TransactionV1> findByUserIdWithConsistencyLevel(FindTransactionQuery query, Pageable pageable) {
         Select select = QueryBuilder.selectFrom("transactions").all()
-                .whereColumn("user_id").isEqualTo(QueryBuilder.literal(userId));
+                .whereColumn("user_id").isEqualTo(QueryBuilder.literal(query.userId()))
+                .whereColumn("year_month").isEqualTo(QueryBuilder.literal(query.yearMonth()));
 
         SimpleStatement statement = select.build();
 
