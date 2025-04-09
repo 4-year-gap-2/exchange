@@ -2,6 +2,7 @@ package com.exchange.matching.application.command;
 
 
 import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.presentation.dto.CreateMatchingRequest;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -14,4 +15,13 @@ public record CreateMatchingCommand(
         BigDecimal quantity, // 수량
         UUID userId // 사용자 ID
 ) {
+    public static CreateMatchingCommand fromRequest(CreateMatchingRequest createMatchingRequest) {
+        return new CreateMatchingCommand(
+                createMatchingRequest.tradingPair(),
+                createMatchingRequest.orderType(),
+                createMatchingRequest.price(),
+                createMatchingRequest.quantity(),
+                createMatchingRequest.userId()
+                );
+    }
 }

@@ -33,7 +33,7 @@ public class MatchingServiceV2 implements MatchingService {
 
     private void matchingProcess(CreateMatchingCommand incomingOrder) {
         BigDecimal remainingQuantity = incomingOrder.quantity();
-        while (remainingQuantity.compareTo(BigDecimal.ZERO) > 0) {
+        while (remainingQuantity.compareTo(BigDecimal.ZERO) != 0) {
             CreateMatchingCommand matchedOrder = findMatchingOrder(incomingOrder.tradingPair(), incomingOrder.orderType());
             if (matchedOrder == null) {
                 saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
@@ -41,15 +41,19 @@ public class MatchingServiceV2 implements MatchingService {
             }
 
             BigDecimal matchedQuantity = matchedOrder.quantity();
+            // 현재 거래 가능한 미체결 주문이 있다
             if (incomingOrder.orderType().equals(OrderType.SELL) && matchedOrder.price().compareTo(incomingOrder.price()) >= 0 ||
                     incomingOrder.orderType().equals(OrderType.BUY) && matchedOrder.price().compareTo(incomingOrder.price()) <= 0) {
+                // 미체결 주문 수량 보다 주문한 수량이 많으면
+                // 미체결 주문 삭제
                 if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
-                    orderMatching(matchedOrder, incomingOrder, matchedQuantity);
-                    removeOrderFromRedis(matchedOrder);
+                    orderMatching(matchedOrder, incomingOrder, matchedQuantity , 1);
                     remainingQuantity = remainingQuantity.subtract(matchedQuantity);
                 } else {
-                    orderMatching(matchedOrder, incomingOrder, remainingQuantity);
-                    updateOrderQuantity(matchedOrder, matchedQuantity.subtract(remainingQuantity));
+                    // 미체결 주문 수량 보다 주문한 수량이 적으면
+                    // 미체결 주문 수랭 차감 후 저장
+                    orderMatching(matchedOrder, incomingOrder, incomingOrder.quantity(),0);
+//                    updateOrderQuantity(matchedOrder, matchedQuantity.subtract(remainingQuantity));
                     remainingQuantity = BigDecimal.ZERO;
                 }
             } else {
@@ -69,10 +73,19 @@ public class MatchingServiceV2 implements MatchingService {
         }
     }
 
-    private void orderMatching(CreateMatchingCommand matchedOrder, CreateMatchingCommand incomingOrder, BigDecimal matchedQuantity) {
+    private void orderMatching(CreateMatchingCommand matchedOrder, CreateMatchingCommand incomingOrder, BigDecimal matchedQuantity, int code) {
 
-        saveOrderToRedis(incomingOrder);
+        if(code == 1){
+            removeOrderFromRedis(matchedOrder);
+        }else{
+            removeOrderFromRedis(matchedOrder);
+            CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(matchedQuantity));
+            saveOrderToRedis(updateMatchedOrder);
+        }
+
+        log.info("체결완료");
     }
+
 
     private void saveOrderToRedis(CreateMatchingCommand order) {
         String key = order.orderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.tradingPair() : "kj_sell_orders:" + order.tradingPair();
@@ -94,21 +107,5 @@ public class MatchingServiceV2 implements MatchingService {
                 remainingQuantity,
                 order.userId()
         );
-    }
-
-    public boolean isDecimalOnly(BigDecimal value) {
-        return Pattern.matches("^0?\\.\\d+$", value.toPlainString());
-    }
-
-    private CreateMatchingCommand getHighestBuyOrderForSell(String stockCode) {
-        String key = "buy_orders:" + stockCode;
-        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-        return zSetOperations.reverseRange(key, 0, 0).stream().findFirst().orElse(null);
-    }
-
-    private CreateMatchingCommand getLowestSellOrderForBuy(String stockCode) {
-        String key = "sell_orders:" + stockCode;
-        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-        return zSetOperations.range(key, 0, 0).stream().findFirst().orElse(null);
     }
 }

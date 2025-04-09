@@ -23,9 +23,7 @@ public class MatchingController {
     public ResponseEntity<ResponseDto<String>> createHub(@RequestBody CreateMatchingRequest createMatchingRequest) {
 
 
-        matchingServiceV2.matchOrders(new CreateMatchingCommand(createMatchingRequest.tradingPair(),createMatchingRequest.orderType()
-        ,createMatchingRequest.price(),createMatchingRequest.quantity(),createMatchingRequest.userId()
-        ));
+        matchingServiceV2.matchOrders(CreateMatchingCommand.fromRequest(createMatchingRequest));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }
