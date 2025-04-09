@@ -47,13 +47,14 @@ public class MatchingServiceV2 implements MatchingService {
                 // 미체결 주문 수량 보다 주문한 수량이 많으면
                 // 미체결 주문 삭제
                 if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
-                    orderMatching(matchedOrder, incomingOrder, matchedQuantity , 1);
+                    removeOrderFromRedis(matchedOrder);
                     remainingQuantity = remainingQuantity.subtract(matchedQuantity);
                 } else {
                     // 미체결 주문 수량 보다 주문한 수량이 적으면
                     // 미체결 주문 수랭 차감 후 저장
-                    orderMatching(matchedOrder, incomingOrder, incomingOrder.quantity(),0);
-//                    updateOrderQuantity(matchedOrder, matchedQuantity.subtract(remainingQuantity));
+                    removeOrderFromRedis(matchedOrder);
+                    CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(remainingQuantity));
+                    saveOrderToRedis(updateMatchedOrder);
                     remainingQuantity = BigDecimal.ZERO;
                 }
             } else {
@@ -71,19 +72,6 @@ public class MatchingServiceV2 implements MatchingService {
         } else {
             return zSetOperations.range(key, 0, 0).stream().findFirst().orElse(null);
         }
-    }
-
-    private void orderMatching(CreateMatchingCommand matchedOrder, CreateMatchingCommand incomingOrder, BigDecimal matchedQuantity, int code) {
-
-        if(code == 1){
-            removeOrderFromRedis(matchedOrder);
-        }else{
-            removeOrderFromRedis(matchedOrder);
-            CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(matchedQuantity));
-            saveOrderToRedis(updateMatchedOrder);
-        }
-
-        log.info("체결완료");
     }
 
 
