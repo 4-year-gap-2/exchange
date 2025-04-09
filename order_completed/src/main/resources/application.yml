@@ -41,11 +41,6 @@ spring:
     connection:
       connect-timeout: 10s
       init-query-timeout: 10s
-    # SSL ?? (??? ??)
-    # ssl: true
-    # ??? ?? ?? (??? ??)
-    # ssl-options:
-    #   enabled: true
 
 server:
   port: 19091
