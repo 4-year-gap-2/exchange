@@ -1,6 +1,6 @@
 package com.exchange.matching.config;
 
-import com.exchange.matching.application.dto.CreateMatchingCommand;
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -12,7 +12,6 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.HashMap;
 import java.util.Map;

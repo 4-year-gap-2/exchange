@@ -1,6 +1,7 @@
 package com.exchange.matching.config;
 
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -11,8 +12,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-
-import java.util.List;
 
 @Configuration
 public class RedisConfig {
@@ -37,14 +36,16 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String,String> hubRouteTemplate() {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
+    public RedisTemplate<String, CreateMatchingCommand> redisTemplate() {
+        RedisTemplate<String, CreateMatchingCommand> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
         template.setKeySerializer(RedisSerializer.string());
         template.setHashKeySerializer(RedisSerializer.string());
-
         ObjectMapper objectMapper = new ObjectMapper();
+        Jackson2JsonRedisSerializer<CreateMatchingCommand> serializer = new Jackson2JsonRedisSerializer<>(CreateMatchingCommand.class);
+
+        template.setHashValueSerializer(serializer);
 
         return template;
     }

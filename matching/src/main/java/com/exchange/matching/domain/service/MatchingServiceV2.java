@@ -1,12 +1,13 @@
 package com.exchange.matching.domain.service;
 
-import com.exchange.matching.application.dto.CreateMatchingCommand;
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+
 import java.util.regex.Pattern;
 
 
@@ -35,7 +36,10 @@ public class MatchingServiceV2 implements MatchingService {
                 UUID.randomUUID() // UUID를 String으로 변환
         );
 
-        // 레디스에서 값 가지고 오기
+        matchingProcess(command);
+    }
+
+    public CreateMatchingCommand getOrder(CreateMatchingCommand command) {
         CreateMatchingCommand tempRedisValue = null;
         if (command.orderType().equals(OrderType.SELL)) {
             tempRedisValue = getHighestBuyOrderForSell(command.tradingPair());
@@ -43,31 +47,72 @@ public class MatchingServiceV2 implements MatchingService {
         if (command.orderType().equals(OrderType.BUY)) {
             tempRedisValue = getLowestSellOrderForBuy(command.tradingPair());
         }
-        matchingProcess(tempRedisValue, command);
+        return tempRedisValue;
     }
 
-    private void matchingProcess(CreateMatchingCommand matchedOrder, CreateMatchingCommand incomingOrder) {
-        while (isDecimalOnly(incomingOrder.quantity())){
+    private void matchingProcess(CreateMatchingCommand incomingOrder) {
+        BigDecimal remainingQuantity = incomingOrder.quantity();
+        while (remainingQuantity.compareTo(BigDecimal.ZERO) > 0) {
+            CreateMatchingCommand matchedOrder = findMatchingOrder(incomingOrder.tradingPair(), incomingOrder.orderType());
             if (matchedOrder == null) {
-
-                // 매칭 주문이 없을 경우 그냥 미체결데이터로 저장
-
+                saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
                 return;
             }
 
-            // 매칭 로직 구현
-            // 매도 주문이면서 매도가 가능한 상황
-            if (incomingOrder.orderType().equals(OrderType.SELL) && matchedOrder.price().compareTo(incomingOrder.price()) <= 0) {
-                // 매도 주문과 매수 주문의 가격 비교 및 체결 로직
-                // 주문 수량만큼 감소 하고 다시 저장 또는 미체결 주문 삭제 후 다시 조회 및 체결
-
-
-            } else if (incomingOrder.orderType().equals(OrderType.BUY) && matchedOrder.price().compareTo(incomingOrder.price()) >= 0) {
-                // 매수 주문과 매도 주문의 가격 비교 및 체결 로직
+            BigDecimal matchedQuantity = matchedOrder.quantity();
+            if (incomingOrder.orderType().equals(OrderType.SELL) && matchedOrder.price().compareTo(incomingOrder.price()) >= 0 ||
+                    incomingOrder.orderType().equals(OrderType.BUY) && matchedOrder.price().compareTo(incomingOrder.price()) <= 0) {
+                if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
+                    orderMatching(matchedOrder, incomingOrder, matchedQuantity);
+                    removeOrderFromRedis(matchedOrder);
+                    remainingQuantity = remainingQuantity.subtract(matchedQuantity);
+                } else {
+                    orderMatching(matchedOrder, incomingOrder, remainingQuantity);
+                    updateOrderQuantity(matchedOrder, matchedQuantity.subtract(remainingQuantity));
+                    remainingQuantity = BigDecimal.ZERO;
+                }
             } else {
-                log.info("이런 경우가 있나?");
+                saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
+                return;
             }
         }
+    }
+
+    private CreateMatchingCommand findMatchingOrder(String stockCode, OrderType orderType) {
+        String key = orderType.equals(OrderType.SELL) ? "buy_orders:" + stockCode : "sell_orders:" + stockCode;
+        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
+        if (orderType.equals(OrderType.SELL)) {
+            return zSetOperations.reverseRange(key, 0, 0).stream().findFirst().orElse(null);
+        } else {
+            return zSetOperations.range(key, 0, 0).stream().findFirst().orElse(null);
+        }
+    }
+
+    private void orderMatching(CreateMatchingCommand matchedOrder, CreateMatchingCommand incomingOrder, BigDecimal matchedQuantity) {
+        incomingOrder.quantity().subtract(matchedQuantity);
+        saveOrderToRedis(incomingOrder);
+    }
+
+    private void saveOrderToRedis(CreateMatchingCommand order) {
+        String key = order.orderType().equals(OrderType.BUY) ? "buy_orders:" + order.tradingPair() : "sell_orders:" + order.tradingPair();
+        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
+        zSetOperations.add(key, order, order.price().doubleValue());
+    }
+
+    private void removeOrderFromRedis(CreateMatchingCommand order) {
+        String key = order.orderType().equals(OrderType.BUY) ? "buy_orders:" + order.tradingPair() : "sell_orders:" + order.tradingPair();
+        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
+        zSetOperations.remove(key, order);
+    }
+
+    private CreateMatchingCommand updateOrderQuantity(CreateMatchingCommand order, BigDecimal remainingQuantity) {
+        return new CreateMatchingCommand(
+                order.tradingPair(),
+                order.orderType(),
+                order.price(),
+                remainingQuantity,
+                order.userId()
+        );
     }
 
     public boolean isDecimalOnly(BigDecimal value) {
