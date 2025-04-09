@@ -1,6 +1,6 @@
 spring:
   application:
-    name: matching-service
+    name: order_completed
 
   datasource:
     url: ${DB_HOST}
@@ -28,6 +28,20 @@ spring:
       username: ${REDIS_NAME}
       password: ${REDIS_PASSWORD}
 
+  cassandra:
+    contact-points: ${CASSANDRA_HOST}
+    port: 9042
+    keyspace-name: exchange
+    username: ${CASSANDRA_NAME}
+    password: ${CASSANDRA_PASSWORD}
+    schema-action: CREATE_IF_NOT_EXISTS
+    local-datacenter: DC1
+    request:
+      timeout: 10s
+    connection:
+      connect-timeout: 10s
+      init-query-timeout: 10s
+
 server:
   port: 19091
 
@@ -50,12 +64,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: "*" # 모든 Actuator 엔드포인트를 노출
+        include: "*" # ?? Actuator ?????? ??
 
   endpoint:
     health:
-      show-details: always # 헬스 체크 엔드포인트에서 상세 정보 표시
-
-
-kafka:
-  topic: 4yearGap.order.orderEvent.match
+      show-details: always # ?? ?? ??????? ?? ?? ??
