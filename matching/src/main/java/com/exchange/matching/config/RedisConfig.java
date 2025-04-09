@@ -2,6 +2,8 @@ package com.exchange.matching.config;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.redisson.config.Config;
 
 @Configuration
 public class RedisConfig {
@@ -47,5 +50,18 @@ public class RedisConfig {
         template.setHashValueSerializer(serializer);
 
         return template;
+    }
+
+    @Bean
+    public RedissonClient redissonClient() {
+        RedissonClient redisson;
+        Config config = new Config();
+        config.useSingleServer()
+                .setAddress("redis://" + host + ":" + port)
+                .setUsername(username)
+                .setPassword(password);
+
+        redisson = Redisson.create(config);
+        return redisson;
     }
 }

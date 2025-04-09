@@ -1,6 +1,7 @@
 package com.exchange.matching.presentation.external;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.service.MatchingFacade;
 import com.exchange.matching.common.response.ResponseDto;
 import com.exchange.matching.domain.service.MatchingServiceV2;
 import com.exchange.matching.presentation.dto.CreateMatchingRequest;
@@ -16,14 +17,14 @@ import org.springframework.web.bind.annotation.*;
 public class MatchingController {
 
 
-    private final MatchingServiceV2 matchingServiceV2;
+    private final MatchingFacade matchingServiceV2;
 
 
     @PostMapping
     public ResponseEntity<ResponseDto<String>> createHub(@RequestBody CreateMatchingRequest createMatchingRequest) {
 
 
-        matchingServiceV2.matchOrders(CreateMatchingCommand.fromRequest(createMatchingRequest));
+        matchingServiceV2.match(CreateMatchingCommand.fromRequest(createMatchingRequest));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }
