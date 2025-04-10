@@ -29,8 +29,6 @@ public class MatchingServiceV2 implements MatchingService {
     @Transactional
     public void matchOrders(CreateMatchingCommand command) {
         // 카프카에서 값 읽기 토픽은 [4yearGap.order.orderEvent.match]
-
-
         matchingProcess(command);
     }
 

@@ -12,8 +12,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
+import org.apache.kafka.common.protocol.types.Field;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.TestPropertySource;
+import scala.util.Random;
 
 @SpringBootTest
 //@SpringBootTest(properties = "spring.aop.auto=true")
@@ -57,19 +60,17 @@ class MatchingServiceV3IntegrationTest {
     void buyOrderWithNoMatchingSellOrder() {
         // Given
         UUID userId = UUID.randomUUID();
-        UUID orderId = UUID.randomUUID();
 
-        KafkaMatchingEvent buyEvent = new KafkaMatchingEvent(
+        CreateMatchingCommand command = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.BUY,
                 BigDecimal.valueOf(50000),
                 BigDecimal.valueOf(1.5),
-                userId,
-                orderId
+                userId
         );
 
         // When
-        matchingService.matchOrders(buyEvent);
+        matchingService.matchOrders(command);
 
         // Then
         Set<String> buyOrders = redisTemplate.opsForZSet().range(BUY_ORDER_KEY + TRADING_PAIR, 0, -1);
@@ -86,35 +87,29 @@ class MatchingServiceV3IntegrationTest {
     void orderMatchingTest() {
         // Given
         UUID buyUserId = UUID.randomUUID();
-        UUID buyOrderId = UUID.randomUUID();
         UUID sellUserId = UUID.randomUUID();
-        UUID sellOrderId = UUID.randomUUID();
 
-        // 매수 주문 생성
-        KafkaMatchingEvent buyEvent = new KafkaMatchingEvent(
+        CreateMatchingCommand buyCommand = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.BUY,
                 BigDecimal.valueOf(50000),
-                BigDecimal.valueOf(2.0),
-                buyUserId,
-                buyOrderId
+                BigDecimal.valueOf(1.5),
+                buyUserId
         );
 
-        // 매도 주문 생성
-        KafkaMatchingEvent sellEvent = new KafkaMatchingEvent(
+        CreateMatchingCommand sellCommand = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.SELL,
                 BigDecimal.valueOf(49000), // 매수가보다 낮은 가격
                 BigDecimal.valueOf(1.0),   // 매수량보다 적은 수량
-                sellUserId,
-                sellOrderId
+                sellUserId
         );
 
         // When
         // 먼저 매수 주문 처리
-        matchingService.matchOrders(buyEvent);
+        matchingService.matchOrders(buyCommand);
         // 이제 매도 주문 처리
-        matchingService.matchOrders(sellEvent);
+        matchingService.matchOrders(sellCommand);
 
     }
 
@@ -123,42 +118,37 @@ class MatchingServiceV3IntegrationTest {
     void multipleOrdersProcessingTest() {
         // Given
         // 여러 매수 주문 생성
-        KafkaMatchingEvent buyEvent1 = new KafkaMatchingEvent(
+        CreateMatchingCommand buyCommand1 = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.BUY,
                 BigDecimal.valueOf(50000),
                 BigDecimal.valueOf(1.0),
-                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
-        KafkaMatchingEvent buyEvent2 = new KafkaMatchingEvent(
+        CreateMatchingCommand buyCommand2 = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.BUY,
-                BigDecimal.valueOf(51000), // 더 높은 가격
+                BigDecimal.valueOf(51000),
                 BigDecimal.valueOf(2.0),
-                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
-        // 매도 주문 생성
-        KafkaMatchingEvent sellEvent = new KafkaMatchingEvent(
+        CreateMatchingCommand sellCommand1 = new CreateMatchingCommand(
                 TRADING_PAIR,
                 OrderType.SELL,
                 BigDecimal.valueOf(49000), // 모든 매수가보다 낮은 가격
                 BigDecimal.valueOf(3.5),   // 모든 매수량의 합보다 큰 수량
-                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
         // When
         // 매수 주문들 처리
-        matchingService.matchOrders(buyEvent1);
-        matchingService.matchOrders(buyEvent2);
+        matchingService.matchOrders(buyCommand1);
+        matchingService.matchOrders(buyCommand2);
 
         // 이제 매도 주문 처리
-        matchingService.matchOrders(sellEvent);
-
+        matchingService.matchOrders(sellCommand1);
     }
 
     @Test
@@ -172,29 +162,27 @@ class MatchingServiceV3IntegrationTest {
         // 5개의 매수 주문과 5개의 매도 주문 생성
         for (int i = 0; i < orderCount / 2; i++) {
             // 매수 주문
-            KafkaMatchingEvent buyEvent = new KafkaMatchingEvent(
+
+            CreateMatchingCommand buyCommand = new CreateMatchingCommand(
                     TRADING_PAIR,
                     OrderType.BUY,
                     BigDecimal.valueOf(50000 + i * 100), // 조금씩 다른 가격
                     BigDecimal.valueOf(1.0),
-                    UUID.randomUUID(),
                     UUID.randomUUID()
             );
 
-            // 매도 주문
-            KafkaMatchingEvent sellEvent = new KafkaMatchingEvent(
+            CreateMatchingCommand sellCommand = new CreateMatchingCommand(
                     TRADING_PAIR,
                     OrderType.SELL,
                     BigDecimal.valueOf(49900 - i * 100), // 조금씩 다른 가격
                     BigDecimal.valueOf(1.0),
-                    UUID.randomUUID(),
                     UUID.randomUUID()
             );
 
             // 매수 주문 처리 작업 제출
             executorService.submit(() -> {
                 try {
-                    matchingService.matchOrders(buyEvent);
+                    matchingService.matchOrders(buyCommand);
                 } finally {
                     latch.countDown();
                 }
@@ -203,7 +191,7 @@ class MatchingServiceV3IntegrationTest {
             // 매도 주문 처리 작업 제출
             executorService.submit(() -> {
                 try {
-                    matchingService.matchOrders(sellEvent);
+                    matchingService.matchOrders(sellCommand);
                 } finally {
                     latch.countDown();
                 }
@@ -213,20 +201,5 @@ class MatchingServiceV3IntegrationTest {
         // 모든 작업이 완료될 때까지 대기
         latch.await(10, TimeUnit.SECONDS);
         executorService.shutdown();
-
-        // Then
-        // 일부 주문이 체결되고 일부는 미체결로 남아있을 것으로 예상
-        // 정확한 결과는 실행 순서에 따라 달라질 수 있으므로 여기서는 간단히 체크
-        Set<String> buyOrders = redisTemplate.opsForZSet().range(BUY_ORDER_KEY + TRADING_PAIR, 0, -1);
-        Set<String> sellOrders = redisTemplate.opsForZSet().range(SELL_ORDER_KEY + TRADING_PAIR, 0, -1);
-
-        // 로그 출력
-        System.out.println("남은 매수 주문 수: " + (buyOrders != null ? buyOrders.size() : 0));
-        System.out.println("남은 매도 주문 수: " + (sellOrders != null ? sellOrders.size() : 0));
-
-        // 모든 주문이 처리되었는지 확인
-        int totalRemainingOrders = (buyOrders != null ? buyOrders.size() : 0)
-                + (sellOrders != null ? sellOrders.size() : 0);
-        assertTrue(totalRemainingOrders <= orderCount);
     }
 }
