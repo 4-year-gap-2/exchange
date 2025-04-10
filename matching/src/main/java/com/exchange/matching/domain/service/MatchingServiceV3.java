@@ -29,7 +29,6 @@ public class MatchingServiceV3 implements MatchingService {
         this.redisTemplate = redisTemplate;
     }
 
-    @Override
     public void matchOrders(KafkaMatchingEvent event) {
         MatchingOrder matchingOrder = MatchingOrder.fromEvent(event);
         matchingProcess(matchingOrder);

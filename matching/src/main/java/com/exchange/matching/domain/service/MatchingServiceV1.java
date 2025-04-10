@@ -6,6 +6,5 @@ public class MatchingServiceV1 implements MatchingService {
 
     @Override
     public void matchOrders(KafkaMatchingEvent event) {
-
     }
 }
