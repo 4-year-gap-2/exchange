@@ -1,5 +1,6 @@
 package com.exchange.matching.domain.service;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import lombok.AllArgsConstructor;
@@ -29,8 +30,8 @@ public class MatchingServiceV3 implements MatchingService {
         this.redisTemplate = redisTemplate;
     }
 
-    public void matchOrders(KafkaMatchingEvent event) {
-        MatchingOrder matchingOrder = MatchingOrder.fromEvent(event);
+    public void matchOrders(CreateMatchingCommand command) {
+        MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
         matchingProcess(matchingOrder);
     }
 
@@ -229,14 +230,14 @@ public class MatchingServiceV3 implements MatchingService {
         private UUID userId;
         private UUID orderId;
 
-        public static MatchingOrder fromEvent(KafkaMatchingEvent event) {
+        public static MatchingOrder fromCommand(CreateMatchingCommand command) {
             return new MatchingOrder(
-                    event.tradingPair(),
-                    event.orderType(),
-                    event.price(),
-                    event.quantity(),
-                    event.userId(),
-                    event.orderId()
+                    command.tradingPair(),
+                    command.orderType(),
+                    command.price(),
+                    command.quantity(),
+                    command.userId(),
+                    UUID.randomUUID()
             );
         }
     }
