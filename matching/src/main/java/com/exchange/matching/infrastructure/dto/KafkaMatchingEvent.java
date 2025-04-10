@@ -1,0 +1,16 @@
+package com.exchange.matching.infrastructure.dto;
+
+import com.exchange.matching.application.dto.enums.OrderType;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+public record KafkaMatchingEvent(
+        String tradingPair,
+        OrderType orderType,
+        BigDecimal price,
+        BigDecimal quantity,
+        UUID userId,
+        UUID orderId
+) {
+}
