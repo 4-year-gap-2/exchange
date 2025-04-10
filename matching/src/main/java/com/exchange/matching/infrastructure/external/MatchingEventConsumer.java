@@ -17,6 +17,7 @@ public class MatchingEventConsumer {
 
     @KafkaListener(topics = "matching-events", groupId = "matching-service")
     public void consume(KafkaMatchingEvent event) {
-        matchingService.matchOrders(event);
+        CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
+        matchingService.matchOrders(command);
     }
 }

@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.*;
 public class MatchingController {
 
 
-    private final MatchingFacade matchingServiceV2;
+    private final MatchingFacade matchingFacade;
 
 
     @PostMapping
     public ResponseEntity<ResponseDto<String>> createHub(@RequestBody CreateMatchingRequest createMatchingRequest) {
 
 
-        matchingServiceV2.match(CreateMatchingCommand.fromRequest(createMatchingRequest));
+        matchingFacade.match(CreateMatchingCommand.fromRequest(createMatchingRequest));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }

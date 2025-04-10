@@ -1,5 +1,6 @@
 package com.exchange.matching.infrastructure.dto;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 
 import java.math.BigDecimal;
@@ -13,4 +14,12 @@ public record KafkaMatchingEvent(
         UUID userId,
         UUID orderId
 ) {
+    public static CreateMatchingCommand commandFromEvent(KafkaMatchingEvent event){
+        return new CreateMatchingCommand(
+                event.tradingPair,
+                event.orderType,
+                event.price,
+                event.quantity,
+                event.userId);
+    }
 }
