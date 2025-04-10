@@ -10,13 +10,15 @@ import org.mockito.Mockito;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
 
-class MatchingFacadeTest {
+@SpringBootTest
+class LockTest {
 
     private RedissonClient redissonClient;
     private MatchingServiceV2 matchingService;
