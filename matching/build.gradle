@@ -46,6 +46,7 @@ dependencies {
 
 
     implementation 'org.redisson:redisson-spring-boot-starter:3.24.3'
+
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'

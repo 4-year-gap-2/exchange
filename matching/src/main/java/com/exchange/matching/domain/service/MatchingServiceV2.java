@@ -2,6 +2,7 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +23,11 @@ import java.math.BigDecimal;
 @Slf4j
 public class MatchingServiceV2 implements MatchingService {
 
-
     private final RedisTemplate<String, CreateMatchingCommand> redisTemplate;
-
-
 
     @Override
     @Transactional
-    public void matchOrders(CreateMatchingCommand command) {
+    public void matchOrders(KafkaMatchingEvent event) {
         // 카프카에서 값 읽기 토픽은 [4yearGap.order.orderEvent.match]
 
         matchingProcess(command);
