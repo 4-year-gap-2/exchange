@@ -3,6 +3,8 @@ package com.springcloud.user.application.command;
 import com.springcloud.user.application.result.FindUserResult;
 import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.repository.UserRepository;
+import com.springcloud.user.security.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ public class UserCommandService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public FindUserResult signUp(CreateUserCommand command) {
         Optional<User> checkUsername = userRepository.findByUsername(command.getUsername());
@@ -26,4 +29,18 @@ public class UserCommandService {
 
         return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone(),savedUser.getEmail());
     }
+
+    public void login(LoginUserCommand command, HttpServletResponse httpServletResponse) {
+        User user = userRepository.findByUsername(command.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 사용자입니다."));
+
+        if (!passwordEncoder.matches(command.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // JWT를 생성하고 쿠키에 저장한 후 HttpServletResponse에 추가하여 반환
+        String token = jwtUtil.createToken(user.getUserId(), user.getRole(), user.getUsername());
+        jwtUtil.addJwtToCookie(token, httpServletResponse);
+    }
+
 }

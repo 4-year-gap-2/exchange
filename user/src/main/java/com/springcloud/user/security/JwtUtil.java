@@ -30,8 +30,17 @@ public class JwtUtil {
     // Token 식별자
     public static final String BEARER_PREFIX = "Bearer ";
 
-    // 토큰 만료시간 (60분)
-    private static final long TOKEN_EXPIRATION_TIME = 60 * 60 * 1000L;
+    // 1일 = 24시간
+    private static final long HOURS_IN_A_DAY = 24;
+
+    // 1시간 = 60분
+    private static final long SECONDS_IN_AN_HOUR = 60 * 60;
+
+    // 1초 = 1000ms
+    private static final long MILLISECONDS_IN_A_SECOND = 1000L;
+
+    // 토큰 만료 시간(24시간)
+    private static final long TOKEN_EXPIRATION_TIME = HOURS_IN_A_DAY * SECONDS_IN_AN_HOUR * MILLISECONDS_IN_A_SECOND;
 
     @Value("${jwt.secret.key}")
     private String secretKey;
@@ -51,13 +60,14 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
     //JWT 생성
-    public String createToken(UUID userId, UserRole role) {
+    public String createToken(UUID userId, UserRole role, String username) {
         Date date = new Date();
 
         return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(String.valueOf(userId)) // 사용자 식별자 값
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
+                        .claim("username",username)
                         .setExpiration(new Date(date.getTime() + TOKEN_EXPIRATION_TIME)) // 만료 시간
                         .setIssuedAt(date) // 발급일
                         .signWith(key, signatureAlgorithm) // 암호화 알고리즘
@@ -79,7 +89,7 @@ public class JwtUtil {
     }
     //토큰 추출
     public String substringToken(String tokenValue) {
-        // Bearer 다음에 있는 토근 값만 추출
+        // Bearer 다음에 있는 토큰 값만 추출
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }

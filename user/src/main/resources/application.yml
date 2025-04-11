@@ -46,3 +46,7 @@ eureka:
 #    homePageUrl: https://${eureka.instance.hostname}/
 #    preferIpAddress: false
 #    secureVirtualHostName: ${spring.application.name}
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
