@@ -62,3 +62,23 @@ dependencyManagement {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.withType(JavaCompile).configureEach {
+	options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/querydsl")
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs += "$buildDir/generated/querydsl"
+		}
+	}
+}
+
+tasks.register("cleanQuerydsl", Delete) {
+	delete file("$buildDir/generated/querydsl")
+}
+
+tasks.named("compileJava") {
+	dependsOn tasks.named("cleanQuerydsl")
+}
