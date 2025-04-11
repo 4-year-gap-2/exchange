@@ -1,8 +1,7 @@
 package com.springcloud.user.security;
 
 import com.springcloud.user.domain.entity.UserRole;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.Cookie;
@@ -11,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -50,7 +50,7 @@ public class JwtUtil {
         byte[] bytes = Base64.getDecoder().decode(secretKey);
         key = Keys.hmacShaKeyFor(bytes);
     }
-
+    //JWT 생성
     public String createToken(UUID userId, UserRole role) {
         Date date = new Date();
 
@@ -63,7 +63,7 @@ public class JwtUtil {
                         .signWith(key, signatureAlgorithm) // 암호화 알고리즘
                         .compact();
     }
-
+    //쿠키에 JWT 저장
     public void addJwtToCookie(String token, HttpServletResponse res) {
         try {
             token = URLEncoder.encode(token, "utf-8").replaceAll("\\+", "%20");
@@ -77,9 +77,30 @@ public class JwtUtil {
             logger.error(e.getMessage());
         }
     }
-
-
-
-
+    //토큰 추출
+    public String substringToken(String tokenValue) {
+        // Bearer 다음에 있는 토근 값만 추출
+        if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
+            return tokenValue.substring(7);
+        }
+        logger.error("토큰을 찾을 수 없습니다.");
+        throw new NullPointerException("토큰을 찾을 수 없습니다.");
+    }
+    //토큰 유효성 검증 기능
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (SecurityException | MalformedJwtException e) {
+            logger.error("JWT 서명이 유효하지 않습니다.");
+        } catch (ExpiredJwtException e) {
+            logger.error("만료된 JWT 입니다.");
+        } catch (UnsupportedJwtException e) {
+            logger.error("지원되지 않는 JWT 입니다.");
+        } catch (IllegalArgumentException e) {
+            logger.error("잘못된 JWT 입니다.");
+        }
+        return false;
+    }
 
 }
