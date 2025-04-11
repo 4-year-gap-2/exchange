@@ -16,7 +16,7 @@ public class UserCommandService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public FindUserResult signup(CreateUserCommand command) {
+    public FindUserResult signUp(CreateUserCommand command) {
         Optional<User> checkUsername = userRepository.findByUsername(command.getUsername());
         if (checkUsername.isPresent()) throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
 
@@ -24,6 +24,6 @@ public class UserCommandService {
         User user = command.toEntity(encodedPassword);
         User savedUser = userRepository.save(user);
 
-        return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone());
+        return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone(),savedUser.getEmail());
     }
 }

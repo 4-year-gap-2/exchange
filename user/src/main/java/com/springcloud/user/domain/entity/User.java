@@ -34,6 +34,10 @@ public class User extends BaseEntity{
     private String phone;
 
     @Column(nullable = false)
+    @Comment("이메일")
+    private String email;
+
+    @Column(nullable = false)
     @Comment("입출금 계좌번호")
     private String bankAccountNumber;
 

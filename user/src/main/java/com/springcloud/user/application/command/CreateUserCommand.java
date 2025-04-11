@@ -14,6 +14,7 @@ public class CreateUserCommand {
     private String username;
     private String password;
     private String phone;
+    private String email;
     private String bankAccountNumber;
 
     public User toEntity(String encodedPassword) {
@@ -21,6 +22,7 @@ public class CreateUserCommand {
                 .username(username)
                 .password(encodedPassword)
                 .phone(phone)
+                .email(email)
                 .bankAccountNumber(bankAccountNumber)
                 .role(UserRole.MASTER)
                 .build();

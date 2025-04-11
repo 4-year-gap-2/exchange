@@ -3,9 +3,9 @@ package com.springcloud.user.presentation.controller;
 import com.springcloud.user.application.command.CreateUserCommand;
 import com.springcloud.user.application.result.FindUserResult;
 import com.springcloud.user.application.service.UserService;
-import com.springcloud.user.application.service.UserServiceImpl;
 import com.springcloud.user.presentation.request.CreateUserRequest;
 import com.springcloud.user.presentation.response.CreateUserResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,10 +21,10 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public CreateUserResponse signUp(@RequestBody CreateUserRequest request) {
+    public CreateUserResponse signUp(@RequestBody @Valid CreateUserRequest request) {
         CreateUserCommand command = request.toCommand();
-        FindUserResult result = userService.signup(command);
-        CreateUserResponse response = new CreateUserResponse(result.getUserId(),result.getUsername(),result.getPhone());
+        FindUserResult result = userService.signUp(command);
+        CreateUserResponse response = new CreateUserResponse(result.getUserId(),result.getUsername(),result.getPhone(),result.getEmail());
 
         return ResponseEntity.ok(response).getBody();
     }
