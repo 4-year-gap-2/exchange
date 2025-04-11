@@ -79,7 +79,20 @@ public class MatchingServiceV2 implements MatchingService {
     private void saveOrderToRedis(CreateMatchingCommand order) {
         String key = order.orderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.tradingPair() : "kj_sell_orders:" + order.tradingPair();
         ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-        zSetOperations.add(key, order, order.price().doubleValue());
+
+        double score = calcScore(order);
+
+        zSetOperations.add(key, order, score);
+    }
+
+    private double calcScore(CreateMatchingCommand order) {
+        long rawTime = System.currentTimeMillis() % 100000;
+
+        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime;
+        String timeStr = String.format("%05d", timePart);
+
+        double score = Double.parseDouble(order.price() + timeStr);
+        return order.price().doubleValue() + score;
     }
 
     private void removeOrderFromRedis(CreateMatchingCommand order) {
