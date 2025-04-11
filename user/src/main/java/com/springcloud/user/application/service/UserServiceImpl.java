@@ -15,7 +15,7 @@ public class UserServiceImpl implements UserService{
     private final UserQueryService userQueryService;
 
     @Override
-    public FindUserResult signup(CreateUserCommand command) {
-        return userCommandService.signup(command);
+    public FindUserResult signUp(CreateUserCommand command) {
+        return userCommandService.signUp(command);
     }
 }

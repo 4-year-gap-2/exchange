@@ -6,5 +6,5 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface UserService {
-    FindUserResult signup(CreateUserCommand command);
+    FindUserResult signUp(CreateUserCommand command);
 }
