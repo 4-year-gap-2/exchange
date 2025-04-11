@@ -2,6 +2,7 @@ package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.domain.service.MatchingService;
+import com.exchange.matching.domain.service.MatchingServiceV2;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -9,9 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class MatchingEventConsumer {
 
-    private final MatchingService matchingService;
+    private final MatchingServiceV2 matchingService;
 
-    public MatchingEventConsumer(MatchingService matchingServiceV3) {
+    public MatchingEventConsumer(MatchingServiceV2 matchingServiceV3) {
         this.matchingService = matchingServiceV3;
     }
 
