@@ -29,6 +29,7 @@ public class MatchingFacade {
     private final MatchingServiceV2 matchingServiceV2;
 
 
+
     @TimeTrace
     public void match(CreateMatchingCommand createMatchingCommand){
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
@@ -39,10 +40,10 @@ public class MatchingFacade {
             if (!lock.tryLock(1, 5, TimeUnit.SECONDS)) {
 //                throw new IllegalArgumentException();
 //                 findMatchingOrder(stockCode,orderType); 다음 조건 주문으로 조회
-                System.out.println("카프카 전송 실패");
+                System.out.println("락 획득 실패");
                 return;
             }
-            log.info("카프카 큐 전송");
+            log.info("체결 시작");
             matchingServiceV2.matchOrders(createMatchingCommand);
 //            kafkaTemplate.send("matching-events",KafkaMatchingEvent.fromCommand(createMatchingCommand));
         } catch (InterruptedException e) {
