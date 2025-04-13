@@ -3,15 +3,16 @@ package com.exchange.matching.domain.service;
 import com.exchange.matching.application.dto.enums.OrderStatus;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.domain.entiry.Order;
-import com.exchange.matching.domain.entiry.Transaction;
-import com.exchange.matching.domain.repository.TransactionReader;
-import com.exchange.matching.domain.repository.TransactionStore;
+import com.exchange.matching.domain.entiry.TransactionB;
+import com.exchange.matching.domain.repository.TransactionBReader;
+import com.exchange.matching.domain.repository.TransactionBStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -24,16 +25,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Transactional
-public class MatchingServiceV1IntegrationTest {
+@Rollback(value = false)
+public class MatchingServiceV1BIntegrationTest {
 
     @Autowired
-    private MatchingServiceV1A orderMatchingService;
+    private MatchingServiceV1B orderMatchingService;
 
     @Autowired
-    private TransactionReader transactionReader;
+    private TransactionBReader transactionReader;
 
     @Autowired
-    private TransactionStore transactionStore;
+    private TransactionBStore transactionStore;
 
     private static final String TRADING_PAIR = "BTC/KRW";
 
@@ -48,21 +50,21 @@ public class MatchingServiceV1IntegrationTest {
 
         // 테스트 데이터 초기화
         // 매수 주문 (BUY)
-        Transaction buyOrder1 = TransactionFactory.createBuyOrder1();
-        Transaction buyOrder2 = TransactionFactory.createBuyOrder2();
-        Transaction buyOrder3 = TransactionFactory.createBuyOrder3();
-        Transaction buyOrder4 = TransactionFactory.createBuyOrder4();
+        TransactionB buyOrder1 = TransactionBFactory.createBuyOrder1();
+        TransactionB buyOrder2 = TransactionBFactory.createBuyOrder2();
+        TransactionB buyOrder3 = TransactionBFactory.createBuyOrder3();
+        TransactionB buyOrder4 = TransactionBFactory.createBuyOrder4();
         // 매도 주문 (SELL)
-        Transaction sellOrder1 = TransactionFactory.createSellOrder1();
-        Transaction sellOrder2 = TransactionFactory.createSellOrder2();
-        Transaction sellOrder3 = TransactionFactory.createSellOrder3();
-        Transaction sellOrder4 = TransactionFactory.createSellOrder4();
-        Transaction sellOrder5 = TransactionFactory.createSellOrder5();
+        TransactionB sellOrder1 = TransactionBFactory.createSellOrder1();
+        TransactionB sellOrder2 = TransactionBFactory.createSellOrder2();
+        TransactionB sellOrder3 = TransactionBFactory.createSellOrder3();
+        TransactionB sellOrder4 = TransactionBFactory.createSellOrder4();
+        TransactionB sellOrder5 = TransactionBFactory.createSellOrder5();
 
         transactionStore.save(buyOrder1);
         Thread.sleep(500);
 
-        List<Transaction> transactionList = List.of(buyOrder2, buyOrder3, buyOrder4,
+        List<TransactionB> transactionList = List.of(buyOrder2, buyOrder3, buyOrder4,
                 sellOrder1, sellOrder2, sellOrder3, sellOrder4, sellOrder5);
 
         transactionStore.saveAll(transactionList);
@@ -100,7 +102,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(sellOrder5);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         assertEquals(9, transactions.size(), "저장된 거래 내역 수는 9건이어야 합니다.");
 
@@ -125,7 +127,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
         assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
@@ -162,7 +164,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(buyOrder);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         // 테스트 데이터 9건을 초기화했으므로, 매수 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
         assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
@@ -199,7 +201,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
         assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 합니다.");
@@ -236,7 +238,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(buyOrder);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         // 테스트 데이터 9건을 초기화했으므로, 매수 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
         assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
@@ -273,7 +275,7 @@ public class MatchingServiceV1IntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 저장된 거래 내역(Transactions) 조회
-        List<Transaction> transactions = transactionReader.findAll();
+        List<TransactionB> transactions = transactionReader.findAll();
 
         // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
         assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
@@ -301,7 +303,7 @@ public class MatchingServiceV1IntegrationTest {
         // 동일 가격 그리고 생성 시간이 다른 두 매수 주문 생성
 
         // 먼저 들어온 주문
-        Transaction earlierBuyOrder = Transaction.builder()
+        TransactionB earlierBuyOrder = TransactionB.builder()
                 .userId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
@@ -311,7 +313,7 @@ public class MatchingServiceV1IntegrationTest {
                 .build();
 
         // 나중에 들어온 주문
-        Transaction laterBuyOrder = Transaction.builder()
+        TransactionB laterBuyOrder = TransactionB.builder()
                 .userId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
@@ -325,12 +327,12 @@ public class MatchingServiceV1IntegrationTest {
         transactionStore.save(laterBuyOrder);
 
         // 동일 조건의 주문 중 top 우선 주문(가격 오름차순, 생성 시간 오름차순) 조회
-        Optional<Transaction> topOrderOpt = transactionReader.findTopByTypeAndTradingPairAndStatusOrderByPriceDescCreatedAtAsc(
+        Optional<TransactionB> topOrderOpt = transactionReader.findTopByTypeAndTradingPairAndStatusOrderByPriceDescCreatedAtAsc(
                 OrderType.BUY, TRADING_PAIR, OrderStatus.PENDING);
 
         // 먼저 들어온 주문(earlierBuyOrder)이 반환돼야 함
         assertTrue(topOrderOpt.isPresent(), "최상위 주문이 존재해야 한다.");
-        Transaction topOrder = topOrderOpt.get();
+        TransactionB topOrder = topOrderOpt.get();
 
         // 두 주문의 가격이 동일하므로, 생성 시간(createdAt)이 더 빠른 주문이 조회돼야 함
         assertEquals(earlierBuyOrder.getCreatedAt(), topOrder.getCreatedAt(), "가격이 동일하면 먼저 들어온 주문(생성 시간이 빠른 주문)이 우선 조회되어야 한다.");
