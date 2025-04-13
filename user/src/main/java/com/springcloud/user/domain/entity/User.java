@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -19,6 +21,7 @@ public class User extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Comment("사용자 식별자")
+    @Column(name = "user_id")
     private UUID userId;
 
     @Column(nullable = false, unique = true)
@@ -46,4 +49,12 @@ public class User extends BaseEntity{
     @Comment("사용자 권한")
     private UserRole role;
 
+    // 수정: mappedBy = "user" (UserBalance의 필드명과 일치)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserBalance> balances = new ArrayList<>();
+
+    public void createBalances(List<UserBalance> balances) {
+        this.balances = balances;
+        balances.forEach(balance -> balance.setUser(this));
+    }
 }
