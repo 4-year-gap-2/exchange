@@ -2,6 +2,7 @@ package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.common.aop.TimeTrace;
 import com.exchange.matching.domain.service.MatchingService;
 import com.exchange.matching.domain.service.MatchingServiceV2;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
@@ -28,6 +29,7 @@ public class MatchingFacade {
     private final MatchingServiceV2 matchingServiceV2;
 
 
+    @TimeTrace
     public void match(CreateMatchingCommand createMatchingCommand){
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
