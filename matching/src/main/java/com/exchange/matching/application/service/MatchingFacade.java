@@ -25,6 +25,7 @@ public class MatchingFacade {
 
     private final RedissonClient redissonClient;
     private final KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate;
+    private final MatchingServiceV2 matchingServiceV2;
 
 
     public void match(CreateMatchingCommand createMatchingCommand){
@@ -40,7 +41,8 @@ public class MatchingFacade {
                 return;
             }
             log.info("카프카 큐 전송");
-            kafkaTemplate.send("matching-events",KafkaMatchingEvent.fromCommand(createMatchingCommand));
+            matchingServiceV2.matchOrders(createMatchingCommand);
+//            kafkaTemplate.send("matching-events",KafkaMatchingEvent.fromCommand(createMatchingCommand));
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -48,8 +50,5 @@ public class MatchingFacade {
                 lock.unlock();
             }
         }
-
-
     }
-
 }

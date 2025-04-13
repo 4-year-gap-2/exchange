@@ -31,7 +31,7 @@ class LockTest {
 
         // Mocked MatchingService
         matchingService = Mockito.mock(MatchingServiceV2.class);
-        matchingFacade = new MatchingFacade(matchingService, redissonClient);
+//        matchingFacade = new MatchingFacade(matchingService, redissonClient);
 
         // 테스트용 주문 객체
         testCommand = new CreateMatchingCommand(

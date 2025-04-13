@@ -50,6 +50,7 @@ public class MatchingServiceV2 implements MatchingService {
                 if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
                     removeOrderFromRedis(matchedOrder);
                     remainingQuantity = remainingQuantity.subtract(matchedQuantity);
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
                 } else {
                     // 미체결 주문 수량 보다 주문한 수량이 적으면
                     // 미체결 주문 수랭 차감 후 저장
@@ -57,6 +58,7 @@ public class MatchingServiceV2 implements MatchingService {
                     CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(remainingQuantity));
                     saveOrderToRedis(updateMatchedOrder);
                     remainingQuantity = BigDecimal.ZERO;
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
                 }
             } else {
                 saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
@@ -88,11 +90,11 @@ public class MatchingServiceV2 implements MatchingService {
     private double calcScore(CreateMatchingCommand order) {
         long rawTime = System.currentTimeMillis() % 100000;
 
-        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime;
-        String timeStr = String.format("%05d", timePart);
+        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime ;
+        String timeStr = "0." + String.format("%05d", timePart);
 
-        double score = Double.parseDouble(order.price() + timeStr);
-        return order.price().doubleValue() + score;
+        double score = Double.parseDouble(timeStr) + order.price().doubleValue();
+        return score;
     }
 
     private void removeOrderFromRedis(CreateMatchingCommand order) {
