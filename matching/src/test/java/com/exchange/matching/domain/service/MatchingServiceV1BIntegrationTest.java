@@ -2,6 +2,7 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.dto.enums.OrderStatus;
 import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.service.MatchingServiceV1B;
 import com.exchange.matching.domain.entiry.Order;
 import com.exchange.matching.domain.entiry.TransactionB;
 import com.exchange.matching.domain.repository.TransactionBReader;

@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
@@ -27,9 +27,10 @@ public class MatchingServiceV3 implements MatchingService {
         this.redisTemplate = redisTemplate;
     }
 
-    public void matchOrders(CreateMatchingCommand command) {
+    public String matchOrders(CreateMatchingCommand command) {
         MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
         matchingProcess(matchingOrder);
+        return "good";
     }
 
     /**

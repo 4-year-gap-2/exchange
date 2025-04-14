@@ -3,13 +3,11 @@ package com.exchange.matching;
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.application.service.MatchingFacade;
-import com.exchange.matching.domain.service.MatchingServiceV2;
+import com.exchange.matching.application.service.MatchingServiceV2;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
