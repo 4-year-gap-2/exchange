@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ public class UserCommandService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Transactional
     public FindUserResult signUp(CreateUserCommand command) {
         // 1. 유저 중복 확인
         Optional<User> checkUsername = userRepository.findByUsername(command.getUsername());
@@ -29,10 +31,8 @@ public class UserCommandService {
         // 2. 유저 생성
         String encodedPassword = passwordEncoder.encode(command.getPassword());
         User user = command.toEntity(encodedPassword);
-        // 3. 코인별 잔액 생성 및 연관관계 설정
-        user.createBalances(userBalanceCommandService.createInitialBalances(user));
 
-        // 4. 저장
+        // 3. 저장
         User savedUser = userRepository.save(user);
 
         return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone(),savedUser.getEmail(),savedUser.getBalances());
