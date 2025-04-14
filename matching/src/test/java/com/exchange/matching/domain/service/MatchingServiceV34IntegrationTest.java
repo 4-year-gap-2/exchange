@@ -2,10 +2,11 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -15,11 +16,12 @@ import java.util.UUID;
 
 
 @SpringBootTest
-@DisplayName("MatchingServiceV3 통합 테스트")
-class MatchingServiceV3IntegrationTest {
+@DisplayName("MatchingServiceV3,4 통합 테스트")
+class MatchingServiceV34IntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(MatchingServiceV34IntegrationTest.class);
     @Autowired
-    private MatchingServiceV3 matchingService;
+    private MatchingServiceV4 matchingService;
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -130,7 +132,7 @@ class MatchingServiceV3IntegrationTest {
         matchingService.matchOrders(sellCommand4);
         matchingService.matchOrders(sellCommand5);
 
-        // 로그를 통해 결과 확인 (assert는 생략)
+        log.info("================미체결 주문 입력 끝================");
     }
 
     @Test
@@ -147,6 +149,16 @@ class MatchingServiceV3IntegrationTest {
         );
 
         matchingService.matchOrders(sellCommand);
+
+        CreateMatchingCommand buyCommand = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                new BigDecimal("9500"),
+                new BigDecimal("0.3"),
+                UUID.randomUUID()
+        );
+
+        matchingService.matchOrders(buyCommand);
     }
 
     @Test
@@ -166,7 +178,7 @@ class MatchingServiceV3IntegrationTest {
 
         CreateMatchingCommand sellCommand = new CreateMatchingCommand(
                 TRADING_PAIR,
-                OrderType.BUY,
+                OrderType.SELL,
                 new BigDecimal("9000"),
                 new BigDecimal("0.05"),
                 UUID.randomUUID()
@@ -194,7 +206,7 @@ class MatchingServiceV3IntegrationTest {
                 TRADING_PAIR,
                 OrderType.SELL,
                 new BigDecimal("8600"),
-                new BigDecimal("0.8"),
+                new BigDecimal("0.9"),
                 UUID.randomUUID()
         );
 
