@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 
 @Service
@@ -18,7 +19,7 @@ import java.math.BigDecimal;
 @Slf4j
 public class MatchingServiceV2 implements MatchingService {
 
-    private final RedisTemplate<String, CreateMatchingCommand> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     @Transactional
@@ -46,7 +47,7 @@ public class MatchingServiceV2 implements MatchingService {
                 if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
                     removeOrderFromRedis(matchedOrder);
                     remainingQuantity = remainingQuantity.subtract(matchedQuantity);
-                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}", remainingQuantity, matchedOrder.quantity());
                 } else {
                     // 미체결 주문 수량 보다 주문한 수량이 적으면
                     // 미체결 주문 수랭 차감 후 저장
@@ -54,7 +55,7 @@ public class MatchingServiceV2 implements MatchingService {
                     CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(remainingQuantity));
                     saveOrderToRedis(updateMatchedOrder);
                     remainingQuantity = BigDecimal.ZERO;
-                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}", remainingQuantity, matchedOrder.quantity());
                 }
             } else {
                 saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
@@ -65,38 +66,71 @@ public class MatchingServiceV2 implements MatchingService {
 
     private CreateMatchingCommand findMatchingOrder(String stockCode, OrderType orderType) {
         String key = orderType.equals(OrderType.SELL) ? "kj_buy_orders:" + stockCode : "kj_sell_orders:" + stockCode;
-        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
+
+        ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
+        ZSetOperations.TypedTuple<String> strOrder = null;
         if (orderType.equals(OrderType.SELL)) {
-            return zSetOperations.reverseRange(key, 0, 0).stream().findFirst().orElse(null);
+            strOrder = zSetOperations.reverseRangeWithScores(key, 0, 0).stream().findFirst().orElse(null);
         } else {
-            return zSetOperations.range(key, 0, 0).stream().findFirst().orElse(null);
+            strOrder = zSetOperations.rangeWithScores(key, 0, 0).stream().findFirst().orElse(null);
         }
+
+        if (null == strOrder) {
+            return null;
+        }
+        CreateMatchingCommand matchingCommand = deserializeOrder(strOrder.getValue(), stockCode,orderType, strOrder.getScore());
+
+        return matchingCommand;
+
     }
 
+    private CreateMatchingCommand deserializeOrder(String strOrder, String stockCode, OrderType orderType, double score) {
 
+        String[] parts = strOrder.split("\\|");
+
+        double quantity = Double.parseDouble(parts[0]);
+
+        BigDecimal scoreAsBigDecimal = BigDecimal.valueOf(score);
+
+        BigDecimal divisor = new BigDecimal(100000);
+        BigDecimal price = scoreAsBigDecimal.divideToIntegralValue(divisor);
+
+
+        return new CreateMatchingCommand(
+                stockCode,
+                orderType,
+                price,
+                BigDecimal.valueOf(quantity),
+                UUID.fromString(parts[1]),
+                UUID.fromString(parts[2])
+        );
+
+    }
     private void saveOrderToRedis(CreateMatchingCommand order) {
         String key = order.orderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.tradingPair() : "kj_sell_orders:" + order.tradingPair();
-        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-
+        ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         double score = calcScore(order);
+        String strOrder = serializeOrder(order);
+        zSetOperations.add(key, strOrder, score);
+    }
 
-        zSetOperations.add(key, order, score);
+    private String serializeOrder(CreateMatchingCommand order) {
+        return order.quantity() +"|"+order.userId()+"|"+order.orderId();
     }
 
     private double calcScore(CreateMatchingCommand order) {
         long rawTime = System.currentTimeMillis() % 100000;
 
-        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime ;
-        String timeStr = "0." + String.format("%05d", timePart);
+        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime;
+        String timeStr = String.format("%05d", timePart);
 
-        double score = Double.parseDouble(timeStr) + order.price().doubleValue();
-        return score;
+        return Double.parseDouble(timeStr) + order.price().doubleValue() * 100000;
     }
 
     private void removeOrderFromRedis(CreateMatchingCommand order) {
         String key = order.orderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.tradingPair() : "kj_sell_orders:" + order.tradingPair();
-        ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-        zSetOperations.remove(key, order);
+        ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
+        zSetOperations.remove(key, serializeOrder(order));
     }
 
     private CreateMatchingCommand updateOrderQuantity(CreateMatchingCommand order, BigDecimal remainingQuantity) {
@@ -105,7 +139,8 @@ public class MatchingServiceV2 implements MatchingService {
                 order.orderType(),
                 order.price(),
                 remainingQuantity,
-                order.userId()
+                order.userId(),
+                order.orderId()
         );
     }
 }

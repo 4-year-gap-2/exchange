@@ -12,5 +12,6 @@ public record CreateMatchingRequest(
         OrderType orderType,
         BigDecimal price,
         BigDecimal quantity,
-        UUID userId) {
+        UUID userId,
+        UUID orderId) {
 }
