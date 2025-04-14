@@ -27,10 +27,9 @@ public class MatchingServiceV3 implements MatchingService {
         this.redisTemplate = redisTemplate;
     }
 
-    public String matchOrders(CreateMatchingCommand command) {
+    public void matchOrders(CreateMatchingCommand command) {
         MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
         matchingProcess(matchingOrder);
-        return "good";
     }
 
     /**
