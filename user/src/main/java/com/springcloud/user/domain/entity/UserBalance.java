@@ -23,11 +23,10 @@ public class UserBalance {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-// 지갑에 들어가야하는 거 아닌가?
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
+    @ManyToOne
+    @JoinColumn(name = "coin_id", nullable = false)
     @Comment("코인 타입") //추후 코인 테이블로 분류 UUID로 적용할 것
-    private CoinType coinType;
+    private Coin coin;
 
     @Column(nullable = false)
     @Comment("총 자산")

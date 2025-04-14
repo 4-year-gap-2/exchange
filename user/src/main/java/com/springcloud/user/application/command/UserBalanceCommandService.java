@@ -1,42 +1,59 @@
 package com.springcloud.user.application.command;
 
-import com.springcloud.user.domain.entity.CoinType;
+import com.springcloud.user.application.result.FindUserBalanceResult;
+import com.springcloud.user.domain.entity.Coin;
 import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
+import com.springcloud.user.domain.repository.CoinRepository;
+import com.springcloud.user.domain.repository.UserBalanceRepository;
+import com.springcloud.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UserBalanceCommandService {
+
+    private final UserRepository userRepository;
+    private final CoinRepository coinRepository;
+    private final UserBalanceRepository userBalanceRepository;
+
     // UserBalance 생성 로직 (User 객체 파라미터 필요)
-    public List<UserBalance> createInitialBalances(User user) {
-        return Arrays.stream(CoinType.values())
-                .map(coinType -> buildUserBalance(user, CoinType.valueOf(coinType.name())))
-                .toList();
+    @Transactional
+    public FindUserBalanceResult createBalance(CreateWalletCommand command, UUID userId) {
+        // 0. 중복 검증 (응용 계층)
+        validateDuplicateWallet(userId, command.getCoinId());
+        // 1. 애그리거트 루트 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다."));
+
+        // 2. Coin 엔티티 조회
+        Coin coin = coinRepository.findById(command.getCoinId())
+                .orElseThrow(() -> new IllegalArgumentException(String.valueOf(command.getCoinId())));
+        //3. userBalance 객체 저장
+        UserBalance savedBalance = userBalanceRepository.save(buildUserBalance(user, coin));
+
+        return new FindUserBalanceResult(savedBalance.getBalanceId(),savedBalance.getUser().getUserId(),savedBalance.getCoin().getCoinId(),savedBalance.getTotalBalance(),savedBalance.getAvailableBalance(),savedBalance.getWallet());
     }
 
-    private UserBalance buildUserBalance(User user, CoinType coinType) {
+    // 중복 검증 메서드 분리
+    private void validateDuplicateWallet(UUID userId, UUID coinId) {
+        if (userBalanceRepository.existsByUser_UserIdAndCoin_CoinId(userId, coinId)) {
+            throw new IllegalArgumentException("이미 해당 코인 지갑이 존재합니다");
+        }
+    }
+
+    private UserBalance buildUserBalance(User user, Coin coin) {
         return UserBalance.builder()
                 .user(user)  // 외부에서 전달받은 User 사용
-                .coinType(coinType)
-                .wallet(generateWalletAddress(coinType))
+                .coin(coin)
+                .wallet(UUID.randomUUID().toString().substring(0, 8))
                 .totalBalance(BigDecimal.ZERO)
                 .availableBalance(BigDecimal.ZERO)
                 .build();
-    }
-
-    // 지갑 주소 생성
-    private String generateWalletAddress(CoinType coinType) {
-        return switch (coinType) {
-            case SOL -> "SOL_" + UUID.randomUUID().toString().substring(0, 8);
-            case ETH -> "ETH_0x" + UUID.randomUUID().toString().substring(0, 8);
-            case BTC -> "BTC_1" + UUID.randomUUID().toString().substring(0, 8);
-        };
     }
 }
