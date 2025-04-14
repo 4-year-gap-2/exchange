@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import org.springframework.stereotype.Service;
@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class MatchingServiceV1 implements MatchingService {
     @Override
-    public void matchOrders(CreateMatchingCommand command) {
+    public String matchOrders(CreateMatchingCommand command) {
 
+        return null;
     }
 }

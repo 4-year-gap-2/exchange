@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
@@ -48,7 +48,7 @@ public class MatchingServiceV4 implements MatchingService {
         this.matchingScript = script;
     }
 
-    public void matchOrders(CreateMatchingCommand command) {
+    public String matchOrders(CreateMatchingCommand command) {
         MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
 
         log.info("{} 주문접수 : {}원 {}개 (주문ID: {})",
@@ -56,6 +56,7 @@ public class MatchingServiceV4 implements MatchingService {
                 matchingOrder.getQuantity(), matchingOrder.getUserId());
 
         matchingProcess(matchingOrder);
+        return "good";
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.dto.enums.OrderStatus;
 import com.exchange.matching.application.dto.enums.OrderType;

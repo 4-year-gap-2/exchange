@@ -1,23 +1,14 @@
 package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.common.aop.TimeTrace;
-import com.exchange.matching.domain.service.MatchingService;
-import com.exchange.matching.domain.service.MatchingServiceV2;
-import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Comment;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.apache.el.parser.ELParserConstants.EMPTY;
 
 @RequiredArgsConstructor
 @Component
@@ -29,9 +20,10 @@ public class MatchingFacade {
 
 
     @TimeTrace
-    public void match(CreateMatchingCommand createMatchingCommand){
+    public String match(CreateMatchingCommand createMatchingCommand){
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
+        String value = "";
 
         try {
             if (createMatchingCommand.price().doubleValue() == 7500.00) throw new IllegalArgumentException();
@@ -40,7 +32,7 @@ public class MatchingFacade {
                 throw new IllegalArgumentException();
             }
             log.info("체결 시작");
-            matchingServiceV2.matchOrders(createMatchingCommand);
+            value = matchingServiceV2.matchOrders(createMatchingCommand);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -48,5 +40,6 @@ public class MatchingFacade {
                 lock.unlock();
             }
         }
+        return value;
     }
 }

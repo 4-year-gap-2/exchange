@@ -1,18 +1,13 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
-import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
 
 
 import java.math.BigDecimal;
@@ -27,9 +22,10 @@ public class MatchingServiceV2 implements MatchingService {
 
     @Override
     @Transactional
-    public void matchOrders(CreateMatchingCommand command) {
+    public String matchOrders(CreateMatchingCommand command) {
         // 카프카에서 값 읽기 토픽은 [4yearGap.order.orderEvent.match]
         matchingProcess(command);
+        return "good";
     }
 
     private void matchingProcess(CreateMatchingCommand incomingOrder) {
