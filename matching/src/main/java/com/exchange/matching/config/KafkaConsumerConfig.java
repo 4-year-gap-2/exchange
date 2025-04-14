@@ -47,10 +47,6 @@ public class KafkaConsumerConfig {
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaMatchingEvent.class);
         // 설정된 프로퍼티로 DefaultKafkaConsumerFactory를 생성하여 반환합니다.
 
-        //acks 설정 테스트 후 삭제
-        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,false);
-        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,"earliest");
-
         // SASL 인증 관련 설정 추가
         configProps.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
         configProps.put(SaslConfigs.SASL_MECHANISM, "PLAIN");
@@ -71,7 +67,6 @@ public class KafkaConsumerConfig {
         // 컨슈머 팩토리를 리스너 컨테이너 팩토리에 설정합니다.
         factory.setConsumerFactory(consumerFactory());
         // 설정된 리스너 컨테이너 팩토리를 반환합니다.
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
 
         return factory;
     }

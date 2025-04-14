@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @DisplayName("MatchingServiceV2 통합 테스트")
-public class MatchingServiceV2IntegrationTest {
+public class  MatchingServiceV2IntegrationTest {
 
 
     @Autowired
@@ -230,7 +230,7 @@ public class MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_sell_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
         assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,sellOrder.orderId().toString());
 
