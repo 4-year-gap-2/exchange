@@ -163,7 +163,7 @@ public class MatchingServiceV4 implements MatchingService {
         }
 
         String oppositeOrderDetails = (String) results.get(1);
-        Double oppositeScore = "".equals(results.get(2)) ? 0.0 : Double.valueOf((String)results.get(2));
+        double oppositeScore = "".equals(results.get(2)) ? 0.0 : Double.parseDouble((String)results.get(2));
         BigDecimal matchPrice = "".equals(results.get(3)) ? BigDecimal.ZERO : new BigDecimal((String)results.get(3));
         BigDecimal matchedQuantity = "".equals(results.get(4)) ? BigDecimal.ZERO : new BigDecimal((String)results.get(4));
         BigDecimal remainingQuantity = "".equals(results.get(5)) ? BigDecimal.ZERO : new BigDecimal((String)results.get(5));
