@@ -17,13 +17,12 @@ public class MatchingFacade {
 
     private final RedissonClient redissonClient;
     private final MatchingServiceV2 matchingServiceV2;
-
+    private final MatchingServiceV4 matchingServiceV4;
 
     @TimeTrace
-    public String match(CreateMatchingCommand createMatchingCommand){
+    public void match(CreateMatchingCommand createMatchingCommand) {
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
-        String value = "";
 
         try {
             if (createMatchingCommand.price().doubleValue() == 7500.00) throw new IllegalArgumentException();
@@ -32,7 +31,7 @@ public class MatchingFacade {
                 throw new IllegalArgumentException();
             }
             log.info("체결 시작");
-            value = matchingServiceV2.matchOrders(createMatchingCommand);
+            matchingServiceV2.matchOrders(createMatchingCommand);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -40,6 +39,9 @@ public class MatchingFacade {
                 lock.unlock();
             }
         }
-        return value;
+    }
+
+    public void matchV4(CreateMatchingCommand createMatchingCommand) {
+        matchingServiceV4.matchOrders(createMatchingCommand);
     }
 }

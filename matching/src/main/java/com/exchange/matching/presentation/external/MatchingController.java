@@ -18,9 +18,8 @@ public class MatchingController {
 
     private final KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate;
 
-
     @PostMapping
-    public ResponseEntity<ResponseDto<String>> createHub(@RequestBody CreateMatchingRequest createMatchingRequest) {
+    public ResponseEntity<ResponseDto<String>> match(@RequestBody CreateMatchingRequest createMatchingRequest) {
         kafkaTemplate.send("matching-events",KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }

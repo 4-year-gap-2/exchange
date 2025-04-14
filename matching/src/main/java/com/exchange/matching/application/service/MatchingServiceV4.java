@@ -48,7 +48,7 @@ public class MatchingServiceV4 implements MatchingService {
         this.matchingScript = script;
     }
 
-    public String matchOrders(CreateMatchingCommand command) {
+    public void matchOrders(CreateMatchingCommand command) {
         MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
 
         log.info("{} 주문접수 : {}원 {}개 (주문ID: {})",
@@ -56,7 +56,6 @@ public class MatchingServiceV4 implements MatchingService {
                 matchingOrder.getQuantity(), matchingOrder.getUserId());
 
         matchingProcess(matchingOrder);
-        return "good";
     }
 
     /**
