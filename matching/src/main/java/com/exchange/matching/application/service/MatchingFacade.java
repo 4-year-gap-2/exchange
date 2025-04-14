@@ -20,7 +20,7 @@ public class MatchingFacade {
     private final MatchingServiceV4 matchingServiceV4;
 
     @TimeTrace
-    public void match(CreateMatchingCommand createMatchingCommand) {
+    public void matchV2(CreateMatchingCommand createMatchingCommand) {
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
 
