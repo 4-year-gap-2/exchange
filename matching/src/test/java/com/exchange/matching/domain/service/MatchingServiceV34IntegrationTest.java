@@ -2,7 +2,6 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +17,9 @@ import java.util.UUID;
 
 @SpringBootTest
 @DisplayName("MatchingServiceV3,4 통합 테스트")
-class MatchingServiceV3IntegrationTest {
+class MatchingServiceV34IntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(MatchingServiceV3IntegrationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchingServiceV34IntegrationTest.class);
     @Autowired
     private MatchingServiceV4 matchingService;
 
@@ -207,7 +206,7 @@ class MatchingServiceV3IntegrationTest {
                 TRADING_PAIR,
                 OrderType.SELL,
                 new BigDecimal("8600"),
-                new BigDecimal("0.8"),
+                new BigDecimal("0.9"),
                 UUID.randomUUID()
         );
 
