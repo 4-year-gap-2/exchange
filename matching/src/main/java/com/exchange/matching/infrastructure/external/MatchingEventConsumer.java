@@ -35,14 +35,44 @@ public class MatchingEventConsumer {
                 .register(meterRegistry);
     }
 
+    @KafkaListener(
+            topics = {"matching-events-tps-v2"},
+            groupId = "matching-service",
+            concurrency = "3"  // 3개의 스레드로 병렬 처리
+    )
+    public void consumeV2(ConsumerRecord<String, KafkaMatchingEvent> record) {
+        // 타이머 시작
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            String topic = record.topic();
+            KafkaMatchingEvent event = record.value();
+
+            System.out.println("topic 이름: " + topic);
+
+            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
+            matchingFacade.matchV2(command);
+
+            // 카운터 증가
+            processedCounter.increment();
+        } finally {
+            // 타이머 종료 및 기록
+            sample.stop(processingTimer);
+        }
+    }
+
 
     //    @RetryableTopic(
     //            attempts = "3", // 최대 3회 재시도
     //            backoff = @Backoff(delay = 10 * 1000, multiplier = 3, maxDelay = 10 * 60 * 1000), // 재시도 간격 설정
     //            include = IllegalArgumentException.class // 모든 예외에 대해 재시도
     //    )
-    @KafkaListener(topics = {"matching-events"}, groupId = "matching-service")
-    public void consume(ConsumerRecord<String, KafkaMatchingEvent> record) {
+    @KafkaListener(
+            topics = {"matching-events-tps-v4"},
+            groupId = "matching-service",
+            concurrency = "3"  // 3개의 스레드로 병렬 처리
+    )
+    public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
 
