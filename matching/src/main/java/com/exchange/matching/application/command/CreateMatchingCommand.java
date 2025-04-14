@@ -13,7 +13,8 @@ public record CreateMatchingCommand(
         OrderType orderType, // 주문 유형 (매수/매도)
         BigDecimal price, // 가격
         BigDecimal quantity, // 수량
-        UUID userId // 사용자 ID
+        UUID userId, // 사용자 ID
+        UUID orderId
 ) {
     public static CreateMatchingCommand fromRequest(CreateMatchingRequest createMatchingRequest) {
         return new CreateMatchingCommand(
@@ -21,7 +22,8 @@ public record CreateMatchingCommand(
                 createMatchingRequest.orderType(),
                 createMatchingRequest.price(),
                 createMatchingRequest.quantity(),
-                createMatchingRequest.userId()
+                createMatchingRequest.userId(),
+                createMatchingRequest.orderId()
                 );
     }
 }
