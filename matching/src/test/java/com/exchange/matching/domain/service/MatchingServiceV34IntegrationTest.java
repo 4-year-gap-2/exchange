@@ -54,6 +54,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("9000"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -62,6 +63,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("9000"),
                 new BigDecimal("0.3"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -70,6 +72,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("8700"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -78,6 +81,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("8900"),
                 new BigDecimal("0.3"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -87,6 +91,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("9500"),
                 new BigDecimal("0.3"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -95,6 +100,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("9700"),
                 new BigDecimal("0.6"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -103,6 +109,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("9700"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -111,6 +118,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("10000"),
                 new BigDecimal("0.2"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -119,6 +127,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("11000"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -146,6 +155,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("9000"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -156,6 +166,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("9500"),
                 new BigDecimal("0.3"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -172,6 +183,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("9600"),
                 new BigDecimal("0.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -182,6 +194,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("9000"),
                 new BigDecimal("0.05"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -198,6 +211,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.BUY,
                 new BigDecimal("10000"),
                 new BigDecimal("1.1"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
@@ -208,6 +222,7 @@ class MatchingServiceV34IntegrationTest {
                 OrderType.SELL,
                 new BigDecimal("8600"),
                 new BigDecimal("0.9"),
+                UUID.randomUUID(),
                 UUID.randomUUID()
         );
 
