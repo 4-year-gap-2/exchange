@@ -26,12 +26,11 @@ public class MatchingServiceV2 implements MatchingService {
 
     @Override
     @Transactional
-    public String matchOrders(CreateMatchingCommand command) {
+    public void matchOrders(CreateMatchingCommand command) {
         // 카프카에서 값 읽기 토픽은 [4yearGap.order.orderEvent.match]
 
         V2MatchOrder v2MatchOrder = V2MatchOrder.fromCommand(command);
         matchingProcess(v2MatchOrder);
-        return "good";
     }
 
     private void matchingProcess(V2MatchOrder incomingOrder) {
