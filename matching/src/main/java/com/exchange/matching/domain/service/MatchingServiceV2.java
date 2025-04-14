@@ -50,6 +50,7 @@ public class MatchingServiceV2 implements MatchingService {
                 if (remainingQuantity.compareTo(matchedQuantity) >= 0) {
                     removeOrderFromRedis(matchedOrder);
                     remainingQuantity = remainingQuantity.subtract(matchedQuantity);
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
                 } else {
                     // 미체결 주문 수량 보다 주문한 수량이 적으면
                     // 미체결 주문 수랭 차감 후 저장
@@ -57,6 +58,7 @@ public class MatchingServiceV2 implements MatchingService {
                     CreateMatchingCommand updateMatchedOrder = updateOrderQuantity(matchedOrder, matchedOrder.quantity().subtract(remainingQuantity));
                     saveOrderToRedis(updateMatchedOrder);
                     remainingQuantity = BigDecimal.ZERO;
+                    log.info("체결 남은 주분 수량 {} 완전 체결 수량 {}",remainingQuantity,matchedOrder.quantity());
                 }
             } else {
                 saveOrderToRedis(updateOrderQuantity(incomingOrder, remainingQuantity));
@@ -79,7 +81,20 @@ public class MatchingServiceV2 implements MatchingService {
     private void saveOrderToRedis(CreateMatchingCommand order) {
         String key = order.orderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.tradingPair() : "kj_sell_orders:" + order.tradingPair();
         ZSetOperations<String, CreateMatchingCommand> zSetOperations = redisTemplate.opsForZSet();
-        zSetOperations.add(key, order, order.price().doubleValue());
+
+        double score = calcScore(order);
+
+        zSetOperations.add(key, order, score);
+    }
+
+    private double calcScore(CreateMatchingCommand order) {
+        long rawTime = System.currentTimeMillis() % 100000;
+
+        int timePart = (order.orderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime ;
+        String timeStr = "0." + String.format("%05d", timePart);
+
+        double score = Double.parseDouble(timeStr) + order.price().doubleValue();
+        return score;
     }
 
     private void removeOrderFromRedis(CreateMatchingCommand order) {
