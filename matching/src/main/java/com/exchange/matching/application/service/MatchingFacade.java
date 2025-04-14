@@ -25,9 +25,7 @@ import static org.apache.el.parser.ELParserConstants.EMPTY;
 public class MatchingFacade {
 
     private final RedissonClient redissonClient;
-    private final KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate;
     private final MatchingServiceV2 matchingServiceV2;
-
 
 
     @TimeTrace
@@ -35,17 +33,14 @@ public class MatchingFacade {
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
 
-
         try {
-            if (!lock.tryLock(1, 5, TimeUnit.SECONDS)) {
-//                throw new IllegalArgumentException();
-//                 findMatchingOrder(stockCode,orderType); 다음 조건 주문으로 조회
+            if (createMatchingCommand.price().doubleValue() == 7500.00) throw new IllegalArgumentException();
+            if (!lock.tryLock(100, 500, TimeUnit.MILLISECONDS)) {
                 System.out.println("락 획득 실패");
-                return;
+                throw new IllegalArgumentException();
             }
             log.info("체결 시작");
             matchingServiceV2.matchOrders(createMatchingCommand);
-//            kafkaTemplate.send("matching-events",KafkaMatchingEvent.fromCommand(createMatchingCommand));
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
