@@ -1,10 +1,10 @@
 package com.exchange.matching.domain.service;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.application.service.MatchingServiceV1A;
 import com.exchange.matching.domain.entiry.ActivatedOrder;
 import com.exchange.matching.domain.entiry.CompletedOrder;
-import com.exchange.matching.domain.entiry.Order;
 import com.exchange.matching.domain.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -80,17 +80,17 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("주문 매칭이 실패하여 모든 주문이 미체결 상태로 남아야 한다.")
     public void testOrdersRemainPendingWhenNoMatchingOccurs() {
         // 매수 주문 (BUY)
-        Order buyOrder1 = OrderFactory.createBuyOrder1();
-        Order buyOrder2 = OrderFactory.createBuyOrder2();
-        Order buyOrder3 = OrderFactory.createBuyOrder3();
-        Order buyOrder4 = OrderFactory.createBuyOrder4();
+        CreateMatchingCommand buyOrder1 = MatchingCommandFactory.createBuyOrder1();
+        CreateMatchingCommand buyOrder2 = MatchingCommandFactory.createBuyOrder2();
+        CreateMatchingCommand buyOrder3 = MatchingCommandFactory.createBuyOrder3();
+        CreateMatchingCommand buyOrder4 = MatchingCommandFactory.createBuyOrder4();
 
         // 매도 주문 (SELL)
-        Order sellOrder1 = OrderFactory.createSellOrder1();
-        Order sellOrder2 = OrderFactory.createSellOrder2();
-        Order sellOrder3 = OrderFactory.createSellOrder3();
-        Order sellOrder4 = OrderFactory.createSellOrder4();
-        Order sellOrder5 = OrderFactory.createSellOrder5();
+        CreateMatchingCommand sellOrder1 = MatchingCommandFactory.createSellOrder1();
+        CreateMatchingCommand sellOrder2 = MatchingCommandFactory.createSellOrder2();
+        CreateMatchingCommand sellOrder3 = MatchingCommandFactory.createSellOrder3();
+        CreateMatchingCommand sellOrder4 = MatchingCommandFactory.createSellOrder4();
+        CreateMatchingCommand sellOrder5 = MatchingCommandFactory.createSellOrder5();
 
         // 매수 주문의 가격은 모두 9000원 이하이고,
         // 매도 주문의 가격은 모두 9500원 이상이므로,
@@ -120,13 +120,14 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("매도 주문과 매수 주문의 가격과 수량이 모두 일치하여 양쪽 주문 모두 완전 체결되어야 한다.")
     public void testOrdersFullyMatched() {
         // 매도 주문 (SELL)
-        Order sellOrder = Order.builder()
-                .userId(UUID.randomUUID())
-                .orderType(OrderType.SELL)
-                .tradingPair(TRADING_PAIR)
-                .price(BigDecimal.valueOf(9000))
-                .quantity(BigDecimal.valueOf(0.1))
-                .build();
+        CreateMatchingCommand sellOrder = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                BigDecimal.valueOf(9000),   // Price
+                BigDecimal.valueOf(0.1),    // Quantity
+                UUID.randomUUID(),  // User ID
+                UUID.randomUUID()   // Order ID
+        );
 
         orderMatchingService.matchOrders(sellOrder);
 
@@ -144,13 +145,14 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 적을 경우, 요청 주문(Buy)은 완전 체결되고 반대 주문(Sell)은 미체결 상태로 남아야 한다.")
     public void shouldPartiallyMatchSellOrder() {
         // 매수 주문 (BUY)
-        Order buyOrder = Order.builder()
-                .userId(UUID.randomUUID())
-                .orderType(OrderType.BUY)
-                .tradingPair(TRADING_PAIR)
-                .price(BigDecimal.valueOf(9600))
-                .quantity(BigDecimal.valueOf(0.1))
-                .build();
+        CreateMatchingCommand buyOrder = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                BigDecimal.valueOf(9600),   // Price
+                BigDecimal.valueOf(0.1),    // Quantity
+                UUID.randomUUID(),  // User ID
+                UUID.randomUUID()   // Order ID
+        );
 
         orderMatchingService.matchOrders(buyOrder);
 
@@ -168,13 +170,14 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 적을 경우, 요청 주문(Sell)은 완전 체결되고 반대 주문(Buy)은 미체결 상태로 남아야 한다.")
     public void shouldPartiallyMatchBuyOrder() {
         // 매도 주문 (SELL)
-        Order sellOrder = Order.builder()
-                .userId(UUID.randomUUID())
-                .orderType(OrderType.SELL)
-                .tradingPair(TRADING_PAIR)
-                .price(BigDecimal.valueOf(8800))
-                .quantity(BigDecimal.valueOf(0.05))
-                .build();
+        CreateMatchingCommand sellOrder = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.SELL,
+                BigDecimal.valueOf(8800),   // Price
+                BigDecimal.valueOf(0.05),    // Quantity
+                UUID.randomUUID(),  // User ID
+                UUID.randomUUID()   // Order ID
+        );
 
         orderMatchingService.matchOrders(sellOrder);
 
@@ -192,13 +195,14 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 많을 경우, 반대 주문이 없거나 가격이 맞지 않아 매칭되지 않을 때까지 반복적으로 매칭 로직이 실행되어야 한다.")
     public void shouldRepeatMatchingForBuyOrderWithExcessQuantity() {
         // 매수 주문 (BUY)
-        Order buyOrder = Order.builder()
-                .userId(UUID.randomUUID())
-                .orderType(OrderType.BUY)
-                .tradingPair(TRADING_PAIR)
-                .price(BigDecimal.valueOf(10000))
-                .quantity(BigDecimal.valueOf(1.1))
-                .build();
+        CreateMatchingCommand buyOrder = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                BigDecimal.valueOf(10000),   // Price
+                BigDecimal.valueOf(1.1),    // Quantity
+                UUID.randomUUID(),  // User ID
+                UUID.randomUUID()   // Order ID
+        );
 
         orderMatchingService.matchOrders(buyOrder);
 
@@ -216,13 +220,14 @@ public class MatchingServiceV1AIntegrationTest {
     @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 많을 경우, 반대 주문이 없거나 가격이 맞지 않아 매칭되지 않을 때까지 반복적으로 매칭 로직이 실행되어야 한다.")
     public void shouldRepeatMatchingForSellOrderWithExcessQuantity() {
         // 매도 주문 (SELL)
-        Order sellOrder = Order.builder()
-                .userId(UUID.randomUUID())
-                .orderType(OrderType.SELL)
-                .tradingPair(TRADING_PAIR)
-                .price(BigDecimal.valueOf(8600))
-                .quantity(BigDecimal.valueOf(0.8))
-                .build();
+        CreateMatchingCommand sellOrder = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.SELL,
+                BigDecimal.valueOf(8600),   // Price
+                BigDecimal.valueOf(0.8),    // Quantity
+                UUID.randomUUID(),  // User ID
+                UUID.randomUUID()   // Order ID
+        );
 
         orderMatchingService.matchOrders(sellOrder);
 
@@ -245,6 +250,7 @@ public class MatchingServiceV1AIntegrationTest {
         // 먼저 들어온 주문
         ActivatedOrder earlierBuyOrder = ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
@@ -255,6 +261,7 @@ public class MatchingServiceV1AIntegrationTest {
         // 나중에 들어온 주문
         ActivatedOrder laterBuyOrder = ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))

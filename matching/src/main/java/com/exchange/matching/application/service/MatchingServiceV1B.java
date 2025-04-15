@@ -1,5 +1,6 @@
 package com.exchange.matching.application.service;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.domain.entiry.*;
 import com.exchange.matching.domain.repository.ActivatedOrderBReader;
@@ -18,15 +19,19 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class MatchingServiceV1B {
+public class MatchingServiceV1B implements MatchingService {
 
     private final ActivatedOrderBReader activatedOrderBReader;
     private final ActivatedOrderBStore activatedOrderBStore;
     private final CompletedOrderStore completedOrderStore;
     private static final int MAX_RETRIES = 3;
 
+    @Override
     @Transactional
-    public void matchOrders(Order order) {
+    public void matchOrders(CreateMatchingCommand command) {
+        // mutable 객체로 변환
+        Order order = Order.from(command);
+
         // 매수/구매(BUY)인지 매도/판매(SELL)인지에 따라 반대 주문 타입 결정
         OrderType oppositeType = (order.getOrderType() == OrderType.BUY) ? OrderType.SELL : OrderType.BUY;
 
@@ -113,6 +118,7 @@ public class MatchingServiceV1B {
     private void saveActivatedOrder(Order order) {
         ActivatedOrderB activatedOrder = ActivatedOrderB.builder()
                 .userId(order.getUserId())
+                .orderId(order.getOrderId())
                 .tradingPair(order.getTradingPair())
                 .price(order.getPrice())
                 .quantity(order.getQuantity())
@@ -127,6 +133,7 @@ public class MatchingServiceV1B {
         CompletedOrder completedOrder = CompletedOrder.builder()
                 .sellerId(order.getOrderType() == OrderType.SELL ? order.getUserId() : oppositeOrderUserId)
                 .buyerId(order.getOrderType() == OrderType.BUY ? order.getUserId() : oppositeOrderUserId)
+                .orderId(order.getOrderId())
                 .tradingPair(order.getTradingPair())
                 .price(matchedPrice)
                 .quantity(matchedQuantity)
@@ -140,6 +147,7 @@ public class MatchingServiceV1B {
         CompletedOrder completedOrder = CompletedOrder.builder()
                 .sellerId(order.getType() == OrderType.SELL ? order.getUserId() : oppositeOrderUserId)
                 .buyerId(order.getType() == OrderType.BUY ? order.getUserId() : oppositeOrderUserId)
+                .orderId(order.getOrderId())
                 .tradingPair(order.getTradingPair())
                 .price(matchedPrice)
                 .quantity(matchedQuantity)
