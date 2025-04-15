@@ -20,7 +20,7 @@ import java.util.UUID;
 public class MatchingServiceV2 implements MatchingService {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private final Long TIME_STAMP_NUMERIC = 99999999999999L;
+    private final Long TIME_STAMP_NUMERIC = 9999999999999L;
 
     @Override
     @Transactional
@@ -165,8 +165,8 @@ public class MatchingServiceV2 implements MatchingService {
             return new MatchingServiceV2.V2MatchOrder(
                     command.tradingPair(),
                     command.orderType(),
-                    command.price(),
-                    command.quantity(),
+                    command.price().stripTrailingZeros(),
+                    command.quantity().stripTrailingZeros(),
                     command.userId(),
                     command.orderId(),
                     0,
