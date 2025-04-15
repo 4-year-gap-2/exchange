@@ -67,11 +67,11 @@ public class MatchingEventConsumer {
     //            backoff = @Backoff(delay = 10 * 1000, multiplier = 3, maxDelay = 10 * 60 * 1000), // 재시도 간격 설정
     //            include = IllegalArgumentException.class // 모든 예외에 대해 재시도
     //    )
-//    @KafkaListener(
-//            topics = {"matching-events-tps-v4"},
-//            groupId = "matching-service",
-//            concurrency = "3"  // 3개의 스레드로 병렬 처리
-//    )
+    @KafkaListener(
+            topics = {"matching-events-tps-v4"},
+            groupId = "matching-service",
+            concurrency = "3"  // 3개의 스레드로 병렬 처리
+    )
     public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
