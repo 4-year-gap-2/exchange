@@ -1,13 +1,13 @@
 package com.springcloud.user.presentation.controller;
 
 import com.springcloud.user.application.command.CreateWalletCommand;
+import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
 import com.springcloud.user.application.result.FindUserBalanceResult;
-import com.springcloud.user.application.result.FindUserResult;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.common.UserInfoHeader;
 import com.springcloud.user.presentation.request.CreateWalletRequest;
-import com.springcloud.user.presentation.response.CreateUserBalanceResponse;
-import com.springcloud.user.presentation.response.CreateUserResponse;
+import com.springcloud.user.presentation.request.UpdateIncrementBalanceRequest;
+import com.springcloud.user.presentation.response.FindUserBalanceResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Description;
@@ -26,29 +26,36 @@ public class UserBalanceController {
 
     @Description("지갑 생성")
     @PostMapping("/wallet")
-    public CreateUserBalanceResponse createWallet(@RequestBody CreateWalletRequest balanceRequest, HttpServletRequest request) {
+    public FindUserBalanceResponse createWallet(@RequestBody CreateWalletRequest balanceRequest, HttpServletRequest request) {
         // user 정보 변환
         UserInfoHeader userInfo = new UserInfoHeader(request);
         CreateWalletCommand command = balanceRequest.toCommand();
         FindUserBalanceResult result = userService.createWallet(command,userInfo.getUserId());
-        CreateUserBalanceResponse response = new CreateUserBalanceResponse(result.getBalancedId(),result.getUserId(),result.getCoinId(),result.getTotalBalance(),result.getAvailableBalance(),result.getWallet());
+        // FindUserBalanceResponse response = new FindUserBalanceResponse(result.getBalancedId(),result.getUserId(),result.getCoinId(),result.getTotalBalance(),result.getAvailableBalance(),result.getWallet());
+        FindUserBalanceResponse response = FindUserBalanceResponse.from(result);
         return ResponseEntity.ok(response).getBody();
     }
 
     // 관리자 권한의 잔액 증가
     @PatchMapping("/increment")
-    public CreateUserResponse incrementBalance(HttpServletRequest request) throws AccessDeniedException {
+    public FindUserBalanceResponse incrementBalance(HttpServletRequest request, @RequestBody UpdateIncrementBalanceRequest balanceRequest) throws AccessDeniedException {
         // 권한 체크
         UserInfoHeader userInfo = new UserInfoHeader(request);
-        if (!"MASTER".equals(userInfo.getUserRole())) {
+        if (!"MASTER".equals(userInfo.getUserRole().name())) {
             throw new AccessDeniedException("관리자 권한이 필요합니다.");
         }
-
         // 서비스 로직
-
+        UpdateIncrementBalanceCommand command = new UpdateIncrementBalanceCommand(balanceRequest.getWallet(),balanceRequest.getAmount());
+        FindUserBalanceResult result = userService.incrementBalance(command);
         //dto 변환하기
-        return null;
+        FindUserBalanceResponse response = FindUserBalanceResponse.from(result);
+        return ResponseEntity.ok(response).getBody();
     }
+
+//    @PatchMapping("/decrement")
+//    public FindUserBalanceResponse incrementBalance(HttpServletRequest request, @RequestBody ){
+//
+//    }
 
 
 }

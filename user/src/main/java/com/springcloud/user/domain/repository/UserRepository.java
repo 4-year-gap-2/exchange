@@ -13,4 +13,6 @@ public interface UserRepository {
     User save(User user);
 
     Optional<User> findById(UUID userId);
+
+//    Optional<User> findByWallet(String wallet);
 }
