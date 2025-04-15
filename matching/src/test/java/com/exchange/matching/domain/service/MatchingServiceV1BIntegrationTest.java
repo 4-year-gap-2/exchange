@@ -1,12 +1,14 @@
 package com.exchange.matching.domain.service;
 
-import com.exchange.matching.application.dto.enums.OrderStatus;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.application.service.MatchingServiceV1B;
+import com.exchange.matching.domain.entiry.ActivatedOrderB;
+import com.exchange.matching.domain.entiry.CompletedOrder;
 import com.exchange.matching.domain.entiry.Order;
-import com.exchange.matching.domain.entiry.TransactionB;
-import com.exchange.matching.domain.repository.TransactionBReader;
-import com.exchange.matching.domain.repository.TransactionBStore;
+import com.exchange.matching.domain.repository.ActivatedOrderBReader;
+import com.exchange.matching.domain.repository.ActivatedOrderBStore;
+import com.exchange.matching.domain.repository.CompletedOrderReader;
+import com.exchange.matching.domain.repository.CompletedOrderStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,17 +36,24 @@ public class MatchingServiceV1BIntegrationTest {
     private MatchingServiceV1B orderMatchingService;
 
     @Autowired
-    private TransactionBReader transactionReader;
+    private ActivatedOrderBReader activatedOrderBReader;
 
     @Autowired
-    private TransactionBStore transactionStore;
+    private ActivatedOrderBStore activatedOrderBStore;
+
+    @Autowired
+    private CompletedOrderReader completedOrderReader;
+
+    @Autowired
+    private CompletedOrderStore completedOrderStore;
 
     private static final String TRADING_PAIR = "BTC/KRW";
 
     @BeforeEach
-    public void setUp(TestInfo testInfo) throws InterruptedException {
+    public void setUp(TestInfo testInfo) {
         // 테스트 전에 거래 내역 테이블 초기화
-        transactionStore.deleteAll();
+        activatedOrderBStore.deleteAll();
+        completedOrderStore.deleteAll();
 
         if (testInfo.getTestMethod().isPresent() && testInfo.getTestMethod().get().isAnnotationPresent(SkipSetUp.class)) {
             return;
@@ -51,24 +61,21 @@ public class MatchingServiceV1BIntegrationTest {
 
         // 테스트 데이터 초기화
         // 매수 주문 (BUY)
-        TransactionB buyOrder1 = TransactionBFactory.createBuyOrder1();
-        TransactionB buyOrder2 = TransactionBFactory.createBuyOrder2();
-        TransactionB buyOrder3 = TransactionBFactory.createBuyOrder3();
-        TransactionB buyOrder4 = TransactionBFactory.createBuyOrder4();
+        ActivatedOrderB buyOrder1 = ActivatedOrderBFactory.createBuyOrder1();
+        ActivatedOrderB buyOrder2 = ActivatedOrderBFactory.createBuyOrder2();
+        ActivatedOrderB buyOrder3 = ActivatedOrderBFactory.createBuyOrder3();
+        ActivatedOrderB buyOrder4 = ActivatedOrderBFactory.createBuyOrder4();
         // 매도 주문 (SELL)
-        TransactionB sellOrder1 = TransactionBFactory.createSellOrder1();
-        TransactionB sellOrder2 = TransactionBFactory.createSellOrder2();
-        TransactionB sellOrder3 = TransactionBFactory.createSellOrder3();
-        TransactionB sellOrder4 = TransactionBFactory.createSellOrder4();
-        TransactionB sellOrder5 = TransactionBFactory.createSellOrder5();
+        ActivatedOrderB sellOrder1 = ActivatedOrderBFactory.createSellOrder1();
+        ActivatedOrderB sellOrder2 = ActivatedOrderBFactory.createSellOrder2();
+        ActivatedOrderB sellOrder3 = ActivatedOrderBFactory.createSellOrder3();
+        ActivatedOrderB sellOrder4 = ActivatedOrderBFactory.createSellOrder4();
+        ActivatedOrderB sellOrder5 = ActivatedOrderBFactory.createSellOrder5();
 
-        transactionStore.save(buyOrder1);
-        Thread.sleep(500);
-
-        List<TransactionB> transactionList = List.of(buyOrder2, buyOrder3, buyOrder4,
+        List<ActivatedOrderB> activatedOrderBList = List.of(buyOrder1, buyOrder2, buyOrder3, buyOrder4,
                 sellOrder1, sellOrder2, sellOrder3, sellOrder4, sellOrder5);
 
-        transactionStore.saveAll(transactionList);
+        activatedOrderBStore.saveAll(activatedOrderBList);
     }
 
     @Test
@@ -90,7 +97,7 @@ public class MatchingServiceV1BIntegrationTest {
 
         // 매수 주문의 가격은 모두 9000원 이하이고,
         // 매도 주문의 가격은 모두 9500원 이상이므로,
-        // 가격 조건이 맞지 않아 어떤 주문도 체결되지 않고 미체결(PENDING) 상태로 거래 내역에 저장
+        // 가격 조건이 맞지 않아 어떤 주문도 체결되지 않고 미체결 상태로 거래 내역에 저장
         orderMatchingService.matchOrders(buyOrder1);
         orderMatchingService.matchOrders(buyOrder2);
         orderMatchingService.matchOrders(buyOrder3);
@@ -102,18 +109,18 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(sellOrder4);
         orderMatchingService.matchOrders(sellOrder5);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        assertEquals(9, transactions.size(), "저장된 거래 내역 수는 9건이어야 합니다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        transactions.forEach(tx ->
-                assertEquals(OrderStatus.PENDING, tx.getStatus(), "모든 거래 내역은 미체결 상태여야 합니다.")
-        );
+        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(0, completedOrderList.size(), "체결 거래 내역 수는 0건이어야 한다.");
     }
 
     @Test
-    @DisplayName("매도 주문과 매수 주문의 가격과 수량이 모두 일치하여 완전 체결되어야 한다.")
+    @DisplayName("매도 주문과 매수 주문의 가격과 수량이 모두 일치하여 양쪽 주문 모두 완전 체결되어야 한다.")
     public void testOrdersFullyMatched() {
         // 매도 주문 (SELL)
         Order sellOrder = Order.builder()
@@ -122,35 +129,22 @@ public class MatchingServiceV1BIntegrationTest {
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
 
         orderMatchingService.matchOrders(sellOrder);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
-        assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        long completedCount = transactions.stream()
-                .filter(tx -> tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(2, completedCount, "COMPLETED 상태의 거래 내역은 2건이어야 한다.");
-
-        long matchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.SELL && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, matchedCount, "매도 주문이 체결된 거래 내역은 1건이어야 한다.");
-
-        long buyMatchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.BUY && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, buyMatchedCount, "매수 주문이 체결된 거래 내역은 1건이어야 한다.");
+        assertEquals(8, activatedOrderBList.size(), "미체결 거래 내역 수는 8건이어야 한다.");
+        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
-    @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 적을 경우, 요청 주문(Buy)은 체결되고 반대 주문(Sell)은 미체결 상태로 남아야 한다.")
+    @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 적을 경우, 요청 주문(Buy)은 완전 체결되고 반대 주문(Sell)은 미체결 상태로 남아야 한다.")
     public void shouldPartiallyMatchSellOrder() {
         // 매수 주문 (BUY)
         Order buyOrder = Order.builder()
@@ -159,35 +153,22 @@ public class MatchingServiceV1BIntegrationTest {
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9600))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
 
         orderMatchingService.matchOrders(buyOrder);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        // 테스트 데이터 9건을 초기화했으므로, 매수 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
-        assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        long completedCount = transactions.stream()
-                .filter(tx -> tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, completedCount, "COMPLETED 상태의 거래 내역은 1건이어야 한다.");
-
-        long matchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.BUY && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, matchedCount, "매수 주문이 체결된 거래 내역은 1건이어야 한다.");
-
-        long sellMatchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.SELL && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(0, sellMatchedCount, "매도 주문이 체결된 거래 내역은 없어야 한다.");
+        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
-    @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 적을 경우, 요청 주문(Sell)은 체결되고 반대 주문(Buy)은 미체결 상태로 남아야 한다.")
+    @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 적을 경우, 요청 주문(Sell)은 완전 체결되고 반대 주문(Buy)은 미체결 상태로 남아야 한다.")
     public void shouldPartiallyMatchBuyOrder() {
         // 매도 주문 (SELL)
         Order sellOrder = Order.builder()
@@ -196,35 +177,22 @@ public class MatchingServiceV1BIntegrationTest {
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(8800))
                 .quantity(BigDecimal.valueOf(0.05))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
 
         orderMatchingService.matchOrders(sellOrder);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
-        assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 합니다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        long completedCount = transactions.stream()
-                .filter(tx -> tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, completedCount, "COMPLETED 상태의 거래 내역은 1건이어야 한다.");
-
-        long matchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.SELL && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, matchedCount, "매도 주문이 체결된 거래 내역은 1건이어야 한다.");
-
-        long buyMatchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.BUY && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(0, buyMatchedCount, "매수 주문이 체결된 거래 내역은 없어야 한다.");
+        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
-    @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 많을 경우, 매칭 로직이 반복적으로 실행되어 가능한 만큼 체결하고, 남은 주문은 부분 체결로 남아야 한다.")
+    @DisplayName("요청 주문(Buy) 수량이 반대 주문(Sell) 수량보다 많을 경우, 반대 주문이 없거나 가격이 맞지 않아 매칭되지 않을 때까지 반복적으로 매칭 로직이 실행되어야 한다.")
     public void shouldRepeatMatchingForBuyOrderWithExcessQuantity() {
         // 매수 주문 (BUY)
         Order buyOrder = Order.builder()
@@ -233,35 +201,22 @@ public class MatchingServiceV1BIntegrationTest {
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(10000))
                 .quantity(BigDecimal.valueOf(1.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
 
         orderMatchingService.matchOrders(buyOrder);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        // 테스트 데이터 9건을 초기화했으므로, 매수 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
-        assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        long completedCount = transactions.stream()
-                .filter(tx -> tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(4, completedCount, "COMPLETED 상태의 거래 내역은 4건이어야 한다.");
-
-        long matchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.SELL && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(3, matchedCount, "매도 주문이 체결된 거래 내역은 3건이어야 한다.");
-
-        long buyMatchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.BUY && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, buyMatchedCount, "매수 주문이 체결된 거래 내역은 1건이어야 한다.");
+        assertEquals(6, activatedOrderBList.size(), "미체결 거래 내역 수는 6건이어야 한다.");
+        assertEquals(8, completedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
     }
 
     @Test
-    @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 많을 경우, 매칭 로직이 반복적으로 실행되어 가능한 만큼 체결하고, 남은 주문은 부분 체결로 남아야 한다.")
+    @DisplayName("요청 주문(Sell) 수량이 반대 주문(Buy) 수량보다 많을 경우, 반대 주문이 없거나 가격이 맞지 않아 매칭되지 않을 때까지 반복적으로 매칭 로직이 실행되어야 한다.")
     public void shouldRepeatMatchingForSellOrderWithExcessQuantity() {
         // 매도 주문 (SELL)
         Order sellOrder = Order.builder()
@@ -270,70 +225,56 @@ public class MatchingServiceV1BIntegrationTest {
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(8600))
                 .quantity(BigDecimal.valueOf(0.8))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
 
         orderMatchingService.matchOrders(sellOrder);
 
-        // 저장된 거래 내역(Transactions) 조회
-        List<TransactionB> transactions = transactionReader.findAll();
+        // 미체결 주문 조회
+        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
 
-        // 테스트 데이터 9건을 초기화했으므로, 매도 주문이 1건 추가되어 총 10건이 저장돼 있어야 함
-        assertEquals(10, transactions.size(), "저장된 거래 내역 수는 10건이어야 한다.");
+        // 체결 주문 조회
+        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
 
-        long completedCount = transactions.stream()
-                .filter(tx -> tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(5, completedCount, "COMPLETED 상태의 거래 내역은 5건이어야 한다.");
-
-        long matchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.BUY && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(4, matchedCount, "매수 주문이 체결된 거래 내역은 4건이어야 한다.");
-
-        long sellMatchedCount = transactions.stream()
-                .filter(tx -> tx.getType() == OrderType.SELL && tx.getStatus() == OrderStatus.COMPLETED)
-                .count();
-        assertEquals(1, sellMatchedCount, "매도 주문이 체결된 거래 내역은 1건이어야 한다.");
+        assertEquals(5, activatedOrderBList.size(), "미체결 거래 내역 수는 5건이어야 한다.");
+        assertEquals(8, completedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
     }
 
     @Test
     @DisplayName("가격이 같으면 먼저 들어온 주문이 우선 체결(조회)되어야 한다.")
     @SkipSetUp
-    void shouldPrioritizeEarlierOrderWhenPricesAreEqual() throws InterruptedException {
+    void shouldPrioritizeEarlierOrderWhenPricesAreEqual() {
         // 동일 가격 그리고 생성 시간이 다른 두 매수 주문 생성
 
         // 먼저 들어온 주문
-        TransactionB earlierBuyOrder = TransactionB.builder()
+        ActivatedOrderB earlierBuyOrder = ActivatedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
                 .type(OrderType.BUY)
-                .status(OrderStatus.PENDING)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         // 나중에 들어온 주문
-        TransactionB laterBuyOrder = TransactionB.builder()
+        ActivatedOrderB laterBuyOrder = ActivatedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
                 .type(OrderType.BUY)
-                .status(OrderStatus.PENDING)
+                .createdAt(LocalDateTime.now().plusMinutes(10))
                 .build();
 
-        transactionStore.save(earlierBuyOrder);
-        Thread.sleep(500);
-        transactionStore.save(laterBuyOrder);
+        activatedOrderBStore.save(earlierBuyOrder);
+        activatedOrderBStore.save(laterBuyOrder);
 
         // 동일 조건의 주문 중 top 우선 주문(가격 오름차순, 생성 시간 오름차순) 조회
-        Optional<TransactionB> topOrderOpt = transactionReader.findTopByTypeAndTradingPairAndStatusOrderByPriceDescCreatedAtAsc(
-                OrderType.BUY, TRADING_PAIR, OrderStatus.PENDING);
+        Optional<ActivatedOrderB> topOrderOpt = activatedOrderBReader.findTopByTypeAndTradingPairOrderByPriceDescCreatedAtAsc(
+                OrderType.BUY, TRADING_PAIR);
 
         // 먼저 들어온 주문(earlierBuyOrder)이 반환돼야 함
         assertTrue(topOrderOpt.isPresent(), "최상위 주문이 존재해야 한다.");
-        TransactionB topOrder = topOrderOpt.get();
+        ActivatedOrderB topOrder = topOrderOpt.get();
 
         // 두 주문의 가격이 동일하므로, 생성 시간(createdAt)이 더 빠른 주문이 조회돼야 함
         assertEquals(earlierBuyOrder.getCreatedAt(), topOrder.getCreatedAt(), "가격이 동일하면 먼저 들어온 주문(생성 시간이 빠른 주문)이 우선 조회되어야 한다.");
