@@ -1,5 +1,6 @@
 package com.exchange.matching.domain.entiry;
 
+import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,16 +19,16 @@ public class Order {
     private BigDecimal price;
     private BigDecimal quantity;
     private UUID userId;
+    private UUID orderId;
 
-    private Order(String tradingPair, OrderType orderType, BigDecimal price, BigDecimal quantity, UUID userId) {
-        this.tradingPair = tradingPair;
-        this.orderType = orderType;
-        this.price = price;
-        this.quantity = quantity;
-        this.userId = userId;
-    }
-
-    public static Order from(String tradingPair, OrderType orderType, BigDecimal price, BigDecimal quantity, UUID userId) {
-        return new Order(tradingPair, orderType, price, quantity, userId);
+    public static Order from(CreateMatchingCommand createMatchingCommand) {
+        return Order.builder()
+                .tradingPair(createMatchingCommand.tradingPair())
+                .orderType(createMatchingCommand.orderType())
+                .price(createMatchingCommand.price())
+                .quantity(createMatchingCommand.quantity())
+                .userId(createMatchingCommand.userId())
+                .orderId(createMatchingCommand.orderId())
+                .build();
     }
 }

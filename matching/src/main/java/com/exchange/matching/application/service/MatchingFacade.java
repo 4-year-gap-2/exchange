@@ -18,6 +18,11 @@ public class MatchingFacade {
     private final RedissonClient redissonClient;
     private final MatchingServiceV2 matchingServiceV2;
     private final MatchingServiceV4 matchingServiceV4;
+    private final MatchingServiceV1A matchingServiceV1A;
+
+    public void matchV1(CreateMatchingCommand createMatchingCommand) {
+        matchingServiceV1A.matchOrders(createMatchingCommand);
+    }
 
     @TimeTrace
     public void matchV2(CreateMatchingCommand createMatchingCommand) {

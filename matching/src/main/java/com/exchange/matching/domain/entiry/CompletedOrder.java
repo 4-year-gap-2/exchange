@@ -32,6 +32,10 @@ public class CompletedOrder {
     @Comment("구매자 ID")
     private UUID buyerId;
 
+    @Column(name = "order_id", nullable = false)
+    @Comment("주문 ID")
+    private UUID orderId;
+
     @Column(name = "trading_pair", nullable = false)
     @Comment("거래쌍 (BTC/KRW)")
     private String tradingPair;

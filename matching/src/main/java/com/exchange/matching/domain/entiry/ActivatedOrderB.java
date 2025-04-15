@@ -28,6 +28,10 @@ public class ActivatedOrderB {
     @Comment("주문자 ID")
     private UUID userId;
 
+    @Column(name = "order_id", nullable = false)
+    @Comment("주문 ID")
+    private UUID orderId;
+
     @Column(name = "trading_pair", nullable = false)
     @Comment("거래쌍 (BTC/KRW)")
     private String tradingPair;
