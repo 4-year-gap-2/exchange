@@ -1,7 +1,6 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.domain.entiry.Order;
-import com.exchange.matching.application.dto.enums.OrderStatus;
 import com.exchange.matching.application.dto.enums.OrderType;
 
 import java.math.BigDecimal;
@@ -16,7 +15,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -27,7 +25,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.3))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -38,7 +35,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(8700))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -49,7 +45,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(8900))
                 .quantity(BigDecimal.valueOf(0.3))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -60,7 +55,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(9500))
                 .quantity(BigDecimal.valueOf(0.3))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -71,7 +65,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(9700))
                 .quantity(BigDecimal.valueOf(0.6))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -82,7 +75,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(9700))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -93,7 +85,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(10000))
                 .quantity(BigDecimal.valueOf(0.2))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 
@@ -104,7 +95,6 @@ public class OrderFactory {
                 .tradingPair("BTC/KRW")
                 .price(BigDecimal.valueOf(11000))
                 .quantity(BigDecimal.valueOf(0.1))
-                .orderStatus(OrderStatus.PENDING)
                 .build();
     }
 }
