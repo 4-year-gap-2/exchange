@@ -1,8 +1,7 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
-import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,8 +11,6 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,8 +18,8 @@ import java.util.UUID;
 @Slf4j
 public class MatchingServiceV3 implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "orders:sell:";
-    private static final String BUY_ORDER_KEY = "orders:buy:";
+    private static final String SELL_ORDER_KEY = "mjy:orders:sell:";
+    private static final String BUY_ORDER_KEY = "mjy:orders:buy:";
 
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -48,8 +45,11 @@ public class MatchingServiceV3 implements MatchingService {
 
                 // 매도 주문이 없거나 가격이 맞지 않으면 미체결 처리 후 종료
                 if (oppositeOrder == null ||
-                    oppositeOrder.getPrice().compareTo(order.getPrice()) > 0) {
+                        oppositeOrder.getPrice().compareTo(order.getPrice()) > 0) {
                     saveUnmatchedOrder(order);
+                    if (oppositeOrder != null) {
+                        saveRestoreOppositeOrder(oppositeOrder);
+                    }
                     break;
                 }
             } else {
@@ -58,8 +58,11 @@ public class MatchingServiceV3 implements MatchingService {
 
                 // 매수 주문이 없거나 가격이 맞지 않으면 미체결 처리 후 종료
                 if (oppositeOrder == null ||
-                    oppositeOrder.getPrice().compareTo(order.getPrice()) < 0) {
+                        oppositeOrder.getPrice().compareTo(order.getPrice()) < 0) {
                     saveUnmatchedOrder(order);
+                    if (oppositeOrder != null) {
+                        saveRestoreOppositeOrder(oppositeOrder);
+                    }
                     break;
                 }
             }
@@ -75,8 +78,7 @@ public class MatchingServiceV3 implements MatchingService {
     private void processMatch(MatchingOrder order, MatchingOrder oppositeOrder) {
         // 매칭 가능한 수량 계산
         BigDecimal matchedQuantity = order.getQuantity().min(oppositeOrder.getQuantity());
-        BigDecimal remainingOrderQuantity = order.getQuantity().subtract(matchedQuantity);
-        BigDecimal remainingOppositeQuantity = oppositeOrder.getQuantity().subtract(matchedQuantity);
+        BigDecimal remainingOrderQuantity = order.getQuantity().subtract(oppositeOrder.getQuantity());
 
         //실제 체결 되는 가격은 반대 주문 가격 설정
         BigDecimal executionPrice = oppositeOrder.getPrice();
@@ -84,16 +86,16 @@ public class MatchingServiceV3 implements MatchingService {
         // 체결 기록 및 이벤트 발행
         recordMatch(order, oppositeOrder, matchedQuantity, executionPrice);
 
-        // 주문 수량 업데이트
-        order.setQuantity(remainingOrderQuantity);
+        if (remainingOrderQuantity.compareTo(BigDecimal.ZERO) >= 0) {
+            // 주문에 잔여 수량이 있으면 수량 변경후 계속 진행
+            order.setQuantity(remainingOrderQuantity);
+        } else {
+            // 반대 주문 수량 변경후 저장후 종료
+            oppositeOrder.setQuantity(remainingOrderQuantity.abs());
+            saveUnmatchedOrder(oppositeOrder);
 
-        // 반대 주문에 잔여 수량이 있으면 다시 저장
-        if (remainingOppositeQuantity.compareTo(BigDecimal.ZERO) > 0) {
-            order.setTradingPair(oppositeOrder.getTradingPair());
-            order.setOrderType(oppositeOrder.getOrderType());
-            order.setOrderId(oppositeOrder.getOrderId());
-            order.setPrice(oppositeOrder.getPrice());
-            order.setUserId(oppositeOrder.getUserId());
+            // 현재 주문 수량을 0으로 설정하여 while 루프 종료 조건을 만듦
+            order.setQuantity(BigDecimal.ZERO);
         }
     }
 
@@ -103,7 +105,7 @@ public class MatchingServiceV3 implements MatchingService {
     private MatchingOrder findLowestSellOrder(String tradingPair) {
         String sellOrderKey = SELL_ORDER_KEY + tradingPair;
 
-        // ZPOPMIN 사용하여 최저가 매도 주문을 원자적으로 가져오고 제거
+        // ZPOPMIN 사용하여 최저가 매도 주문을 가져오고 제거
         Set<ZSetOperations.TypedTuple<String>> lowestSellOrders = redisTemplate.opsForZSet()
                 .popMin(sellOrderKey, 1);
 
@@ -112,14 +114,31 @@ public class MatchingServiceV3 implements MatchingService {
         }
 
         ZSetOperations.TypedTuple<String> lowestSellOrder = lowestSellOrders.iterator().next();
+        double originalScore = lowestSellOrder.getScore();
+
+        // double을 BigDecimal로 정확하게 변환
+        BigDecimal scoreAsBigDecimal = BigDecimal.valueOf(originalScore);
+
+        // 수학적 방법으로 분할 (문자열 변환 없이)
+        BigDecimal divisor = new BigDecimal(100000);
+        BigDecimal price = scoreAsBigDecimal.divideToIntegralValue(divisor);
+
+        // 시간 부분 추출 (나머지 계산)
+        BigDecimal timePart = scoreAsBigDecimal.remainder(divisor);
+        String timeStr = String.format("%05d", timePart.intValue());
 
         // 가격 정보를 score에서 가져와서 MatchingOrder 생성
-        return deserializeOrder(
+        MatchingOrder order = deserializeOrder(
                 lowestSellOrder.getValue(),
                 OrderType.SELL,
                 tradingPair,
-                BigDecimal.valueOf(lowestSellOrder.getScore())
+                price
         );
+
+        // 다시 redis에 저장 위해 원래 시간 부분을 저장
+        order.setOriginalTimeStr(timeStr);
+
+        return order;
     }
 
     /**
@@ -128,6 +147,7 @@ public class MatchingServiceV3 implements MatchingService {
     private MatchingOrder findHighestBuyOrder(String tradingPair) {
         String buyOrderKey = BUY_ORDER_KEY + tradingPair;
 
+        // ZPOPMAX 사용하여 최고가 매수 주문을 가져오고 제거
         Set<ZSetOperations.TypedTuple<String>> highestBuyOrders = redisTemplate.opsForZSet()
                 .popMax(buyOrderKey, 1);
 
@@ -136,31 +156,49 @@ public class MatchingServiceV3 implements MatchingService {
         }
 
         ZSetOperations.TypedTuple<String> highestBuyOrder = highestBuyOrders.iterator().next();
-        // 가격 정보를 score에서 가져와서 MatchingOrder 생성
-        return deserializeOrder(
+        double originalScore = highestBuyOrder.getScore();
+
+        // double을 BigDecimal로 정확하게 변환
+        BigDecimal scoreAsBigDecimal = BigDecimal.valueOf(originalScore);
+
+        // 수학적 방법으로 분할 (문자열 변환 없이)
+        BigDecimal divisor = new BigDecimal(100000);
+        BigDecimal price = scoreAsBigDecimal.divideToIntegralValue(divisor);
+
+        // 시간 부분 추출 (나머지 계산)
+        BigDecimal timePart = scoreAsBigDecimal.remainder(divisor);
+        String timeStr = String.format("%05d", timePart.intValue());
+
+        MatchingOrder order = deserializeOrder(
                 highestBuyOrder.getValue(),
                 OrderType.BUY,
                 tradingPair,
-                BigDecimal.valueOf(highestBuyOrder.getScore())
+                price
         );
+
+        // 다시 redis에 저장 위해 원래 시간 부분을 저장
+        order.setOriginalTimeStr(timeStr);
+
+        return order;
     }
 
     /**
-     * 체결 결과를 기록합니다.
+     * 체결 결과를 기록
      */
     private void recordMatch(MatchingOrder order, MatchingOrder oppositeOrder,
                              BigDecimal matchedQuantity, BigDecimal executionPrice) {
-        // 실제 구현에서는 여기서 체결 결과를 DB에 저장하거나 이벤트로 발행할 수 있습니다.
+        // 실제 구현에서는 여기서 체결 결과를 DB에 저장하거나 이벤트로 발행
         // 매수/매도 주문 식별
         MatchingOrder buyOrder = OrderType.BUY.equals(order.getOrderType()) ? order : oppositeOrder;
         MatchingOrder sellOrder = OrderType.SELL.equals(order.getOrderType()) ? order : oppositeOrder;
 
-        System.out.println("주문 체결: " +
-                "매수자=" + buyOrder.getUserId() + ", " +
-                "매도자=" + sellOrder.getUserId() + ", " +
-                "거래쌍=" + order.getTradingPair() + ", " +
-                "가격=" + executionPrice + ", " +
-                "수량=" + matchedQuantity);
+        log.info("BUY 체결 : {}원 {}개 (주문ID: {}, 사용자ID: {}, 시간 구분 : {})",
+                executionPrice, matchedQuantity,
+                buyOrder.getOrderId(), buyOrder.getUserId(), buyOrder.getOriginalTimeStr());
+
+        log.info("SELL 체결 : {}원 {}개 (주문ID: {}, 사용자ID: {}, 시간 구분 : {})",
+                executionPrice, matchedQuantity,
+                sellOrder.getOrderId(), sellOrder.getUserId(), sellOrder.getOriginalTimeStr());
     }
 
     /**
@@ -184,6 +222,36 @@ public class MatchingServiceV3 implements MatchingService {
         double score = Double.parseDouble(order.price + timeStr);
 
         redisTemplate.opsForZSet().add(orderKey, orderDetails, score);
+
+        log.info("{} 미체결 : {}원 {}개 (주문ID: {}, 사용자ID: {})",
+                order.getOrderType(), order.getPrice(),
+                order.getQuantity(), order.getOrderId(), order.getUserId());
+    }
+
+    /**
+     * 반대 주문 다시 저장
+     */
+    private void saveRestoreOppositeOrder(MatchingOrder order) {
+        String orderKey = OrderType.BUY.equals(order.getOrderType())
+                ? BUY_ORDER_KEY + order.getTradingPair()
+                : SELL_ORDER_KEY + order.getTradingPair();
+
+        String orderDetails = serializeOrder(order);
+
+        String timeStr = order.getOriginalTimeStr();
+        if (timeStr == null) {
+            long rawTime = System.currentTimeMillis() % 100000;
+            int timePart = (order.getOrderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime;
+            timeStr = String.format("%05d", timePart);
+        }
+
+        double score = Double.parseDouble(order.getPrice() + timeStr);
+
+        redisTemplate.opsForZSet().add(orderKey, orderDetails, score);
+
+        log.info("{} pop후 재삽입 : {}원 {}개 (주문ID: {}, 사용자ID: {})",
+                order.getOrderType(), order.getPrice(),
+                order.getQuantity(), order.getOrderId(), order.getUserId());
     }
 
     /**
@@ -214,7 +282,6 @@ public class MatchingServiceV3 implements MatchingService {
         );
     }
 
-
     /**
      * 주문 매칭 프로세스에서 사용하는 내부 DTO 클래스
      * 매칭 수량을 변경할 수 있도록 mutable하게 설계
@@ -223,12 +290,24 @@ public class MatchingServiceV3 implements MatchingService {
     @Getter
     @AllArgsConstructor
     public static class MatchingOrder {
-        private String tradingPair;
-        private OrderType orderType;
-        private BigDecimal price;
+        private final String tradingPair;
+        private final OrderType orderType;
+        private final BigDecimal price;
         private BigDecimal quantity;
-        private UUID userId;
-        private UUID orderId;
+        private final UUID userId;
+        private final UUID orderId;
+        private String originalTimeStr;
+
+        public MatchingOrder(String tradingPair, OrderType orderType, BigDecimal price,
+                             BigDecimal quantity, UUID userId, UUID orderId) {
+            this.tradingPair = tradingPair;
+            this.orderType = orderType;
+            this.price = price;
+            this.quantity = quantity;
+            this.userId = userId;
+            this.orderId = orderId;
+            this.originalTimeStr = null;
+        }
 
         public static MatchingOrder fromCommand(CreateMatchingCommand command) {
             return new MatchingOrder(
