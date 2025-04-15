@@ -20,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @DisplayName("MatchingServiceV2 통합 테스트")
-public class MatchingServiceV2IntegrationTest {
+public class  MatchingServiceV2IntegrationTest {
 
 
     @Autowired
     private MatchingServiceV2 matchingService;
 
     @Autowired
-    private RedisTemplate<String, CreateMatchingCommand> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     private UUID userId = UUID.randomUUID();
 
@@ -47,63 +47,72 @@ public class MatchingServiceV2IntegrationTest {
                 OrderType.BUY,
                 BigDecimal.valueOf(9000),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command2 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.BUY,
                 BigDecimal.valueOf(9000),
                 BigDecimal.valueOf(0.3),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command3 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.BUY,
                 BigDecimal.valueOf(8700),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command4 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.BUY,
                 BigDecimal.valueOf(8900),
                 BigDecimal.valueOf(0.3),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command5 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9500),
                 BigDecimal.valueOf(0.3),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command6 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9700),
                 BigDecimal.valueOf(0.6),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command7 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(10000),
                 BigDecimal.valueOf(0.2),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command8 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(11000),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand command9 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9700),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
 
         matchingService.matchOrders(command1);
@@ -117,11 +126,11 @@ public class MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(command9);
 
 
-        Set<CreateMatchingCommand> buyOrders = redisTemplate.opsForZSet().range("kj_buy_orders:BTC/KRW" , 0, -1);
+        Set<String> buyOrders = redisTemplate.opsForZSet().range("kj_buy_orders:BTC/KRW" , 0, -1);
         assertNotNull(buyOrders);
         assertEquals(3, buyOrders.size());
 
-        Set<CreateMatchingCommand> sellOrders = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW" , 0, -1);
+        Set<String> sellOrders = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW" , 0, -1);
         assertNotNull(sellOrders);
         assertEquals(4, sellOrders.size());
     }
@@ -134,21 +143,24 @@ public class MatchingServiceV2IntegrationTest {
                 OrderType.BUY,
                 BigDecimal.valueOf(9000),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand secondBuyOrder = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.BUY,
                 BigDecimal.valueOf(9000),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand sellOrder = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9000),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
 
         matchingService.matchOrders(firstBuyOrder);
@@ -157,9 +169,10 @@ public class MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        CreateMatchingCommand remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
-        assertEquals(secondBuyOrder, remainingOrder);
+        assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,secondBuyOrder.orderId().toString());
+        System.out.println(remainingOrder);
     }
 
     @Test
@@ -170,24 +183,27 @@ public class MatchingServiceV2IntegrationTest {
                 OrderType.BUY,
                 BigDecimal.valueOf(9600),
                 BigDecimal.valueOf(0.2),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand sellOrder = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9500),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
 
         matchingService.matchOrders(buyOrder);
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        CreateMatchingCommand remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
-        assertEquals(9600, remainingOrder.price());
-        assertEquals(0.1, remainingOrder.quantity());
+
+        assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,buyOrder.orderId().toString());
+        System.out.println(remainingOrder);
     }
 
     @Test
@@ -198,24 +214,27 @@ public class MatchingServiceV2IntegrationTest {
                 OrderType.BUY,
                 BigDecimal.valueOf(9600),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand sellOrder = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.SELL,
                 BigDecimal.valueOf(9500),
                 BigDecimal.valueOf(0.2),
-                userId
+                userId,
+                UUID.randomUUID()
         );
 
         matchingService.matchOrders(buyOrder);
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        CreateMatchingCommand remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_sell_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
-        assertEquals(9500, remainingOrder.price());
-        assertEquals(0.1, remainingOrder.quantity());
+        assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,sellOrder.orderId().toString());
+
+        System.out.println(remainingOrder);
     }
 
     @Test
@@ -227,25 +246,28 @@ public class MatchingServiceV2IntegrationTest {
                 OrderType.BUY,
                 BigDecimal.valueOf(9500),
                 BigDecimal.valueOf(0.1),
-                userId
+                userId,
+                UUID.randomUUID()
         );
         CreateMatchingCommand buyOrder2 = new CreateMatchingCommand(
                 "BTC/KRW",
                 OrderType.BUY,
                 BigDecimal.valueOf(9500),
                 BigDecimal.valueOf(0.2),
-                userId
+                userId,
+                UUID.randomUUID()
         );
 
         matchingService.matchOrders(buyOrder);
         Thread.sleep(2000);
         matchingService.matchOrders(buyOrder2);
 
-        CreateMatchingCommand remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
 
         assertNotNull(remainingOrder);
-        assertEquals(9500, remainingOrder.price());
-        assertEquals(0.2, remainingOrder.quantity());
+
+        assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,buyOrder.orderId().toString());
+        System.out.println(remainingOrder);
 
     }
 }

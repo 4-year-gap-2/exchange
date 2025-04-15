@@ -43,7 +43,8 @@ public class KafkaMatchingEvent implements  Serializer , Deserializer {
                 event.orderType,
                 event.price,
                 event.quantity,
-                event.userId
+                event.userId,
+                event.orderId
         );
     }
 

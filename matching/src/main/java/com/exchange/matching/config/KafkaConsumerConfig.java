@@ -67,6 +67,7 @@ public class KafkaConsumerConfig {
         // 컨슈머 팩토리를 리스너 컨테이너 팩토리에 설정합니다.
         factory.setConsumerFactory(consumerFactory());
         // 설정된 리스너 컨테이너 팩토리를 반환합니다.
+
         return factory;
     }
 }
