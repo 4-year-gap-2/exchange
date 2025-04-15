@@ -18,6 +18,12 @@ public class MatchingController {
 
     private final KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate;
 
+    @PostMapping("/v1")
+    public ResponseEntity<ResponseDto<String>> matchV1(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        kafkaTemplate.send("matching-events-tps-v1",KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
     @PostMapping("/v2")
     public ResponseEntity<ResponseDto<String>> matchV2(@RequestBody CreateMatchingRequest createMatchingRequest) {
         kafkaTemplate.send("matching-events-tps-v2",KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));

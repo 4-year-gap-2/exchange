@@ -9,11 +9,14 @@ import java.util.UUID;
 
 public class ActivatedOrderFactory {
 
+    private static final String TRADING_PAIR = "BTC/KRW";
+
     public static ActivatedOrder createBuyOrder1() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.1))
                 .createdAt(LocalDateTime.now().minusMinutes(10))
@@ -23,8 +26,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createBuyOrder2() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9000))
                 .quantity(BigDecimal.valueOf(0.3))
                 .createdAt(LocalDateTime.now())
@@ -34,8 +38,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createBuyOrder3() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(8700))
                 .quantity(BigDecimal.valueOf(0.1))
                 .createdAt(LocalDateTime.now())
@@ -45,8 +50,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createBuyOrder4() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(8900))
                 .quantity(BigDecimal.valueOf(0.3))
                 .createdAt(LocalDateTime.now())
@@ -56,8 +62,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createSellOrder1() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9500))
                 .quantity(BigDecimal.valueOf(0.3))
                 .createdAt(LocalDateTime.now())
@@ -67,8 +74,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createSellOrder2() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9700))
                 .quantity(BigDecimal.valueOf(0.6))
                 .createdAt(LocalDateTime.now())
@@ -78,8 +86,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createSellOrder3() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(9700))
                 .quantity(BigDecimal.valueOf(0.1))
                 .createdAt(LocalDateTime.now())
@@ -89,8 +98,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createSellOrder4() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(10000))
                 .quantity(BigDecimal.valueOf(0.2))
                 .createdAt(LocalDateTime.now())
@@ -100,8 +110,9 @@ public class ActivatedOrderFactory {
     public static ActivatedOrder createSellOrder5() {
         return ActivatedOrder.builder()
                 .userId(UUID.randomUUID())
+                .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
-                .tradingPair("BTC/KRW")
+                .tradingPair(TRADING_PAIR)
                 .price(BigDecimal.valueOf(11000))
                 .quantity(BigDecimal.valueOf(0.1))
                 .createdAt(LocalDateTime.now())
