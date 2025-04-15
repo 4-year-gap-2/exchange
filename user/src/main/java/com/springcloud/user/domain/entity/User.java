@@ -1,10 +1,7 @@
 package com.springcloud.user.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Comment;
 
 import java.util.ArrayList;
@@ -16,6 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 @Table(name = "p_user")
 public class User extends BaseEntity{
     @Id
@@ -53,8 +51,10 @@ public class User extends BaseEntity{
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserBalance> balances = new ArrayList<>();
 
-    public void createBalances(List<UserBalance> balances) {
-        this.balances = balances;
-        balances.forEach(balance -> balance.setUser(this));
+    public UserBalance getBalanceByWallet(String wallet) {
+        return balances.stream()
+                .filter(b -> b.getWallet().equals(wallet))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지갑 주소를 찾을 수 없습니다: " + wallet));
     }
 }

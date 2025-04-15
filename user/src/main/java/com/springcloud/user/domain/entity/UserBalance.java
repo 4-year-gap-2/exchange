@@ -39,4 +39,11 @@ public class UserBalance {
     @Column(nullable = false, unique = true)
     @Comment("지갑 주소")
     private String wallet;
+
+    public void increase(BigDecimal amount) {
+        // 1. 금액 유효성 검증은 프레젠테이션 계층에서 어노테이션으로 진행(생략)
+        // 2. 잔액 증가
+        this.totalBalance = this.totalBalance.add(amount);
+        this.availableBalance = this.availableBalance.add(amount);
+    }
 }

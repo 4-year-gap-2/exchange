@@ -40,4 +40,9 @@ public class UserServiceImpl implements UserService{
     public FindUserBalanceResult createWallet(CreateWalletCommand command, UUID userId) {
         return userBalanceCommandService.createBalance(command,userId);
     }
+
+    @Override
+    public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
+        return userBalanceCommandService.incrementBalance(command);
+    }
 }
