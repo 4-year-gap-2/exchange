@@ -3,10 +3,7 @@ package com.exchange.matching.application.service;
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -23,6 +20,7 @@ import java.util.UUID;
 public class MatchingServiceV2 implements MatchingService {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final Long TIME_STAMP_NUMERIC = 99999999999999L;
 
     @Override
     @Transactional
@@ -82,7 +80,7 @@ public class MatchingServiceV2 implements MatchingService {
         if (null == strOrder) {
             return null;
         }
-        V2MatchOrder matchingCommand = deserializeOrder(strOrder.getValue(), stockCode,orderType.equals(OrderType.SELL) ? OrderType.BUY:OrderType.SELL , strOrder.getScore());
+        V2MatchOrder matchingCommand = deserializeOrder(strOrder.getValue(), stockCode, orderType.getOPP(orderType), strOrder.getScore());
 
         return matchingCommand;
 
@@ -92,32 +90,30 @@ public class MatchingServiceV2 implements MatchingService {
 
         String[] parts = strOrder.split("\\|");
 
-        double quantity = Double.parseDouble(parts[0]);
-
-        BigDecimal scoreAsBigDecimal = BigDecimal.valueOf(score);
-
-        BigDecimal divisor = new BigDecimal(100000);
-        BigDecimal price = scoreAsBigDecimal.divideToIntegralValue(divisor);
-
-
+        double quantity = Double.parseDouble(parts[1]);
+        long time = Long.parseLong(parts[0]);
+        BigDecimal price = BigDecimal.valueOf(score);
         return new V2MatchOrder(
                 stockCode,
                 orderType,
                 price,
                 BigDecimal.valueOf(quantity),
-                UUID.fromString(parts[1]),
                 UUID.fromString(parts[2]),
-                score
+                UUID.fromString(parts[3]),
+                score,
+                time
         );
 
     }
+
     private void saveOrderToRedis(V2MatchOrder order) {
         String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
-        double score = calcScore(order);
+        order.setTimeRecord(order.getOrderType().equals(OrderType.SELL) ?  System.currentTimeMillis() : TIME_STAMP_NUMERIC -System.currentTimeMillis());
         String strOrder = serializeOrder(order);
-        zSetOperations.add(key, strOrder, score);
+        zSetOperations.add(key, strOrder, order.getPrice().doubleValue());
     }
+
     private void resaveOrderToRedis(V2MatchOrder order) {
         String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
@@ -126,22 +122,15 @@ public class MatchingServiceV2 implements MatchingService {
     }
 
     private String serializeOrder(V2MatchOrder order) {
-        return order.getQuantity() +"|"+order.getUserId()+"|"+order.getOrderId();
+        return order.getTimeRecord() + "|" + order.getQuantity() + "|" + order.getUserId() + "|" + order.getOrderId();
     }
 
-    private double calcScore(V2MatchOrder order) {
-        long rawTime = System.currentTimeMillis() % 100000;
-
-        int timePart = (order.getOrderType() == OrderType.BUY) ? (100000 - (int) rawTime) : (int) rawTime;
-        String timeStr = String.format("%05d", timePart);
-
-        return Double.parseDouble(timeStr) + order.getPrice().doubleValue() * 100000;
-    }
 
     private void removeOrderFromRedis(V2MatchOrder order) {
         String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
-        zSetOperations.remove(key, serializeOrder(order));
+        String strOrder = serializeOrder(order);
+        zSetOperations.remove(key, strOrder);
     }
 
     private V2MatchOrder updateOrderQuantity(V2MatchOrder order, BigDecimal remainingQuantity) {
@@ -152,9 +141,11 @@ public class MatchingServiceV2 implements MatchingService {
                 remainingQuantity,
                 order.getUserId(),
                 order.getOrderId(),
-                order.getScore()
+                order.getScore(),
+                order.getTimeRecord()
         );
     }
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
@@ -166,6 +157,8 @@ public class MatchingServiceV2 implements MatchingService {
         private UUID userId; // 사용자 ID
         private UUID orderId;
         private double score;
+        @Setter
+        private Long timeRecord;
 
 
         public static V2MatchOrder fromCommand(CreateMatchingCommand command) {
@@ -176,8 +169,10 @@ public class MatchingServiceV2 implements MatchingService {
                     command.quantity(),
                     command.userId(),
                     command.orderId(),
-                    0);
+                    0,
+                    0L);
         }
+
     }
 
 }
