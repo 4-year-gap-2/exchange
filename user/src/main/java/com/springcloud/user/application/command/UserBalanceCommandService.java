@@ -1,5 +1,7 @@
 package com.springcloud.user.application.command;
 
+import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
+import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.domain.entity.Coin;
 import com.springcloud.user.domain.entity.User;
@@ -58,6 +60,7 @@ public class UserBalanceCommandService {
                 .build();
     }
 
+    // 자산 증가 로직(외부 거래소 -> 우리 거래소
     @Transactional
     public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
 //        // 1. 애그리거트 루트로 유저밸런스 조회
@@ -75,11 +78,8 @@ public class UserBalanceCommandService {
         //Result에 함수 생성해서 코드 간결화
         //return new FindUserBalanceResult(balance.getBalanceId(),balance.getUser().getUserId(),balance.getCoin().getCoinId(),balance.getTotalBalance(),balance.getAvailableBalance(),balance.getWallet());
         return FindUserBalanceResult.from(balance);
-
-
-
-
     }
+
 
 
 }

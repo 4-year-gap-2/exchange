@@ -1,23 +1,20 @@
 package com.springcloud.user.infrastructure.repository;
 
 import com.springcloud.user.domain.entity.UserBalance;
+import com.springcloud.user.domain.repository.UserBalanceRepository;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
 
-@Repository
-public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUID> {
+public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUID>, UserBalanceRepository {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))

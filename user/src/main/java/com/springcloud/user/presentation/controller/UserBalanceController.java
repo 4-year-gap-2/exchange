@@ -2,11 +2,15 @@ package com.springcloud.user.presentation.controller;
 
 import com.springcloud.user.application.command.CreateWalletCommand;
 import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
+import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
+import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.common.UserInfoHeader;
+import com.springcloud.user.presentation.request.CheckBalanceRequest;
 import com.springcloud.user.presentation.request.CreateWalletRequest;
 import com.springcloud.user.presentation.request.UpdateIncrementBalanceRequest;
+import com.springcloud.user.presentation.response.CheckBalanceResponse;
 import com.springcloud.user.presentation.response.FindUserBalanceResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -52,10 +56,14 @@ public class UserBalanceController {
         return ResponseEntity.ok(response).getBody();
     }
 
-//    @PatchMapping("/decrement")
-//    public FindUserBalanceResponse incrementBalance(HttpServletRequest request, @RequestBody ){
-//
-//    }
+
+    @GetMapping("/availableBalance")
+    @Description("주문 서버에서 사용가능한 자산 조회, feignClient")
+    public CheckBalanceResponse checkAvailableBalance(@RequestBody CheckBalanceRequest balanceRequest) {
+        CheckAvailableBalanceQuery query = balanceRequest.toQuery();
+        CheckBalanceResult result = userService.checkAvailableBalance(query);
+        return new CheckBalanceResponse(result.isSuccess(), result.getMessage());
+    }
 
 
 }

@@ -6,9 +6,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
 public interface CoinRepository {
     Optional<Coin> findById(UUID coinId);
 
     Coin save(Coin coin);
+
+    Optional<Coin> findBySymbol(String CoinSymbol);
 }

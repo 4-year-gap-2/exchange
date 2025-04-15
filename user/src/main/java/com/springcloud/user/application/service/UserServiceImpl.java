@@ -1,7 +1,10 @@
 package com.springcloud.user.application.service;
 
 import com.springcloud.user.application.command.*;
+import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
+import com.springcloud.user.application.query.UserBalanceQueryService;
 import com.springcloud.user.application.query.UserQueryService;
+import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.result.FindUserResult;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +22,7 @@ public class UserServiceImpl implements UserService{
     private final UserQueryService userQueryService;
     private final UserBalanceCommandService userBalanceCommandService;
     private final ManagementCommandService managementCommandService;
+    private final UserBalanceQueryService userBalanceQueryService;
 
 
     @Override
@@ -44,5 +48,10 @@ public class UserServiceImpl implements UserService{
     @Override
     public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
         return userBalanceCommandService.incrementBalance(command);
+    }
+
+    @Override
+    public CheckBalanceResult checkAvailableBalance(CheckAvailableBalanceQuery query) {
+        return userBalanceQueryService.checkAvailableBalance(query);
     }
 }
