@@ -20,7 +20,6 @@ public class UserServiceImpl implements UserService{
     private final UserBalanceCommandService userBalanceCommandService;
     private final ManagementCommandService managementCommandService;
 
-
     @Override
     public FindUserResult signUp(CreateUserCommand command) {
         return userCommandService.signUp(command);
@@ -44,5 +43,10 @@ public class UserServiceImpl implements UserService{
     @Override
     public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
         return userBalanceCommandService.incrementBalance(command);
+    }
+
+    @Override
+    public void internalDecrementBalance(DecreaseBalanceCommand command) {
+        userBalanceCommandService.internalDecrementBalance(command);
     }
 }

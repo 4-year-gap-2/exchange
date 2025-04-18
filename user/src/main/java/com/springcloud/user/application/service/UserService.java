@@ -1,9 +1,8 @@
 package com.springcloud.user.application.service;
 
-import com.springcloud.user.application.command.CreateUserCommand;
-import com.springcloud.user.application.command.CreateWalletCommand;
-import com.springcloud.user.application.command.LoginUserCommand;
-import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
+import com.springcloud.user.application.command.*;
+import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
+import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.result.FindUserResult;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,4 +22,6 @@ public interface UserService {
     FindUserBalanceResult createWallet(CreateWalletCommand command, UUID userId);
 
     FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command);
+
+    void internalDecrementBalance(DecreaseBalanceCommand command);
 }
