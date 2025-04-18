@@ -1,8 +1,6 @@
 package com.springcloud.user.application.service;
 
 import com.springcloud.user.application.command.*;
-import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
-import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.result.FindUserResult;
 import jakarta.servlet.http.HttpServletResponse;
