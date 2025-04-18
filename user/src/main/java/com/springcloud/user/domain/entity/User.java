@@ -1,12 +1,11 @@
 package com.springcloud.user.domain.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.Comment;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -14,11 +13,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 @Table(name = "p_user")
 public class User extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Comment("사용자 식별자")
+    @Column(name = "user_id")
     private UUID userId;
 
     @Column(nullable = false, unique = true)
@@ -46,4 +47,14 @@ public class User extends BaseEntity{
     @Comment("사용자 권한")
     private UserRole role;
 
+    // 수정: mappedBy = "user" (UserBalance의 필드명과 일치)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserBalance> balances = new ArrayList<>();
+
+    public UserBalance getBalanceByWallet(String wallet) {
+        return balances.stream()
+                .filter(b -> b.getWallet().equals(wallet))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지갑 주소를 찾을 수 없습니다: " + wallet));
+    }
 }
