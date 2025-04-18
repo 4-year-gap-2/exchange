@@ -37,7 +37,7 @@ public class MatchingEventConsumer {
 
     @KafkaListener(
             topics = {"matching-events-tps-v1"},
-            groupId = "matching-service",
+            containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void consumeV1(ConsumerRecord<String, KafkaMatchingEvent> record) {
@@ -63,7 +63,7 @@ public class MatchingEventConsumer {
 
     @KafkaListener(
             topics = {"matching-events-tps-v2"},
-            groupId = "matching-service",
+            containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void consumeV2(ConsumerRecord<String, KafkaMatchingEvent> record) {
@@ -87,7 +87,6 @@ public class MatchingEventConsumer {
         }
     }
 
-
     //    @RetryableTopic(
     //            attempts = "3", // 최대 3회 재시도
     //            backoff = @Backoff(delay = 10 * 1000, multiplier = 3, maxDelay = 10 * 60 * 1000), // 재시도 간격 설정
@@ -95,7 +94,7 @@ public class MatchingEventConsumer {
     //    )
     @KafkaListener(
             topics = {"matching-events-tps-v4"},
-            groupId = "matching-service",
+            containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
