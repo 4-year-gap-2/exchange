@@ -2,32 +2,40 @@ package com.springcloud.user.application.command;
 
 import com.springcloud.user.application.result.FindUserResult;
 import com.springcloud.user.domain.entity.User;
+import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserRepository;
 import com.springcloud.user.security.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class UserCommandService {
 
+    private UserBalanceCommandService userBalanceCommandService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Transactional
     public FindUserResult signUp(CreateUserCommand command) {
+        // 1. 유저 중복 확인
         Optional<User> checkUsername = userRepository.findByUsername(command.getUsername());
         if (checkUsername.isPresent()) throw new IllegalArgumentException("이미 사용 중인 사용자 이름입니다.");
-
+        // 2. 유저 생성
         String encodedPassword = passwordEncoder.encode(command.getPassword());
         User user = command.toEntity(encodedPassword);
+
+        // 3. 저장
         User savedUser = userRepository.save(user);
 
-        return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone(),savedUser.getEmail());
+        return new FindUserResult(savedUser.getUserId(),savedUser.getUsername(),savedUser.getPhone(),savedUser.getEmail(),savedUser.getBalances());
     }
 
     public void login(LoginUserCommand command, HttpServletResponse httpServletResponse) {

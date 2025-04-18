@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @AllArgsConstructor
@@ -22,4 +23,14 @@ public class UserRepositoryImpl implements UserRepository {
     public User save(User user) {
         return userJpaRepository.save(user);
     }
+
+    @Override
+    public Optional<User> findById(UUID userId) {
+        return userJpaRepository.findById(userId);
+    }
+
+//    @Override
+//    public Optional<User> findByWallet(String wallet) {
+//        return userJpaRepository.findByBalanceWallet(wallet);
+//    }
 }
