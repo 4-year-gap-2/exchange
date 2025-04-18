@@ -2,15 +2,11 @@ package com.springcloud.user.presentation.controller;
 
 import com.springcloud.user.application.command.CreateWalletCommand;
 import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
-import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
-import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.common.UserInfoHeader;
-import com.springcloud.user.presentation.request.CheckBalanceRequest;
 import com.springcloud.user.presentation.request.CreateWalletRequest;
 import com.springcloud.user.presentation.request.UpdateIncrementBalanceRequest;
-import com.springcloud.user.presentation.response.CheckBalanceResponse;
 import com.springcloud.user.presentation.response.FindUserBalanceResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

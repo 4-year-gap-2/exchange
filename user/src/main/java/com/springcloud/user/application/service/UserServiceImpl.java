@@ -18,7 +18,7 @@ public class UserServiceImpl implements UserService{
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
     private final UserBalanceCommandService userBalanceCommandService;
-    private final ManagementCommandService managementCommandService;
+    //private final ManagementCommandService managementCommandService;
 
     @Override
     public FindUserResult signUp(CreateUserCommand command) {
@@ -30,10 +30,10 @@ public class UserServiceImpl implements UserService{
         userCommandService.login(command, httpServletResponse);
     }
 
-    @Override
-    public void createFee(BigDecimal feeValue) {
-        managementCommandService.createFee(feeValue);
-    }
+//    @Override
+//    public void createFee(BigDecimal feeValue) {
+//        managementCommandService.createFee(feeValue);
+//    }
 
     @Override
     public FindUserBalanceResult createWallet(CreateWalletCommand command, UUID userId) {

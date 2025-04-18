@@ -1,6 +1,5 @@
 package com.springcloud.user.infrastructure.repository;
 
-import com.springcloud.user.domain.entity.Coin;
 import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
@@ -16,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUID>, UserBalanceRepository {
+public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUID>{
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
