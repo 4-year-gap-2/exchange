@@ -56,14 +56,4 @@ public class UserBalanceController {
         return ResponseEntity.ok(response).getBody();
     }
 
-
-    @GetMapping("/availableBalance")
-    @Description("주문 서버에서 사용가능한 자산 조회, feignClient")
-    public CheckBalanceResponse checkAvailableBalance(@RequestBody CheckBalanceRequest balanceRequest) {
-        CheckAvailableBalanceQuery query = balanceRequest.toQuery();
-        CheckBalanceResult result = userService.checkAvailableBalance(query);
-        return new CheckBalanceResponse(result.isSuccess(), result.getMessage());
-    }
-
-
 }

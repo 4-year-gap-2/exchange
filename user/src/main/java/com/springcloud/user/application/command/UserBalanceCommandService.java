@@ -1,7 +1,5 @@
 package com.springcloud.user.application.command;
 
-import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
-import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.domain.entity.Coin;
 import com.springcloud.user.domain.entity.User;
@@ -9,16 +7,18 @@ import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.CoinRepository;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
 import com.springcloud.user.domain.repository.UserRepository;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+
 public class UserBalanceCommandService {
 
     private final UserRepository userRepository;
@@ -79,6 +79,51 @@ public class UserBalanceCommandService {
         //return new FindUserBalanceResult(balance.getBalanceId(),balance.getUser().getUserId(),balance.getCoin().getCoinId(),balance.getTotalBalance(),balance.getAvailableBalance(),balance.getWallet());
         return FindUserBalanceResult.from(balance);
     }
+
+    //Kafka 에서 데이터 받아서 처리
+    //자산 차감 로직
+    @Transactional
+    public void internalDecrementBalance(DecreaseBalanceCommand command) {
+        try {
+            // 1. Symbol 분리 (BTC/KRW → ["BTC", "KRW"])
+            String[] currencies = command.getSymbol().split("/");
+
+            if (currencies.length != 2) {
+                throw new IllegalArgumentException("잘못된 심볼 형식:"+command.getSymbol());
+            }
+
+            // 2. 주문 유형에 따라 확인할 화폐 결정
+            String targetCoin = command.getOrderType().equalsIgnoreCase("BUY")
+                    ? currencies[1] // 매수 → KRW 확인
+                    : currencies[0]; // 매도 → BTC 확인
+
+            // 3. 필요 금액 계산
+            BigDecimal requiredAmount = command.getOrderType().equalsIgnoreCase("BUY")
+                    ? command.getPrice()   // 매수 → 총 가격
+                    : command.getAmount(); // 매도 → 수량
+
+            User user = userRepository.findById(command.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다: "+ command.getUserId()));
+            //비관적 락 적용
+            UserBalance balance = userBalanceRepository.findByUserAndCoinForUpdate(user, targetCoin)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자산입니다: " + targetCoin));
+
+            //자산의 사용 가능 금액
+            BigDecimal availableBalance = balance.getAvailableBalance();
+
+            // 6. 잔액 검증 및 잔액 차감(도메인에서)
+            balance.decrease(requiredAmount);
+
+        } catch (Exception e) {
+            log.error("자산 차감 중 문제 발생 유저에게 문제 사항 전송",e);
+            //소켓 서버로 문제 보내기
+            throw new RuntimeException();
+        }
+
+    }
+
+
+
 
 
 

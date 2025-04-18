@@ -1,5 +1,7 @@
 package com.springcloud.user.infrastructure.repository;
 
+import com.springcloud.user.domain.entity.Coin;
+import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
 import jakarta.persistence.LockModeType;
@@ -22,4 +24,8 @@ public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUI
     Optional<UserBalance> findByWalletWithLock(@Param("wallet") String wallet);
 
     boolean existsByUser_UserIdAndCoin_CoinId(UUID userId, UUID coinId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM UserBalance b WHERE b.user = :user AND b.coin = :coin")
+    Optional<UserBalance> findByUserAndCoinForUpdate(@Param("user") User user, @Param("coinName") String coinName);
 }

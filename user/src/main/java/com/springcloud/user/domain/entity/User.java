@@ -57,10 +57,10 @@ public class User extends BaseEntity{
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("지갑 주소를 찾을 수 없습니다: " + wallet));
     }
-    // 도메인 로직: 코인 잔액 조회
-    public UserBalance getBalance(UUID coinId) {
+    // 도메인 로직: 자산 계좌 조회 메서드
+    public UserBalance getBalance(String coinName) {
         return balances.stream()
-                .filter(b -> b.getCoin().getCoinId().equals(coinId))
+                .filter(b -> b.getCoin().getCoinName().equals(coinName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 코인에 대한 자산이 존재하지 않습니다"));
     }

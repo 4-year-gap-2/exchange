@@ -1,9 +1,6 @@
 package com.springcloud.user.application.service;
 
-import com.springcloud.user.application.command.CreateUserCommand;
-import com.springcloud.user.application.command.CreateWalletCommand;
-import com.springcloud.user.application.command.LoginUserCommand;
-import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
+import com.springcloud.user.application.command.*;
 import com.springcloud.user.application.query.CheckAvailableBalanceQuery;
 import com.springcloud.user.application.result.CheckBalanceResult;
 import com.springcloud.user.application.result.FindUserBalanceResult;
@@ -26,5 +23,5 @@ public interface UserService {
 
     FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command);
 
-    CheckBalanceResult checkAvailableBalance(CheckAvailableBalanceQuery query);
+    void internalDecrementBalance(DecreaseBalanceCommand command);
 }
