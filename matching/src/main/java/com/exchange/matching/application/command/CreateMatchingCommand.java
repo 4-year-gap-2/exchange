@@ -22,7 +22,6 @@ public record CreateMatchingCommand(
                 createMatchingRequest.quantity(),
                 createMatchingRequest.userId(),
                 createMatchingRequest.orderId()
-                );
+        );
     }
-
 }

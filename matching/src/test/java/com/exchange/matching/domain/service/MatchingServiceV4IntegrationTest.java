@@ -11,16 +11,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.math.BigDecimal;
+import java.util.Set;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 @SpringBootTest
-@DisplayName("MatchingServiceV3,4 통합 테스트")
-class MatchingServiceV34IntegrationTest {
+@DisplayName("MatchingServiceV4 통합 테스트")
+class MatchingServiceV4IntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(MatchingServiceV34IntegrationTest.class);
+    private static final Logger log = LoggerFactory.getLogger(MatchingServiceV4IntegrationTest.class);
     @Autowired
     private MatchingServiceV4 matchingService;
 
@@ -227,5 +232,94 @@ class MatchingServiceV34IntegrationTest {
         );
 
         matchingService.matchOrders(sellCommand);
+    }
+
+    @Test
+    @DisplayName("동일 가격 주문의 시간 우선순위 테스트")
+    void testTimeBasedPriority() {
+        // 1. Redis 초기화
+        String buyOrderKey = "mjy:orders:buy:" + TRADING_PAIR;
+        String sellOrderKey = "mjy:orders:sell:" + TRADING_PAIR;
+        redisTemplate.delete(buyOrderKey);
+        redisTemplate.delete(sellOrderKey);
+
+        // 2. 첫 번째 매수 주문 등록
+        UUID user1Id = UUID.randomUUID();
+        CreateMatchingCommand firstBuyCommand = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                new BigDecimal("10000"),  // 동일 가격
+                new BigDecimal("0.4"),
+                user1Id,
+                UUID.randomUUID()
+        );
+        matchingService.matchOrders(firstBuyCommand);
+
+        // 3. 시간 간격 (85초)
+//        try {
+//            Thread.sleep(85000);
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
+
+        // 4. 두 번째 매수 주문 등록 (동일 가격)
+        UUID user2Id = UUID.randomUUID();
+        CreateMatchingCommand secondBuyCommand = new CreateMatchingCommand(
+                TRADING_PAIR,
+                OrderType.BUY,
+                new BigDecimal("10000"),  // 동일 가격
+                new BigDecimal("0.5"),
+                user2Id,
+                UUID.randomUUID()
+        );
+        matchingService.matchOrders(secondBuyCommand);
+
+        // 5. Redis에서 주문 정보 확인
+        // ZREVRANGE로 첫 번째 주문(오래된 주문)이 우선 처리되는지 확인
+        Set<ZSetOperations.TypedTuple<String>> orders = redisTemplate.opsForZSet()
+                .reverseRangeWithScores(buyOrderKey, 0, -1);
+
+        // 6. 결과 검증
+        assertNotNull(orders);
+        assertEquals(2, orders.size());
+
+        // 7. 첫 번째로 매칭될 주문(가장 우선순위 높은 주문) 확인
+        String firstOrder = redisTemplate.opsForZSet().reverseRange(buyOrderKey, 0, 0)
+                .stream().findFirst().orElse(null);
+        assertNotNull(firstOrder);
+
+        // 첫 번째 주문의 타임스탬프와 사용자 ID 추출
+//        String[] firstOrderParts = firstOrder.split(":");
+//        String timeStampPart = firstOrderParts[0];
+//        String orderDetailsPart = firstOrderParts[1];
+        String userId = firstOrder.split("\\|")[2];
+
+        // 타임스탬프가 반전되었으므로 값이 큰 경우(작은 원래 시간)가 오래된 주문
+        // 첫 번째 사용자의 주문이 우선 매칭되는지 확인
+        assertEquals(user1Id.toString(), userId, "오래된 주문(첫 번째 사용자)이 우선 매칭되어야 함");
+
+//        // 8. 매도 주문 등록 (매칭 발생)
+//        CreateMatchingCommand sellCommand = new CreateMatchingCommand(
+//                TRADING_PAIR,
+//                OrderType.SELL,
+//                new BigDecimal("10000"),
+//                new BigDecimal("0.3"),
+//                UUID.randomUUID()
+//        );
+//        matchingService.matchOrders(sellCommand);
+//
+//        // 9. 매칭 후 첫 번째 주문 수량이 감소했는지 확인
+//        String updatedFirstOrder = redisTemplate.opsForZSet().reverseRange(buyOrderKey, 0, 0)
+//                .stream().findFirst().orElse(null);
+//        assertNotNull(updatedFirstOrder);
+//
+//        // 주문 수량 확인
+//        String[] updatedParts = updatedFirstOrder.split(":");
+//        String updatedOrderDetails = updatedParts[1];
+//        BigDecimal remainingQuantity = new BigDecimal(updatedOrderDetails.split("\\|")[0]);
+//
+//        // 원래 0.5에서 0.3이 매칭되었으므로 0.2가 남아야 함
+//        assertEquals(0, remainingQuantity.compareTo(new BigDecimal("0.2")),
+//                "첫 번째 주문(오래된 주문)이 우선 매칭되어 수량이 감소해야 함");
     }
 }
