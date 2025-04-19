@@ -4,6 +4,7 @@ import com.exchange.order_completed.domain.entiry.CompletedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record CreateOrderStoreCommand(
@@ -33,6 +34,7 @@ public record CreateOrderStoreCommand(
                 .quantity(quantity)
                 .userId(userId)
                 .orderId(orderId)
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 }
