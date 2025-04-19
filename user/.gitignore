@@ -37,5 +37,4 @@ out/
 .vscode/
 
 # 환경 설정 파일
-.properties
-.yml
+/src/main/resources/properties/env*
