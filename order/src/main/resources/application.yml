@@ -1,6 +1,6 @@
 spring:
   application:
-    name: matching-service
+    name: order-service
 
   datasource:
     url: ${DB_HOST}
