@@ -25,4 +25,12 @@ public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUI
     Optional<UserBalance> findByWalletWithLock(@Param("wallet") String wallet);
 
     boolean existsByUser_UserIdAndCoin_CoinId(UUID userId, UUID coinId);
+
+    @Query("SELECT ub FROM UserBalance ub " +
+            "JOIN FETCH ub.user u " +
+            "JOIN FETCH ub.coin c " +
+            "WHERE u.userId = :userId AND c.coinName = :coinId")
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
+                                                         @Param("coinId") String coinId);
 }
