@@ -14,6 +14,8 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ConsumerAwareRebalanceListener;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
@@ -61,14 +63,29 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> kafkaListenerContainerFactory() {
+    public DefaultErrorHandler errorHandler(KafkaTemplate<String, KafkaOrderStoreEvent> template) {
+        // 1초 간격으로 최대 3회 재시도
+        FixedBackOff backOff = new FixedBackOff(1_000L, 3L);
+
+        // 3회 재시도 실패 시 4yearGap.match.OrderCompletedCompensatorEvent.compensation 토픽으로 publish
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(template, (record, ex) ->
+                new TopicPartition("4yearGap.match.OrderCompletedCompensatorEvent.compensation", record.partition())
+        );
+
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
+        // 특정 예외는 재시도하지 않도록 설정 가능
+        // handler.addNotRetryableExceptions(BadRequestException.class);
+
+        return handler;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> kafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
 //        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.getContainerProperties().setSyncCommits(true);
-        // 재시도 3회 (총 4번 시도), 즉시 재시도(interval = 0L → 재시도 간 대기 시간 0ms)
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(new FixedBackOff(0L, 3));
         factory.setCommonErrorHandler(errorHandler);
         return factory;
     }

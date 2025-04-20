@@ -27,7 +27,7 @@ public class SandMessageTestController {
                 .userId(request.userId())
                 .orderId(request.orderId())
                 .build();
-        kafkaTemplate.send("matching-orderStore-store", event);
+        kafkaTemplate.send("4yearGap.match.orderStore.store", event);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }

@@ -16,7 +16,7 @@ public class KafkaEventConsumer {
     private final OrderCompletedFacade orderCompletedFacade;
 
     @KafkaListener(
-            topics = "matching-orderStore-store",
+            topics = "4yearGap.match.orderStore.store",
             groupId = "matching-service",
             containerFactory = "kafkaListenerContainerFactory")
     public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
