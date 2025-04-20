@@ -3,6 +3,7 @@ package com.springcloud.user.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
+import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -34,6 +35,26 @@ public class KafkaConsumerConfig {
     @Bean
     public KafkaTemplate<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaTemplate() {
         ProducerFactory<String, KafkaUserBalanceIncreaseEvent> factory =
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                });
+        return new KafkaTemplate<>(factory);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> matchingCompensatorEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(
+                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
+                }, "user-service")
+        );
+
+        return factory;
+    }
+
+    @Bean
+    public KafkaTemplate<String, MatchCompensatorEvent> matchingCompensatorEventKafkaTemplate() {
+        ProducerFactory<String, MatchCompensatorEvent> factory =
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 });
         return new KafkaTemplate<>(factory);

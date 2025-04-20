@@ -5,6 +5,7 @@ import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.common.UserInfoHeader;
+import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import com.springcloud.user.presentation.request.CreateWalletRequest;
 import com.springcloud.user.presentation.request.UpdateIncrementBalanceRequest;
 import com.springcloud.user.presentation.response.FindUserBalanceResponse;
@@ -12,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Description;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
@@ -23,6 +25,7 @@ import java.nio.file.AccessDeniedException;
 public class UserBalanceController {
 
     private final UserService userService;
+    private final KafkaTemplate<String, MatchCompensatorEvent> kafkaTemplate;
 
     @Description("지갑 생성")
     @PostMapping("/wallet")
@@ -56,6 +59,11 @@ public class UserBalanceController {
 //    public FindUserBalanceResponse incrementBalance(HttpServletRequest request, @RequestBody ){
 //
 //    }
+
+    @GetMapping("/compensatonTest")
+    public void test(){
+
+    }
 
 
 }
