@@ -76,6 +76,11 @@ public class KafkaConsumerConfig {
         // 특정 예외는 재시도하지 않도록 설정 가능
         // handler.addNotRetryableExceptions(BadRequestException.class);
 
+        // 재시도가 모두 실패한 메시지의 오프셋을 커밋해 컨슈머 그룹 오프셋을 다음 메시지로 이동
+        // 보상 트랜잭션 큐로 이동한 메시지는 다시 처리하지 않도록 설정
+        handler.setCommitRecovered(true);
+        handler.setAckAfterHandle(true);
+
         return handler;
     }
 
