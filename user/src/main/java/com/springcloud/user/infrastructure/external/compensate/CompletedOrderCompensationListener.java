@@ -1,6 +1,5 @@
 package com.springcloud.user.infrastructure.external.compensate;
 
-import com.springcloud.user.application.command.IncreaseBalanceCommand;
 import com.springcloud.user.application.command.UserBalanceRollBackCommand;
 import com.springcloud.user.application.service.BalanceCompensationService;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
@@ -12,13 +11,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MatchingCompensateListener {
+public class CompletedOrderCompensationListener {
 
-    @Qualifier("matchingCompensationService")
+    @Qualifier("completedOrderCompensationService")
     private final BalanceCompensationService balanceCompensationService;
 
     @KafkaListener(
-            topics = {"4yearGap.match.MatchCompensatorEvent.compensation"},
+            topics = {"4yearGap.match.OrderCompletedCompensatorEvent.compensation"},
             groupId = "user-service",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
