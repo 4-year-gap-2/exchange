@@ -18,7 +18,7 @@ public class BalanceIncreaseEventConsumer {
 
     @KafkaListener(
             topics = {"user-balance-increase"},
-            groupId = "matching-service",
+            groupId = "user-service",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void increaseBalance(ConsumerRecord<String, KafkaUserBalanceIncreaseEvent> record) {
