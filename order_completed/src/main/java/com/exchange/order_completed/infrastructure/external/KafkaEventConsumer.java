@@ -6,6 +6,7 @@ import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -18,9 +19,10 @@ public class KafkaEventConsumer {
             topics = "matching-orderStore-store",
             groupId = "matching-service",
             containerFactory = "kafkaListenerContainerFactory")
-    public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record) {
+    public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
         KafkaOrderStoreEvent event = record.value();
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
         orderCompletedFacade.saveCompletedOrder(command);
+        ack.acknowledge();
     }
 }

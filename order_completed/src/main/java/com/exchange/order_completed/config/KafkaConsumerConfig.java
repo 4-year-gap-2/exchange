@@ -2,7 +2,9 @@ package com.exchange.order_completed.config;
 
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +14,14 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ConsumerAwareRebalanceListener;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.util.backoff.FixedBackOff;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,6 +54,9 @@ public class KafkaConsumerConfig {
                 "org.apache.kafka.common.security.plain.PlainLoginModule required " +
                         "username=\"" + kafkaName + "\" password=\"" + kafkaPassword + "\";");
 
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+
         return new DefaultKafkaConsumerFactory<>(configProps, new StringDeserializer(), new JsonDeserializer<>(KafkaOrderStoreEvent.class));
     }
 
@@ -54,7 +64,12 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+//        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setSyncCommits(true);
+        // 재시도 3회 (총 4번 시도), 즉시 재시도(interval = 0L → 재시도 간 대기 시간 0ms)
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(new FixedBackOff(0L, 3));
+        factory.setCommonErrorHandler(errorHandler);
         return factory;
     }
 }
