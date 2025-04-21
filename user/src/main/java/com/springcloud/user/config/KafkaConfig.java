@@ -2,6 +2,7 @@ package com.springcloud.user.config;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.springcloud.user.infrastructure.dto.KafkaOrderFormEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
@@ -48,10 +49,10 @@ public class KafkaConfig {
         return factory;
     }
 
-    // 아직 사용 안 함
+    // 유저 -> 매칭 주문서 전달
     @Bean
-    public KafkaTemplate<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaTemplate() {
-        ProducerFactory<String, KafkaUserBalanceIncreaseEvent> factory =
+    public KafkaTemplate<String, KafkaOrderFormEvent> OrederEventKafkaTemplate() {
+        ProducerFactory<String, KafkaOrderFormEvent> factory =
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 });
         return new KafkaTemplate<>(factory);

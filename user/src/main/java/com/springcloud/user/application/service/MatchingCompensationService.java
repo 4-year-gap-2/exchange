@@ -2,12 +2,8 @@ package com.springcloud.user.application.service;
 
 import com.springcloud.user.application.command.UserBalanceRollBackCommand;
 import com.springcloud.user.application.enums.OrderType;
-import com.springcloud.user.common.exception.CustomNotFoundException;
-import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
-import com.springcloud.user.domain.repository.UserRepository;
-import jakarta.ws.rs.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
