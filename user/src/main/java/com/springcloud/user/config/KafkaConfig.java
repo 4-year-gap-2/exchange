@@ -2,6 +2,7 @@ package com.springcloud.user.config;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -21,7 +22,20 @@ public class KafkaConfig {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
 
+    // 주문 시 자산 감소
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> orderEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
+        factory.setConsumerFactory(
+                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
+                }, "user-service")
+        );
+
+        return factory;
+    }
+
+    // 체결 시 자산 증가
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
@@ -34,6 +48,7 @@ public class KafkaConfig {
         return factory;
     }
 
+    // 아직 사용 안 함
     @Bean
     public KafkaTemplate<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaTemplate() {
         ProducerFactory<String, KafkaUserBalanceIncreaseEvent> factory =
@@ -42,6 +57,7 @@ public class KafkaConfig {
         return new KafkaTemplate<>(factory);
     }
 
+    // 체결 실패 보상
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> matchingCompensatorEventKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
@@ -54,6 +70,7 @@ public class KafkaConfig {
         return factory;
     }
 
+    // 사용 안 함
     @Bean
     public KafkaTemplate<String, MatchCompensatorEvent> matchingCompensatorEventKafkaTemplate() {
         ProducerFactory<String, MatchCompensatorEvent> factory =

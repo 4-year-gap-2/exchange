@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Getter
-public class KafkaUserBalanceDecreaseEvent  implements Serializer, Deserializer {
+public class KafkaUserBalanceDecreaseEvent {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -21,40 +21,6 @@ public class KafkaUserBalanceDecreaseEvent  implements Serializer, Deserializer 
     private String orderType; // buy/sell
     private BigDecimal price; //총 가격
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 
-    @Override
-    public Object deserialize(String s, byte[] bytes) {
-        return null;
-    }
-
-    @Override
-    public Object deserialize(String topic, Headers headers, byte[] data) {
-        return Deserializer.super.deserialize(topic, headers, data);
-    }
-
-    @Override
-    public Object deserialize(String topic, Headers headers, ByteBuffer data) {
-        return Deserializer.super.deserialize(topic, headers, data);
-    }
-
-    @Override
-    public void configure(Map configs, boolean isKey) {
-        Serializer.super.configure(configs, isKey);
-    }
-
-    @Override
-    public byte[] serialize(String s, Object o) {
-        return new byte[0];
-    }
-
-    @Override
-    public byte[] serialize(String topic, Headers headers, Object data) {
-        return Serializer.super.serialize(topic, headers, data);
-    }
-
-    @Override
-    public void close() {
-        Serializer.super.close();
-    }
 }

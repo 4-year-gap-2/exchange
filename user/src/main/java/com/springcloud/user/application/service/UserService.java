@@ -22,4 +22,6 @@ public interface UserService {
     FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command);
 
     void internalDecrementBalance(DecreaseBalanceCommand command);
+
+    void internalIncrementBalance(IncreaseBalanceCommand command);
 }

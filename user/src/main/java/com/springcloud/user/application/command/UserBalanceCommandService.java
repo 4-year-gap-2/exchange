@@ -84,10 +84,10 @@ public class UserBalanceCommandService {
     public void internalDecrementBalance(DecreaseBalanceCommand command) {
         try {
             // 1. Symbol 분리 (BTC/KRW → ["BTC", "KRW"])
-            String[] currencies = command.getSymbol().split("/");
+            String[] currencies = command.getTradingPair().split("/");
 
             if (currencies.length != 2) {
-                throw new IllegalArgumentException("잘못된 심볼 형식:"+command.getSymbol());
+                throw new IllegalArgumentException("잘못된 심볼 형식:"+command.getTradingPair());
             }
 
             // 2. 주문 유형에 따라 확인할 화폐 결정
