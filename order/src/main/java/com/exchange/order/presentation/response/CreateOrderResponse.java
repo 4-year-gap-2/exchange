@@ -16,7 +16,7 @@ public class CreateOrderResponse {
     private OrderType orderType; // buy/sell
     private BigDecimal price; //총 가격
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 
     public static CreateOrderResponse fromResponse(FindOrderResult result) {
         return new CreateOrderResponse(
@@ -25,7 +25,7 @@ public class CreateOrderResponse {
                 result.getOrderType(),
                 result.getPrice(),
                 result.getAmount(),
-                result.getSymbol()
+                result.getTradingPair()
         );
     }
 }

@@ -16,7 +16,7 @@ public class FindOrderResult {
     private OrderType orderType; // buy/sell
     private BigDecimal price; //총 가격
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 
     public static FindOrderResult fromResult(KafkaUserBalanceDecreaseEvent event) {
         return new FindOrderResult(
@@ -25,7 +25,7 @@ public class FindOrderResult {
                 event.getOrderType(),
                 event.getPrice(),
                 event.getAmount(),
-                event.getSymbol()
+                event.getTradingPair()
         );
     }
 }
