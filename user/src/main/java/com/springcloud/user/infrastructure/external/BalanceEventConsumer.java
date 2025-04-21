@@ -23,7 +23,8 @@ public class BalanceEventConsumer {
 
     @KafkaListener(
             topics = {"order-to-user.excute-decrease-balance"},
-            containerFactory = "orderEventKafkaListenerContainerFactory"
+            containerFactory = "orderEventKafkaListenerContainerFactory",
+            concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void decreaseBalance(ConsumerRecord<String, KafkaUserBalanceDecreaseEvent> record) {
 
@@ -35,7 +36,9 @@ public class BalanceEventConsumer {
     //체결 시 자산 증가
     @KafkaListener(
             topics = {"order_completed-to-user_balance.execute-increase-balance"},
-            containerFactory = "matchingEventKafkaListenerContainerFactory"
+            containerFactory = "matchingEventKafkaListenerContainerFactory",
+            concurrency = "3"  // 3개의 스레드로 병렬 처리
+
     )
     public void IncreaseBalance(ConsumerRecord<String, KafkaUserBalanceIncreaseEvent> record) {
 
