@@ -1,0 +1,33 @@
+package com.exchange.order.presentation.request;
+
+import com.exchange.order.application.command.CreateOrderCommand;
+
+import com.exchange.order.application.enums.OrderType;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Getter
+@Builder
+public class CreateOrderRequest {
+    private OrderType orderType; // buy/sell
+    @DecimalMin("0.0001")
+    private BigDecimal price; //총 가격
+    @DecimalMin("0.0001")
+    private BigDecimal amount; // 수량
+    private String symbol; //거래소 명칭
+
+    public CreateOrderCommand toCommand(UUID userId) {
+        return CreateOrderCommand.builder()
+                .orderId(UUID.randomUUID())
+                .userId(userId)
+                .orderType(orderType)
+                .price(price)
+                .amount(amount)
+                .symbol(symbol).build();
+    }
+}
