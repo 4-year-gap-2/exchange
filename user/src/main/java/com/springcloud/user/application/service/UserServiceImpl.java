@@ -18,7 +18,7 @@ public class UserServiceImpl implements UserService{
     private final UserCommandService userCommandService;
     private final UserQueryService userQueryService;
     private final UserBalanceCommandService userBalanceCommandService;
-    private final ManagementCommandService managementCommandService;
+//    private final ManagementCommandService managementCommandService;
 
 
     @Override
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public void createFee(BigDecimal feeValue) {
-        managementCommandService.createFee(feeValue);
+//        managementCommandService.createFee(feeValue);
     }
 
     @Override

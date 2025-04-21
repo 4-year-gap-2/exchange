@@ -1,7 +1,7 @@
 package com.springcloud.user.application.command;
 
 import com.springcloud.user.application.enums.OrderType;
-import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
+import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -10,25 +10,21 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @Getter
-public class IncreaseBalanceCommand {
-
+public class UserBalanceRollBackCommand {
     private UUID orderId;
     private String tradingPair;
     private BigDecimal price;
     private BigDecimal quantity;
-    private UUID buyer;
-    private UUID seller;
+    private UUID userId;
     private OrderType orderType;
-
-    public static IncreaseBalanceCommand commandFromEvent(KafkaUserBalanceIncreaseEvent event) {
-
-        return new IncreaseBalanceCommand(
+    public static UserBalanceRollBackCommand commandFromEvent(MatchCompensatorEvent event){
+        return new UserBalanceRollBackCommand(
                 event.getOrderId(),
                 event.getTradingPair(),
                 event.getPrice(),
                 event.getQuantity(),
-                event.getBuyer(),
-                event.getSeller(),
-                event.getOrderType());
+                event.getUserId(),
+                event.getOrderType()
+        );
     }
 }
