@@ -4,6 +4,8 @@ import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
 import com.exchange.order_completed.domain.repository.CompletedOrderReader;
 import com.exchange.order_completed.domain.repository.CompletedOrderStore;
+import com.exchange.order_completed.infrastructure.dto.KafkaBalanceIncreaseEvent;
+import com.exchange.order_completed.infrastructure.external.KafkaEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,8 +17,10 @@ public class OrderCompletedFacade {
 
     private final CompletedOrderStore completedOrderStore;
     private final CompletedOrderReader completedOrderReader;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     public void completeOrder(CreateOrderStoreCommand command) {
+
         CompletedOrder persistedCompletedOrder = completedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId());
 
         if (persistedCompletedOrder != null) {
@@ -26,5 +30,7 @@ public class OrderCompletedFacade {
 
         CompletedOrder newCompletedOrder = command.toEntity();
         completedOrderStore.save(newCompletedOrder);
+
+        kafkaEventPublisher.publishMessage(KafkaBalanceIncreaseEvent.from(command));
     }
 }

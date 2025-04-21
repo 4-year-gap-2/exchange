@@ -14,10 +14,12 @@ import org.springframework.stereotype.Component;
 public class KafkaEventConsumer {
 
     private final OrderCompletedFacade orderCompletedFacade;
+    private static final String TOPIC = "matching-to-order_completed.execute-order-info-save";
+    private static final String GROUP_ID = "matching-service";
 
     @KafkaListener(
-            topics = "4yearGap.match.orderStore.store",
-            groupId = "matching-service",
+            topics = TOPIC,
+            groupId = GROUP_ID,
             containerFactory = "kafkaListenerContainerFactory")
     public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
         KafkaOrderStoreEvent event = record.value();
