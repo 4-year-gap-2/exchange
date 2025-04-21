@@ -18,5 +18,5 @@ public class CreateOrderCommand {
     private OrderType orderType; // buy/sell
     private BigDecimal price; //총 가격
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 }

@@ -19,7 +19,7 @@ public class CreateOrderRequest {
     private BigDecimal price; //총 가격
     @DecimalMin("0.0001")
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 
     public CreateOrderCommand toCommand(UUID userId) {
         return CreateOrderCommand.builder()
@@ -28,6 +28,6 @@ public class CreateOrderRequest {
                 .orderType(orderType)
                 .price(price)
                 .amount(amount)
-                .symbol(symbol).build();
+                .symbol(tradingPair).build();
     }
 }
