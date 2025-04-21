@@ -1,1 +1,0 @@
-package com.springcloud.user.infrastructure.external;
