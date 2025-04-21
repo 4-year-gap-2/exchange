@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SandMessageTestController {
 
     private final KafkaTemplate<String, KafkaOrderStoreEvent> kafkaTemplate;
+    private static final String TOPIC = "matching-to-order_completed.execute-order-info-save";
 
     @PostMapping
     public ResponseEntity<ResponseDto<String>> store(@RequestBody CreateOrderStoreRequest request) {
@@ -27,7 +28,9 @@ public class SandMessageTestController {
                 .userId(request.userId())
                 .orderId(request.orderId())
                 .build();
-        kafkaTemplate.send("4yearGap.match.orderStore.store", event);
+
+        kafkaTemplate.send(TOPIC, event);
+
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }
