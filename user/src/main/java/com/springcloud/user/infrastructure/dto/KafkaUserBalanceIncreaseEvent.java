@@ -1,6 +1,7 @@
 package com.springcloud.user.infrastructure.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.springcloud.user.application.enums.OrderType;
 import lombok.Getter;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Deserializer;
@@ -20,5 +21,5 @@ public class KafkaUserBalanceIncreaseEvent{
     private BigDecimal quantity;
     private UUID buyer;
     private UUID seller;
-
+    private OrderType orderType;
 }

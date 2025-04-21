@@ -4,6 +4,7 @@ package com.springcloud.user.config;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -11,11 +12,12 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 
 @Configuration
-public class KafkaConsumerConfig {
+public class KafkaConfig {
 
     private final KafkaCommonConfig kafkaCommonConfig;
 
-    public KafkaConsumerConfig(KafkaCommonConfig kafkaCommonConfig) {
+
+    public KafkaConfig(KafkaCommonConfig kafkaCommonConfig) {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
 

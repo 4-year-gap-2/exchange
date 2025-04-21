@@ -60,10 +60,6 @@ public class UserBalanceController {
 //
 //    }
 
-    @GetMapping("/compensatonTest")
-    public void test(){
-
-    }
 
 
 }

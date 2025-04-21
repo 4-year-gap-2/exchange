@@ -1,26 +1,25 @@
 package com.springcloud.user.infrastructure.external.compensate;
 
-import com.springcloud.user.application.command.IncreaseBalanceCommand;
 import com.springcloud.user.application.command.UserBalanceRollBackCommand;
-import com.springcloud.user.application.service.BalanceCompensationService;
+import com.springcloud.user.application.service.MatchingCompensationService;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
-import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class MatchingCompensateListener {
 
-    @Qualifier("matchingCompensationService")
-    private final BalanceCompensationService balanceCompensationService;
+
+    private final MatchingCompensationService balanceCompensationService;
+
+    public MatchingCompensateListener(MatchingCompensationService service) {
+        this.balanceCompensationService = service;
+    }
 
     @KafkaListener(
             topics = {"4yearGap.match.MatchCompensatorEvent.compensation"},
-            groupId = "user-service",
-            concurrency = "3"  // 3개의 스레드로 병렬 처리
+            containerFactory = "matchingCompensatorEventKafkaListenerContainerFactory"
     )
     public void increaseBalance(ConsumerRecord<String, MatchCompensatorEvent> record) {
 

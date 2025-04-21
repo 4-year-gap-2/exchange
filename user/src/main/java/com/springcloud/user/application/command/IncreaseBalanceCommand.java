@@ -1,5 +1,6 @@
 package com.springcloud.user.application.command;
 
+import com.springcloud.user.application.enums.OrderType;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +18,7 @@ public class IncreaseBalanceCommand {
     private BigDecimal quantity;
     private UUID buyer;
     private UUID seller;
+    private OrderType orderType;
 
     public static IncreaseBalanceCommand commandFromEvent(KafkaUserBalanceIncreaseEvent event) {
 
@@ -26,6 +28,7 @@ public class IncreaseBalanceCommand {
                 event.getPrice(),
                 event.getQuantity(),
                 event.getBuyer(),
-                event.getSeller());
+                event.getSeller(),
+                event.getOrderType());
     }
 }

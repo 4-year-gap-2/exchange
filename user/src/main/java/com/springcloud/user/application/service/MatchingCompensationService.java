@@ -16,14 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MatchingCompensationService implements BalanceCompensationService {
 
-    private final UserRepository userRepository;
     private final UserBalanceRepository userBalanceRepository;
 
     @Override
     @Transactional
     public void rollBack(UserBalanceRollBackCommand command) {
-        User user = userRepository.findById(command.getUserId())
-                .orElseThrow(() -> new CustomNotFoundException(command.getUserId() + "해당 유저가 존재하지 않습니다."));
 
         String targetCoin = getTargetCoinFromTradingPair(command.getTradingPair(),command.getOrderType());
 
