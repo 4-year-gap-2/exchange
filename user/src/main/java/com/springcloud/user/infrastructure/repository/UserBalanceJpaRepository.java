@@ -2,7 +2,6 @@ package com.springcloud.user.infrastructure.repository;
 
 import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
-import com.springcloud.user.domain.repository.UserBalanceRepository;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,4 +26,12 @@ public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUI
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM UserBalance b WHERE b.user = :user AND b.coin = :coin")
     Optional<UserBalance> findByUserAndCoinForUpdate(@Param("user") User user, @Param("coinName") String coinName);
+
+    @Query("SELECT ub FROM UserBalance ub " +
+            "JOIN FETCH ub.user u " +
+            "JOIN FETCH ub.coin c " +
+            "WHERE u.userId = :userId AND c.coinName = :coinId")
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
+                                                         @Param("coinId") String coinId);
 }

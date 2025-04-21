@@ -14,11 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-
 public class UserBalanceCommandService {
 
     private final UserRepository userRepository;
@@ -123,8 +121,32 @@ public class UserBalanceCommandService {
     }
 
 
+    @Transactional
+    public void internalIncrementBalance(IncreaseBalanceCommand command) {
 
+        try {
+            String[] parts = command.getTradingPair().split("/");
 
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("잘못된 트레이딩 페어 형식: " + command.getTradingPair());
+            }
 
+            UserBalance buyerBalance = userBalanceRepository
+                    .findUserBalanceWithUserAndCoin(command.getBuyer(), parts[0])
+                    .orElseThrow(() -> new IllegalArgumentException(command.getSeller().toString() + "는 존재하지 않는 자산"));
 
+            UserBalance sellerBalance = userBalanceRepository
+                    .findUserBalanceWithUserAndCoin(command.getSeller(), parts[1])
+                    .orElseThrow(() -> new IllegalArgumentException(command.getSeller().toString() + "는 존재하지 않는 자산"));
+
+            buyerBalance.increase(command.getQuantity());
+
+            //이건 확인 필요
+            sellerBalance.increase(command.getQuantity().multiply(command.getPrice()));
+        } catch (Exception e) {
+            log.error("자산 증가 중 문제 발생 유저에게 문제 사항 전송",e);
+            //소켓 서버로 문제 보내기
+            throw new RuntimeException();
+        }
+    }
 }

@@ -33,4 +33,9 @@ public class UserBalanceRepositoryImpl implements UserBalanceRepository {
     public Optional<UserBalance> findByUserAndCoinForUpdate(User user, String targetCoin) {
         return userBalanceJpaRepository.findByUserAndCoinForUpdate(user, targetCoin);
     }
+
+    @Override
+    public Optional<UserBalance> findUserBalanceWithUserAndCoin(UUID userId, String coinId) {
+        return userBalanceJpaRepository.findUserBalanceWithUserAndCoin(userId,coinId);
+    }
 }
