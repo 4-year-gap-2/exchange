@@ -86,6 +86,7 @@ public class UserBalanceCommandService {
     //자산 차감 로직
     @Transactional
     public void internalDecrementBalance(DecreaseBalanceCommand command) {
+        log.info("Kafka 메시지 수신 및 자산 차감 로직 시작: {}", command);
         try {
             // 1. Symbol 분리 (BTC/KRW → ["BTC", "KRW"])
             String[] currencies = command.getTradingPair().split("/");

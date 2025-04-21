@@ -8,10 +8,12 @@ import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BalanceEventConsumer {
@@ -25,7 +27,7 @@ public class BalanceEventConsumer {
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
     public void decreaseBalance(ConsumerRecord<String, KafkaUserBalanceDecreaseEvent> record) {
-
+        log.info("Kafka로부터 메시지 수신: {}", record);
         DecreaseBalanceCommand command = DecreaseBalanceCommand.commandFromEvent(record.value());
         userService.internalDecrementBalance(command);
 
