@@ -44,17 +44,5 @@ public class BalanceEventConsumer {
 
     }
 
-    //체결 실패 시 보상(자산 증가)
-    @KafkaListener(
-            topics = {"order_completed-to-user.execute-order-info-save-compensation"},
-            containerFactory = "matchingCompensatorEventKafkaListenerContainerFactory"
-    )
-    public void compensationIncreaseBalance(ConsumerRecord<String, MatchCompensatorEvent> record) {
-
-        UserBalanceRollBackCommand command = UserBalanceRollBackCommand.commandFromEvent(record.value());
-        balanceCompensationService.rollBack(command);
-
-    }
-
 
 }
