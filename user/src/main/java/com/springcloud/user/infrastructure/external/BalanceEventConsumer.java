@@ -3,12 +3,10 @@ package com.springcloud.user.infrastructure.external;
 
 import com.springcloud.user.application.command.DecreaseBalanceCommand;
 import com.springcloud.user.application.command.IncreaseBalanceCommand;
-import com.springcloud.user.application.command.UserBalanceRollBackCommand;
 import com.springcloud.user.application.service.BalanceCompensationService;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
-import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
