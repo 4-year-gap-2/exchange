@@ -6,7 +6,6 @@ import com.springcloud.user.infrastructure.dto.KafkaOrderFormEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;

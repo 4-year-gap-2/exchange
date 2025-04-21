@@ -2,7 +2,6 @@ package com.springcloud.user.infrastructure.dto;
 
 import com.springcloud.user.application.command.DecreaseBalanceCommand;
 import com.springcloud.user.application.enums.OrderType;
-import com.springcloud.user.domain.entity.UserBalance;
 import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
