@@ -16,7 +16,7 @@ public class OrderCompletedFacade {
     private final CompletedOrderStore completedOrderStore;
     private final CompletedOrderReader completedOrderReader;
 
-    public void saveCompletedOrder(CreateOrderStoreCommand command) {
+    public void completeOrder(CreateOrderStoreCommand command) {
         CompletedOrder persistedCompletedOrder = completedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId());
 
         if (persistedCompletedOrder != null) {

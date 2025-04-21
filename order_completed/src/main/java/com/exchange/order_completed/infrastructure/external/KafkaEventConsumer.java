@@ -22,7 +22,7 @@ public class KafkaEventConsumer {
     public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
         KafkaOrderStoreEvent event = record.value();
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
-        orderCompletedFacade.saveCompletedOrder(command);
+        orderCompletedFacade.completeOrder(command);
         ack.acknowledge();
     }
 }
