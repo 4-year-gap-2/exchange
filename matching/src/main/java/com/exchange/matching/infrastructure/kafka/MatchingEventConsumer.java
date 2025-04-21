@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.external;
+package com.exchange.matching.infrastructure.kafka;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.service.MatchingFacade;
@@ -36,9 +36,9 @@ public class MatchingEventConsumer {
     }
 
     @KafkaListener(
-            topics = {"matching-events-tps-v1"},
+            topics = {"user-to-matching.execute-order-delivery.v1"},
             containerFactory = "matchingEventKafkaListenerContainerFactory",
-            concurrency = "3"  // 3개의 스레드로 병렬 처리
+            concurrency = "3"
     )
     public void consumeV1(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
@@ -62,9 +62,9 @@ public class MatchingEventConsumer {
     }
 
     @KafkaListener(
-            topics = {"matching-events-tps-v2"},
+            topics = {"user-to-matching.execute-order-delivery.v2"},
             containerFactory = "matchingEventKafkaListenerContainerFactory",
-            concurrency = "3"  // 3개의 스레드로 병렬 처리
+            concurrency = "3"
     )
     public void consumeV2(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
@@ -87,15 +87,10 @@ public class MatchingEventConsumer {
         }
     }
 
-    //    @RetryableTopic(
-    //            attempts = "3", // 최대 3회 재시도
-    //            backoff = @Backoff(delay = 10 * 1000, multiplier = 3, maxDelay = 10 * 60 * 1000), // 재시도 간격 설정
-    //            include = IllegalArgumentException.class // 모든 예외에 대해 재시도
-    //    )
     @KafkaListener(
-            topics = {"matching-events-tps-v4"},
+            topics = {"user-to-matching.execute-order-delivery.v4"},
             containerFactory = "matchingEventKafkaListenerContainerFactory",
-            concurrency = "3"  // 3개의 스레드로 병렬 처리
+            concurrency = "3"
     )
     public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
@@ -109,6 +104,32 @@ public class MatchingEventConsumer {
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV4(command);
+
+            // 카운터 증가
+            processedCounter.increment();
+        } finally {
+            // 타이머 종료 및 기록
+            sample.stop(processingTimer);
+        }
+    }
+
+    @KafkaListener(
+            topics = {"user-to-matching.execute-order-delivery.v5"},
+            containerFactory = "matchingEventKafkaListenerContainerFactory",
+            concurrency = "3"
+    )
+    public void consumeV5(ConsumerRecord<String, KafkaMatchingEvent> record) {
+        // 타이머 시작
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            String topic = record.topic();
+            KafkaMatchingEvent event = record.value();
+
+            System.out.println("topic 이름: " + topic);
+
+            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
+            matchingFacade.matchV5(command);
 
             // 카운터 증가
             processedCounter.increment();

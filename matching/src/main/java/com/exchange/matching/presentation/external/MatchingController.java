@@ -20,19 +20,29 @@ public class MatchingController {
 
     @PostMapping("/v1")
     public ResponseEntity<ResponseDto<String>> matchV1(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("matching-events-tps-v1", KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v1",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
     @PostMapping("/v2")
     public ResponseEntity<ResponseDto<String>> matchV2(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("matching-events-tps-v2", KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v2",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
     @PostMapping("/v4")
     public ResponseEntity<ResponseDto<String>> matchV4(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("matching-events-tps-v4", KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v4",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
+    @PostMapping("/v5")
+    public ResponseEntity<ResponseDto<String>> matchV5(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v5",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 }

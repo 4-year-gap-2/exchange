@@ -5,6 +5,7 @@ import com.exchange.matching.common.aop.TimeTrace;
 import com.exchange.matching.domain.service.MatchingServiceV1A;
 import com.exchange.matching.domain.service.MatchingServiceV2;
 import com.exchange.matching.domain.service.MatchingServiceV4;
+import com.exchange.matching.domain.service.MatchingServiceV5;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -19,9 +20,10 @@ import java.util.concurrent.TimeUnit;
 public class MatchingFacade {
 
     private final RedissonClient redissonClient;
+    private final MatchingServiceV1A matchingServiceV1A;
     private final MatchingServiceV2 matchingServiceV2;
     private final MatchingServiceV4 matchingServiceV4;
-    private final MatchingServiceV1A matchingServiceV1A;
+    private final MatchingServiceV5 matchingServicev5;
 
     public void matchV1(CreateMatchingCommand createMatchingCommand) {
         matchingServiceV1A.matchOrders(createMatchingCommand);
@@ -51,5 +53,9 @@ public class MatchingFacade {
 
     public void matchV4(CreateMatchingCommand createMatchingCommand) {
         matchingServiceV4.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV5(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev5.matchOrders(createMatchingCommand);
     }
 }

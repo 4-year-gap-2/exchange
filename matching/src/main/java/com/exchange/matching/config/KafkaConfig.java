@@ -36,4 +36,24 @@ public class KafkaConfig {
                 });
         return new KafkaTemplate<>(factory);
     }
+
+    @Bean
+    public KafkaTemplate<String, Object> genericKafkaTemplate() {
+        ProducerFactory<String, Object> factory =
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                });
+        return new KafkaTemplate<>(factory);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> recoveryEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+
+        factory.setConsumerFactory(
+                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
+                }, "recovery-service")
+        );
+
+        return factory;
+    }
 }

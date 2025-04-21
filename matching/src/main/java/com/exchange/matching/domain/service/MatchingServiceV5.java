@@ -2,6 +2,9 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.domain.event.MatchingEvent;
+import com.exchange.matching.domain.event.MatchingEventType;
+import com.exchange.matching.infrastructure.kafka.EventPublisher;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,16 +24,22 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class MatchingServiceV4 implements MatchingService {
+public class MatchingServiceV5 implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "v4:orders:sell:";
-    private static final String BUY_ORDER_KEY = "v4:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v5:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v5:orders:buy:";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
+    private final EventPublisher eventPublisher;
+    private final KafkaMessageSender kafkaMessageSender; // Kafka 메시지 전송을 위한 서비스
 
-    public MatchingServiceV4(RedisTemplate<String, String> redisTemplate) {
+    public MatchingServiceV5(RedisTemplate<String, String> redisTemplate,
+                             EventPublisher eventPublisher,
+                             KafkaMessageSender kafkaMessageSender) {
         this.redisTemplate = redisTemplate;
+        this.eventPublisher = eventPublisher;
+        this.kafkaMessageSender = kafkaMessageSender;
 
         // Lua 스크립트 로드
         DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
@@ -46,8 +55,10 @@ public class MatchingServiceV4 implements MatchingService {
         this.matchingScript = script;
     }
 
+    @Override
     public void matchOrders(CreateMatchingCommand command) {
-        // event : 복구를 위한 주문 접수 이벤트 발행 시작
+        // 상관 관계 ID 생성 (거래 흐름 추적용)
+        String correlationId = UUID.randomUUID().toString();
 
         MatchingOrder matchingOrder = MatchingOrder.fromCommand(command);
 
@@ -55,32 +66,49 @@ public class MatchingServiceV4 implements MatchingService {
                 matchingOrder.getOrderType(), matchingOrder.getPrice(),
                 matchingOrder.getQuantity(), matchingOrder.getUserId());
 
-        matchingProcess(matchingOrder);
+        // 복구를 위한 주문 접수 이벤트 발행
+        MatchingEvent orderReceivedEvent = MatchingEvent.orderReceived(matchingOrder, correlationId);
+        eventPublisher.publish(orderReceivedEvent);
+
+        try {
+            matchingProcess(matchingOrder, correlationId);
+
+            // 모든 프로세스 정상 종료 기록된 이벤트 모두 제거 (완료 이벤트 발행 후)
+            MatchingEvent completedEvent = MatchingEvent.processingCompleted(correlationId);
+            eventPublisher.publish(completedEvent);
+
+            // Kafka로 처리 완료 메시지 전송
+            kafkaMessageSender.sendProcessingCompletedMessage(correlationId);
+
+            // 이벤트 처리 완료 표시 (이벤트 삭제 또는 상태 변경)
+            eventPublisher.markEventsAsProcessed(correlationId);
+        } catch (Exception e) {
+            log.error("주문 매칭 처리 중 오류 발생: {}", e.getMessage(), e);
+            // 오류가 발생해도 이벤트는 이미 저장되어 있으므로 복구 가능
+        }
     }
 
     /**
      * 주문 매칭 프로세스 시작
      */
-    private void matchingProcess(MatchingOrder order) {
-
+    private void matchingProcess(MatchingOrder order, String correlationId) {
         // 남은 수량이 있는 동안 매칭 시도
         while (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+            // Lua 스크립트 실행으로 매칭 처리 및 이벤트 발행
+            MatchingResult result = tryMatchAndPublishEvent(order, correlationId);
 
-            // Lua 스크립트 실행으로 매칭 처리
-            MatchingResult result = tryMatch(order);
-
-            // 매칭 실패 시 미체결 주문 저장 후 종료
+            // 매칭 결과에 따른 후속 처리 및 Kafka 메시지 전송
             if (!result.isMatched()) {
-                saveUnmatchedOrder(order);
-                // event : 복구를 위한 미체결 event 발행 끝
+                // 미체결 주문 처리
+                saveUnmatchedOrder(order, correlationId);
                 break;
             }
 
             // 매칭된 반대 주문 정보
             MatchingOrder oppositeOrder = result.getOppositeOrder();
 
-            // 체결 정보 저장
-            saveMatchOrder(order, oppositeOrder, result.getMatchedQuantity(), result.getMatchPrice());
+            // 체결 정보 저장 및 Kafka 메시지 전송
+            saveMatchOrder(order, oppositeOrder, result.getMatchedQuantity(), result.getMatchPrice(), correlationId);
 
             // 잔여 수량이 있을 경우 다음 매칭 준비
             BigDecimal remainingQuantity = result.getRemainingQuantity();
@@ -93,14 +121,12 @@ public class MatchingServiceV4 implements MatchingService {
                 break;
             }
         }
-
-        // 프로세스 종료 이벤트 발행
     }
 
     /**
-     * Lua 스크립트를 사용하여 주문 매칭 시도
+     * Lua 스크립트를 사용하여 주문 매칭 시도 및 이벤트 발행
      */
-    private MatchingResult tryMatch(MatchingOrder order) {
+    private MatchingResult tryMatchAndPublishEvent(MatchingOrder order, String correlationId) {
         String oppositeOrderKey, currentOrderKey;
         if (OrderType.BUY.equals(order.getOrderType())) {
             oppositeOrderKey = SELL_ORDER_KEY + order.getTradingPair();
@@ -128,18 +154,19 @@ public class MatchingServiceV4 implements MatchingService {
                 orderDetails
         );
 
-        // event : 복구를 위한 주문 접수 이벤트 발행 끝
+        // 복구를 위한 주문 접수 이벤트는 이미 발행되었으므로 삭제 가능
+        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_RECEIVED);
 
         // 결과 파싱
         boolean matched = "true".equals(results.get(0));
 
-        // 매칭 실패 시 빠른 종료
         if (!matched) {
-            // event : 복구를 위한 미체결 event 발행 시작
+            // 미체결 상황이라면 복구를 위한 미체결 event 발행
+            MatchingEvent unmatchedEvent = MatchingEvent.orderUnmatched(order, correlationId);
+            eventPublisher.publish(unmatchedEvent);
+
             return new MatchingResult(false, null, null, BigDecimal.ZERO, order.getQuantity());
         }
-
-        // event : 복구를 위한 체결 event 발행 시작
 
         // 매칭 성공 시 결과 파싱
         String oppositeOrderDetails = (String) results.get(1);
@@ -155,6 +182,18 @@ public class MatchingServiceV4 implements MatchingService {
                 matchPrice
         );
 
+        // 체결 상황이라면 복구를 위한 체결 event 발행
+        MatchingEvent matchedEvent = MatchingEvent.orderMatched(
+                order, oppositeOrder, matchedQuantity, matchPrice, correlationId);
+        eventPublisher.publish(matchedEvent);
+
+        // 잔여 수량이 있을 경우 복구를 위한 잔여 체결 event 발행
+        if (remainingQuantity.compareTo(BigDecimal.ZERO) > 0) {
+            MatchingEvent remainingEvent = MatchingEvent.orderRemaining(
+                    order, remainingQuantity, correlationId);
+            eventPublisher.publish(remainingEvent);
+        }
+
         return new MatchingResult(
                 true,
                 oppositeOrder,
@@ -165,10 +204,14 @@ public class MatchingServiceV4 implements MatchingService {
     }
 
     /**
-     * 미체결 주문 저장
+     * 미체결 주문 저장 및 Kafka 메시지 전송
      */
-    private void saveUnmatchedOrder(MatchingOrder order) {
-        // kafka로 체결 서버로 데이터 전달 필요
+    private void saveUnmatchedOrder(MatchingOrder order, String correlationId) {
+        // Kafka로 미체결 주문 데이터 전달
+        kafkaMessageSender.sendUnmatchedOrderMessage(order, correlationId);
+
+        // 미체결 이벤트 처리 완료로 표시 (이벤트 삭제)
+        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_UNMATCHED);
 
         log.info("{} 미체결 : {}원 {}개 (주문ID: {}, 사용자ID: {})",
                 order.getOrderType(), order.getPrice(),
@@ -176,15 +219,23 @@ public class MatchingServiceV4 implements MatchingService {
     }
 
     /**
-     * 체결 결과를 기록
+     * 체결 결과를 기록하고 Kafka 메시지 전송
      */
     private void saveMatchOrder(MatchingOrder order, MatchingOrder oppositeOrder,
-                             BigDecimal matchedQuantity, BigDecimal executionPrice) {
-        // 체결 내역 이벤트 발행
+                                BigDecimal matchedQuantity, BigDecimal executionPrice, String correlationId) {
 
         // 매수/매도 주문 식별
         MatchingOrder buyOrder = OrderType.BUY.equals(order.getOrderType()) ? order : oppositeOrder;
         MatchingOrder sellOrder = OrderType.SELL.equals(order.getOrderType()) ? order : oppositeOrder;
+
+        // Kafka로 체결 정보 전달
+        kafkaMessageSender.sendMatchedOrderMessage(
+                buyOrder, sellOrder, matchedQuantity, executionPrice, correlationId);
+
+        // 체결 이벤트 처리 완료로 표시 (이벤트 삭제)
+        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_MATCHED);
+
+        // 잔여 수량 이벤트가 있으면 처리 (삭제하지 않고 다음 매칭 단계에서 사용)
 
         log.info("BUY 완전체결 : {}원 {}개 (주문ID: {}, 시간 구분 : {})",
                 executionPrice, matchedQuantity,
@@ -217,7 +268,7 @@ public class MatchingServiceV4 implements MatchingService {
 
     /**
      * 직렬화된 주문을 역직렬화
-     * 형식: quantity|userId|orderId
+     * 형식: timestamp|quantity|userId|orderId
      */
     private MatchingOrder deserializeOrder(String orderValue, OrderType orderType,
                                            String tradingPair, BigDecimal price) {
