@@ -19,7 +19,7 @@ public class SlackKafkaListener {
     private final SlackClientAdapter slackClientAdapter;
 
     @KafkaListener(
-            topics = {"slack_topic"},
+            topics = {"user-to-management.execute-notification"},
             containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
@@ -27,7 +27,7 @@ public class SlackKafkaListener {
 
         CreateSlackCommand command = CreateSlackCommand.fromEvent(record.value());
         slackService.saveSlackMessage(command, command.createMessage(record.topic()));
-        slackClientAdapter.sendSlackMessageToAdminChannel("초비상 당장 확인 바람" + command.createMessage(record.topic()));
+        slackClientAdapter.sendSlackMessageToAdminChannel(command.createMessage(record.topic()));
 
     }
 }

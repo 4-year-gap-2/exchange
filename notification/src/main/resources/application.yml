@@ -43,7 +43,7 @@ server:
 eureka:
   client:
     service-url:
-      defaultZone: http://${Eureka_name}:${Eureka_password}@${Eureka_host}:19090/eureka/
+      defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
 #  instance:
 #    hostname: ${My_host}
 #    securePortEnabled: true
