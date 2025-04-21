@@ -19,7 +19,7 @@ public class KafkaUserBalanceDecreaseEvent {
     private UUID userId; //유저 아이디
     private OrderType orderType; // buy/sell
     private BigDecimal price; //총 가격
-    private BigDecimal amount; // 수량
+    private BigDecimal quantity; // 수량
     private String tradingPair; //거래소 명칭
 
     public static KafkaUserBalanceDecreaseEvent fromCommand(CreateOrderCommand command) {
@@ -28,7 +28,7 @@ public class KafkaUserBalanceDecreaseEvent {
                 command.getUserId(),
                 command.getOrderType(),
                 command.getPrice(),
-                command.getAmount(),
+                command.getQuantity(),
                 command.getTradingPair()
         );
     }

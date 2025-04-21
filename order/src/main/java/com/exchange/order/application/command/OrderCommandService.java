@@ -14,7 +14,7 @@ public class OrderCommandService {
 
     public FindOrderResult createOrder(CreateOrderCommand command) {
         KafkaUserBalanceDecreaseEvent kafkaUserBalanceDecreaseEvent = KafkaUserBalanceDecreaseEvent.fromCommand(command);
-        kafkaTemplate.send("user-balance-Decrease", kafkaUserBalanceDecreaseEvent);
+        kafkaTemplate.send("order-to-user.excute-decrease-balance", kafkaUserBalanceDecreaseEvent);
         return FindOrderResult.fromResult(kafkaUserBalanceDecreaseEvent);
     }
 }
