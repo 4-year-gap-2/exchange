@@ -1,6 +1,7 @@
 package com.exchange.order_completed.config;
 
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
+@Slf4j
 public class KafkaConsumerConfig {
 
     @Value("${spring.kafka.host}")
@@ -63,9 +65,10 @@ public class KafkaConsumerConfig {
         // 1초 간격으로 최대 3회 재시도
         FixedBackOff backOff = new FixedBackOff(1_000L, 3L);
 
+        // 최대 재시도 횟수 초과 시 보상 트랜잭션 큐(Dead Letter Queue)로 메시지 이동
         // 3회 재시도 실패 시 4yearGap.match.OrderCompletedCompensatorEvent.compensation 토픽으로 publish
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(template, (record, ex) ->
-                new TopicPartition("4yearGap.match.OrderCompletedCompensatorEvent.compensation", record.partition())
+                new TopicPartition("order_completed-to-user.execute-order-info-save-compensation", record.partition())
         );
 
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
@@ -76,6 +79,10 @@ public class KafkaConsumerConfig {
         // 보상 트랜잭션 큐로 이동한 메시지는 다시 처리하지 않도록 설정
         handler.setCommitRecovered(true);
         handler.setAckAfterHandle(true);
+        handler.setRetryListeners((record, ex, deliveryAttempt) -> {
+            log.error("Retry #{} for record {} failed", deliveryAttempt, record, ex);
+        });
+
 
         return handler;
     }
