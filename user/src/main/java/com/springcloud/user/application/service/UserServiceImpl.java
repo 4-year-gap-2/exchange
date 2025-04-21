@@ -50,4 +50,9 @@ public class UserServiceImpl implements UserService{
     public void internalDecrementBalance(DecreaseBalanceCommand command) {
         userBalanceCommandService.internalDecrementBalance(command);
     }
+
+    @Override
+    public void internalIncrementBalance(IncreaseBalanceCommand command) {
+        userBalanceCommandService.internalIncrementBalance(command);
+    }
 }

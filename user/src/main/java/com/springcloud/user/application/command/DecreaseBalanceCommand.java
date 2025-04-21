@@ -15,7 +15,7 @@ public class DecreaseBalanceCommand {
     private String orderType; // buy/sell
     private BigDecimal price; //총 가격
     private BigDecimal amount; // 수량
-    private String symbol; //거래소 명칭
+    private String tradingPair; //거래소 명칭
 
 
 
@@ -24,7 +24,7 @@ public class DecreaseBalanceCommand {
         return new DecreaseBalanceCommand(
                 event.getOrderId(),
                 event.getUserId(),
-                event.getSymbol(),
+                event.getTradingPair(),
                 event.getPrice(),
                 event.getAmount(),
                 event.getOrderType());
