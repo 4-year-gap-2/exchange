@@ -18,7 +18,7 @@ public class CreateOrderRequest {
     @DecimalMin("0.0001")
     private BigDecimal price; //총 가격
     @DecimalMin("0.0001")
-    private BigDecimal amount; // 수량
+    private BigDecimal quantity; // 수량
     private String tradingPair; //거래소 명칭
 
     public CreateOrderCommand toCommand(UUID userId) {
@@ -27,7 +27,7 @@ public class CreateOrderRequest {
                 .userId(userId)
                 .orderType(orderType)
                 .price(price)
-                .amount(amount)
-                .symbol(tradingPair).build();
+                .quantity(quantity)
+                .tradingPair(tradingPair).build();
     }
 }
