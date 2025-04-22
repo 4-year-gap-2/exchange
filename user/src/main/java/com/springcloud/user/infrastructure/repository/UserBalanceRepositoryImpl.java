@@ -1,5 +1,6 @@
 package com.springcloud.user.infrastructure.repository;
 
+import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,11 @@ public class UserBalanceRepositoryImpl implements UserBalanceRepository {
     @Override
     public Optional<UserBalance> findByWalletWithLock(String wallet) {
         return userBalanceJpaRepository.findByWalletWithLock(wallet);
+    }
+
+    @Override
+    public Optional<UserBalance> findByUserAndCoinForUpdate(User user, String targetCoin) {
+        return userBalanceJpaRepository.findByUserAndCoinForUpdate(user, targetCoin);
     }
 
     @Override

@@ -42,7 +42,7 @@ public class JwtUtil {
     // 토큰 만료 시간(24시간)
     private static final long TOKEN_EXPIRATION_TIME = HOURS_IN_A_DAY * SECONDS_IN_AN_HOUR * MILLISECONDS_IN_A_SECOND;
 
-    @Value("${jwt.secret.key}")
+    @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
     // Secret Key를 담을 객체

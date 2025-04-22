@@ -16,9 +16,9 @@ public class MatchingCompensateListener {
     public MatchingCompensateListener(MatchingCompensationService service) {
         this.balanceCompensationService = service;
     }
-
+    //체결 실패 시 보상(자산 증가)
     @KafkaListener(
-            topics = {"4yearGap.match.MatchCompensatorEvent.compensation"},
+            topics = {"order_completed-to-user.execute-order-info-save-compensation"},
             containerFactory = "matchingCompensatorEventKafkaListenerContainerFactory"
     )
     public void increaseBalance(ConsumerRecord<String, MatchCompensatorEvent> record) {

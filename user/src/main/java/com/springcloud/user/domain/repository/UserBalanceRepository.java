@@ -1,7 +1,7 @@
 package com.springcloud.user.domain.repository;
 
+import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -15,6 +15,8 @@ public interface UserBalanceRepository {
     boolean existsByUser_UserIdAndCoin_CoinId(UUID userId, UUID coinId);
 
     Optional<UserBalance> findByWalletWithLock(@Param("wallet") String wallet);
+
+    Optional<UserBalance> findByUserAndCoinForUpdate(User user, String targetCoin);
 
 
 
