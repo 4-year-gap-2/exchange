@@ -46,4 +46,11 @@ public class UserBalance {
         this.totalBalance = this.totalBalance.add(amount);
         this.availableBalance = this.availableBalance.add(amount);
     }
+
+    public void decrease(BigDecimal requiredAmount) {
+        if (this.availableBalance.compareTo(requiredAmount) < 0) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        this.availableBalance = this.availableBalance.subtract(requiredAmount);
+    }
 }
