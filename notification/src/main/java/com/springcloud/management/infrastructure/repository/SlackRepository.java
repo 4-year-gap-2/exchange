@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
-public interface SlackRepository extends JpaRepository<Slack, UUID>, SlackStore, SlackReader, SlackRepositoryCustom {
+public interface SlackRepository extends JpaRepository<Slack, UUID>, SlackStore, SlackReader {
 }

@@ -23,11 +23,13 @@ public class SlackKafkaListener {
             containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
-    public void increaseBalance(ConsumerRecord<String, NotificationKafkaEvent> record) {
+    public void slackListener(ConsumerRecord<String, NotificationKafkaEvent> record) {
+
 
         CreateSlackCommand command = CreateSlackCommand.fromEvent(record.value());
-        slackService.saveSlackMessage(command, command.createMessage(record.topic()));
-        slackClientAdapter.sendSlackMessageToAdminChannel(command.createMessage(record.topic()));
+        String message = command.createMessage(record.topic());
+        slackService.saveSlackMessage(command,message);
+        slackClientAdapter.sendSlackMessageToAdminChannel(message);
 
     }
 }

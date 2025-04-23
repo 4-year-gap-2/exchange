@@ -16,10 +16,19 @@ public class TradeServiceImpl implements TradeService {
     private final ChartRepositoryReader chartRepositoryReader;
 
     public List<TradeDataInfo> getTradeInfo(String pair, TimeInterval timeInterval) {
+
         String formattedPair = pair.toLowerCase().replace("/", "");
         String timeFormat = timeInterval.getShortCode();
         String viewName = String.format("%s_%s_trades", formattedPair, timeFormat);
+        if (!isValidIdentifier(viewName) || !isValidIdentifier(timeFormat)) {
+            throw new IllegalArgumentException("Invalid SQL identifier");
+        }
+        return chartRepositoryReader.searchDataFromView(viewName, timeInterval.getInterval());
+    }
 
-        return chartRepositoryReader.searchDataFromView(viewName , timeInterval.getInterval());
+    private boolean isValidIdentifier(String identifier) {
+        // SQL 식별자에 대한 간단한 검증 로직
+        // 알파벳, 숫자, 언더스코어만 허용하고 SQL 키워드 금지 등
+        return identifier != null && identifier.matches("^[a-zA-Z0-9]+$");
     }
 }

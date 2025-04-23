@@ -38,8 +38,6 @@ public class ChartRepositoryReader {
 
     public List<TradeDataInfo> searchDataFromView(String viewName, String timeColumnName) {
 
-        System.out.println(jdbcTemplate.getDataSource().toString());
-
         String sql = "SELECT " + timeColumnName + ", pair, first_price, last_price, max_price, min_price, amount FROM " + viewName;
 
         RowMapper<TradeDataInfo> rowMapper = (rs, rowNum) -> {
