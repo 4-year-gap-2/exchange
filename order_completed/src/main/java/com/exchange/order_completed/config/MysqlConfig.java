@@ -42,7 +42,6 @@ public class MysqlConfig {
     private String username;
 
     @Bean
-    @Primary
     public DataSource mysqlDataSource() {
 
         return DataSourceBuilder.create()

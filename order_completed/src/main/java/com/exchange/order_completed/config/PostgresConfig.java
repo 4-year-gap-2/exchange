@@ -43,6 +43,7 @@ public class PostgresConfig {
     private String username;
 
     @Bean
+    @Primary
     public DataSource postgresDataSource() {
 
         return DataSourceBuilder.create()
