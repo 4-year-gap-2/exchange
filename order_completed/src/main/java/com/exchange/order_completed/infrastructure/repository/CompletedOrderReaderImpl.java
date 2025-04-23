@@ -5,6 +5,7 @@ import com.exchange.order_completed.domain.repository.CompletedOrderReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -16,5 +17,10 @@ public class CompletedOrderReaderImpl implements CompletedOrderReader {
     @Override
     public CompletedOrder findByUserIdAndOrderId(UUID userId, UUID orderId) {
         return completedOrderReaderRepository.findByUserIdAndOrderId(userId, orderId);
+    }
+
+    @Override
+    public Optional<Object> findByOrderId(UUID orderId) {
+        return completedOrderReaderRepository.findByOrderId(orderId);
     }
 }
