@@ -88,14 +88,14 @@ public class MatchingServiceV2 implements MatchingService {
 
         String[] parts = strOrder.split("\\|");
 
-        double quantity = Double.parseDouble(parts[1]);
+        BigDecimal quantity = new BigDecimal(parts[1]);
         long time = Long.parseLong(parts[0]);
-        BigDecimal price = BigDecimal.valueOf(score);
+        BigDecimal price = new BigDecimal(score);
         return new V2MatchOrder(
                 stockCode,
                 orderType,
                 price,
-                BigDecimal.valueOf(quantity),
+                quantity,
                 UUID.fromString(parts[2]),
                 UUID.fromString(parts[3]),
                 score,
@@ -120,7 +120,7 @@ public class MatchingServiceV2 implements MatchingService {
     }
 
     private String serializeOrder(V2MatchOrder order) {
-        return order.getTimeRecord() + "|" + order.getQuantity() + "|" + order.getUserId() + "|" + order.getOrderId();
+        return order.getTimeRecord() + "|" + order.getQuantity()+ "|" + order.getUserId() + "|" + order.getOrderId();
     }
 
 
@@ -128,6 +128,7 @@ public class MatchingServiceV2 implements MatchingService {
         String key = order.getOrderType().equals(OrderType.BUY) ? "v2:orders:buy:" + order.getTradingPair() : "v2:orders:sell:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         String strOrder = serializeOrder(order);
+        log.info("{} 삭제" , strOrder);
         zSetOperations.remove(key, strOrder);
     }
 
@@ -163,8 +164,8 @@ public class MatchingServiceV2 implements MatchingService {
             return new MatchingServiceV2.V2MatchOrder(
                     command.tradingPair(),
                     command.orderType(),
-                    command.price().stripTrailingZeros(),
-                    command.quantity().stripTrailingZeros(),
+                    new BigDecimal(command.price().stripTrailingZeros().toPlainString()),
+                    new BigDecimal(command.quantity().stripTrailingZeros().toPlainString()),
                     command.userId(),
                     command.orderId(),
                     0,
