@@ -16,7 +16,7 @@ public interface UserBalanceRepository {
 
     Optional<UserBalance> findByWalletWithLock(@Param("wallet") String wallet);
 
-    Optional<UserBalance> findByUserAndCoinForUpdate(User user, String targetCoin);
+    Optional<UserBalance> findByUserAndCoinSymbolForUpdate(User user, String targetCoin);
 
 
 
