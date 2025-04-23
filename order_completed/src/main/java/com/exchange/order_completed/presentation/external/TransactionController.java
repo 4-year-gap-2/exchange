@@ -59,5 +59,11 @@ public class TransactionController {
         ListTransactionResponse transactionV1s = facade.getTransactionsByUserId(request, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(transactionV1s));
     }
+
+    @GetMapping(value = "/chart/{interval}")
+    public ResponseEntity<ResponseDto<ListTransactionResponse>> getChartData(@PathVariable(value = "interval") String interval) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success());
+    }
 }
 
