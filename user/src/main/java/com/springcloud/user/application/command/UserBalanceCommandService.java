@@ -1,5 +1,6 @@
 package com.springcloud.user.application.command;
 
+import com.springcloud.user.application.enums.OrderType;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.domain.entity.Coin;
 import com.springcloud.user.domain.entity.User;
@@ -7,14 +8,16 @@ import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.CoinRepository;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
 import com.springcloud.user.domain.repository.UserRepository;
-import lombok.AllArgsConstructor;
+import com.springcloud.user.infrastructure.dto.KafkaOrderFormEvent;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserBalanceCommandService {
@@ -22,6 +25,7 @@ public class UserBalanceCommandService {
     private final UserRepository userRepository;
     private final CoinRepository coinRepository;
     private final UserBalanceRepository userBalanceRepository;
+    private final KafkaTemplate<String, KafkaOrderFormEvent> kafkaTemplate;
 
     // UserBalance 생성 로직 (User 객체 파라미터 필요)
     @Transactional
@@ -58,6 +62,7 @@ public class UserBalanceCommandService {
                 .build();
     }
 
+    // 자산 증가 로직(외부 거래소 -> 우리 거래소
     @Transactional
     public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
 //        // 1. 애그리거트 루트로 유저밸런스 조회
@@ -75,11 +80,80 @@ public class UserBalanceCommandService {
         //Result에 함수 생성해서 코드 간결화
         //return new FindUserBalanceResult(balance.getBalanceId(),balance.getUser().getUserId(),balance.getCoin().getCoinId(),balance.getTotalBalance(),balance.getAvailableBalance(),balance.getWallet());
         return FindUserBalanceResult.from(balance);
+    }
 
+    //Kafka 에서 데이터 받아서 처리
+    //자산 차감 로직
+    @Transactional
+    public void internalDecrementBalance(DecreaseBalanceCommand command) {
+        log.info("Kafka 메시지 수신 및 자산 차감 로직 시작: {}", command);
+        try {
+            // 1. Symbol 분리 (BTC/KRW → ["BTC", "KRW"])
+            String[] currencies = command.getTradingPair().split("/");
 
+            if (currencies.length != 2) {
+                throw new IllegalArgumentException("잘못된 심볼 형식:"+command.getTradingPair());
+            }
 
+            // 2. 주문 유형에 따라 확인할 화폐 결정
+            String targetCoin = command.getOrderType().equals(OrderType.BUY)
+                    ? currencies[1] // 매수 → KRW 확인
+                    : currencies[0]; // 매도 → BTC 확인
+
+            // 3. 필요 금액 계산
+            BigDecimal requiredAmount = command.getOrderType().equals(OrderType.BUY)
+                    ? command.getPrice()   // 매수 → 총 가격
+                    : command.getQuantity(); // 매도 → 수량
+
+            User user = userRepository.findById(command.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다: "+ command.getUserId()));
+            //비관적 락 적용
+            UserBalance balance = userBalanceRepository.findByUserAndCoinForUpdate(user, targetCoin)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자산입니다: " + targetCoin));
+
+            //자산의 사용 가능 금액
+            BigDecimal availableBalance = balance.getAvailableBalance();
+
+            // 6. 잔액 검증 및 잔액 차감(도메인에서)
+            balance.decrease(requiredAmount);
+
+            kafkaTemplate.send("user-to-matching.execute-order-delivery",KafkaOrderFormEvent.fromEvent(command));
+
+        } catch (Exception e) {
+            log.error("자산 차감 중 문제 발생 유저에게 문제 사항 전송",e);
+            //소켓 서버로 문제 보내기
+            throw new RuntimeException();
+        }
 
     }
 
 
+    @Transactional
+    public void internalIncrementBalance(IncreaseBalanceCommand command) {
+
+        try {
+            String[] parts = command.getTradingPair().split("/");
+
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("잘못된 트레이딩 페어 형식: " + command.getTradingPair());
+            }
+
+            UserBalance buyerBalance = userBalanceRepository
+                    .findUserBalanceWithUserAndCoin(command.getBuyer(), parts[0])
+                    .orElseThrow(() -> new IllegalArgumentException(command.getSeller().toString() + "는 존재하지 않는 자산"));
+
+            UserBalance sellerBalance = userBalanceRepository
+                    .findUserBalanceWithUserAndCoin(command.getSeller(), parts[1])
+                    .orElseThrow(() -> new IllegalArgumentException(command.getSeller().toString() + "는 존재하지 않는 자산"));
+
+            buyerBalance.increase(command.getQuantity());
+
+            //이건 확인 필요
+            sellerBalance.increase(command.getQuantity().multiply(command.getPrice()));
+        } catch (Exception e) {
+            log.error("자산 증가 중 문제 발생 유저에게 문제 사항 전송",e);
+            //소켓 서버로 문제 보내기
+            throw new RuntimeException();
+        }
+    }
 }

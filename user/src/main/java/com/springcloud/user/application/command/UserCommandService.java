@@ -17,7 +17,7 @@ import java.util.Optional;
 @AllArgsConstructor
 @Service
 public class UserCommandService {
-
+    // 파일 위치를 고민해보자
     private UserBalanceCommandService userBalanceCommandService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
