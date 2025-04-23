@@ -44,7 +44,8 @@ public record CreateOrderStoreCommand(
                 this.price,
                 this.quantity,
                 this.orderType,
-                this.tradingPair
+                this.tradingPair,
+                null
         );
     }
 }

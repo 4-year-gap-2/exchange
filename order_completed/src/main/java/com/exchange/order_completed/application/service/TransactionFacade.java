@@ -5,6 +5,7 @@ import com.exchange.order_completed.application.query.FindTransactionQuery;
 import com.exchange.order_completed.application.response.TransactionResponse;
 import com.exchange.order_completed.application.response.ListTransactionResponse;
 import com.exchange.order_completed.domain.service.TransactionService;
+import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryReader;
 import com.exchange.order_completed.presentation.dto.CreateTransactionRequest;
 import com.exchange.order_completed.presentation.dto.FindTransactionRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,9 +17,10 @@ import java.util.Map;
 public class TransactionFacade {
 
     private final Map<String, TransactionService> transactionServiceMap;
-
-    public TransactionFacade(Map<String, TransactionService> transactionServiceMap) {
+    private final ChartRepositoryReader chartRepositoryReader;
+    public TransactionFacade(Map<String, TransactionService> transactionServiceMap, ChartRepositoryReader chartRepositoryReader) {
         this.transactionServiceMap = transactionServiceMap;
+        this.chartRepositoryReader = chartRepositoryReader;
     }
 
     public TransactionService getService(String type) {
