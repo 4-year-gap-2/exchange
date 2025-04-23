@@ -3,10 +3,12 @@ package com.springcloud.user.infrastructure.dto;
 import com.springcloud.user.application.command.DecreaseBalanceCommand;
 import com.springcloud.user.application.enums.OrderType;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+@Getter
 @AllArgsConstructor
 public class KafkaOrderFormEvent {
     private UUID orderId;
