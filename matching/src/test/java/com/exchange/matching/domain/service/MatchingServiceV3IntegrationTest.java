@@ -26,8 +26,8 @@ class MatchingServiceV3IntegrationTest {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    private static final String SELL_ORDER_KEY = "mjy:orders:sell:";
-    private static final String BUY_ORDER_KEY = "mjy:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v3:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v3:orders:buy:";
     private static final String TRADING_PAIR = "BTC/KRW";
 
     @BeforeEach
