@@ -3,7 +3,6 @@ package com.springcloud.user.infrastructure.external;
 
 import com.springcloud.user.application.command.DecreaseBalanceCommand;
 import com.springcloud.user.application.command.IncreaseBalanceCommand;
-import com.springcloud.user.application.service.BalanceCompensationService;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
@@ -19,10 +18,9 @@ import org.springframework.stereotype.Component;
 public class BalanceEventConsumer {
 
     private final UserService userService;
-    private final BalanceCompensationService balanceCompensationService;
 
     @KafkaListener(
-            topics = {"order-to-user.excute-decrease-balance"},
+            topics = {"order-to-user.execute-decrease-balance"},
             containerFactory = "orderEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
     )
