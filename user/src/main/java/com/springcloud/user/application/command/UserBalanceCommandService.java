@@ -108,7 +108,7 @@ public class UserBalanceCommandService {
             User user = userRepository.findById(command.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다: "+ command.getUserId()));
             //비관적 락 적용
-            UserBalance balance = userBalanceRepository.findByUserAndCoinForUpdate(user, targetCoin)
+            UserBalance balance = userBalanceRepository.findByUserAndCoinSymbolForUpdate(user, targetCoin)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자산입니다: " + targetCoin));
 
             //자산의 사용 가능 금액
@@ -116,9 +116,9 @@ public class UserBalanceCommandService {
 
             // 6. 잔액 검증 및 잔액 차감(도메인에서)
             balance.decrease(requiredAmount);
-
+            log.error("잔액 차감 완료");
             kafkaTemplate.send("user-to-matching.execute-order-delivery",KafkaOrderFormEvent.fromEvent(command));
-
+            log.error("매칭서버로 주문서 전달 완료");
         } catch (Exception e) {
             log.error("자산 차감 중 문제 발생 유저에게 문제 사항 전송",e);
             //소켓 서버로 문제 보내기
