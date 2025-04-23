@@ -18,8 +18,8 @@ import java.util.UUID;
 @Slf4j
 public class MatchingServiceV3 implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "mjy:orders:sell:";
-    private static final String BUY_ORDER_KEY = "mjy:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v3:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v3:orders:buy:";
 
     private final RedisTemplate<String, String> redisTemplate;
 

@@ -32,9 +32,8 @@ public class  MatchingServiceV2IntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // DEL kj_buy_orders:BTC/KRW 명령어 실행
-        redisTemplate.delete("kj_buy_orders:BTC/KRW");
-        redisTemplate.delete("kj_sell_orders:BTC/KRW");
+        redisTemplate.delete("v2:orders:buy:BTC/KRW");
+        redisTemplate.delete("v2:orders:sell:BTC/KRW");
     }
 
     @Test
@@ -125,11 +124,11 @@ public class  MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(command9);
 
 
-        Set<String> buyOrders = redisTemplate.opsForZSet().range("kj_buy_orders:BTC/KRW" , 0, -1);
+        Set<String> buyOrders = redisTemplate.opsForZSet().range("v2:orders:buy:BTC/KRW" , 0, -1);
         assertNotNull(buyOrders);
         assertEquals(3, buyOrders.size());
 
-        Set<String> sellOrders = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW" , 0, -1);
+        Set<String> sellOrders = redisTemplate.opsForZSet().range("v2:orders:sell:BTC/KRW" , 0, -1);
         assertNotNull(sellOrders);
         assertEquals(4, sellOrders.size());
     }
@@ -168,7 +167,7 @@ public class  MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("v2:orders:buy:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
         assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,secondBuyOrder.orderId().toString());
         System.out.println(remainingOrder);
@@ -198,7 +197,7 @@ public class  MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("v2:orders:buy:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
 
         assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,buyOrder.orderId().toString());
@@ -229,7 +228,7 @@ public class  MatchingServiceV2IntegrationTest {
         matchingService.matchOrders(sellOrder);
 
         //첫번째 주문은 완전 체결이 되고 주문이 하나만 남아야 함
-        String remainingOrder = redisTemplate.opsForZSet().range("kj_sell_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().range("v2:orders:sell:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
         assertNotNull(remainingOrder);
         assertEquals(remainingOrder,"0.1|" + userId.toString()+"|" ,sellOrder.orderId().toString());
 
@@ -261,7 +260,7 @@ public class  MatchingServiceV2IntegrationTest {
         Thread.sleep(2000);
         matchingService.matchOrders(buyOrder2);
 
-        String remainingOrder = redisTemplate.opsForZSet().reverseRange("kj_buy_orders:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
+        String remainingOrder = redisTemplate.opsForZSet().reverseRange("v2:orders:buy:BTC/KRW", 0, 0).stream().findFirst().orElse(null);
 
         assertNotNull(remainingOrder);
 
