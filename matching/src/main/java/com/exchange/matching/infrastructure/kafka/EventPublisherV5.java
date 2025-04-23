@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EventPublisher {
+public class EventPublisherV5 {
 
     private final EventStore eventStore;
 

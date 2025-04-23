@@ -4,7 +4,8 @@ import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 import com.exchange.matching.domain.event.MatchingEvent;
 import com.exchange.matching.domain.event.MatchingEventType;
-import com.exchange.matching.infrastructure.kafka.EventPublisher;
+import com.exchange.matching.infrastructure.kafka.EventPublisherV5;
+import com.exchange.matching.infrastructure.kafka.MessageSenderV5;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,15 +32,15 @@ public class MatchingServiceV5 implements MatchingService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
-    private final EventPublisher eventPublisher;
-    private final KafkaMessageSender kafkaMessageSender; // Kafka 메시지 전송을 위한 서비스
+    private final EventPublisherV5 eventPublisherV5;
+    private final MessageSenderV5 messageSenderV5; // Kafka 메시지 전송을 위한 서비스
 
     public MatchingServiceV5(RedisTemplate<String, String> redisTemplate,
-                             EventPublisher eventPublisher,
-                             KafkaMessageSender kafkaMessageSender) {
+                             EventPublisherV5 eventPublisherV5,
+                             MessageSenderV5 messageSenderV5) {
         this.redisTemplate = redisTemplate;
-        this.eventPublisher = eventPublisher;
-        this.kafkaMessageSender = kafkaMessageSender;
+        this.eventPublisherV5 = eventPublisherV5;
+        this.messageSenderV5 = messageSenderV5;
 
         // Lua 스크립트 로드
         DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
@@ -68,20 +69,20 @@ public class MatchingServiceV5 implements MatchingService {
 
         // 복구를 위한 주문 접수 이벤트 발행
         MatchingEvent orderReceivedEvent = MatchingEvent.orderReceived(matchingOrder, correlationId);
-        eventPublisher.publish(orderReceivedEvent);
+        eventPublisherV5.publish(orderReceivedEvent);
 
         try {
             matchingProcess(matchingOrder, correlationId);
 
             // 모든 프로세스 정상 종료 기록된 이벤트 모두 제거 (완료 이벤트 발행 후)
             MatchingEvent completedEvent = MatchingEvent.processingCompleted(correlationId);
-            eventPublisher.publish(completedEvent);
+            eventPublisherV5.publish(completedEvent);
 
             // Kafka로 처리 완료 메시지 전송
-            kafkaMessageSender.sendProcessingCompletedMessage(correlationId);
+            messageSenderV5.sendProcessingCompletedMessage(correlationId);
 
             // 이벤트 처리 완료 표시 (이벤트 삭제 또는 상태 변경)
-            eventPublisher.markEventsAsProcessed(correlationId);
+            eventPublisherV5.markEventsAsProcessed(correlationId);
         } catch (Exception e) {
             log.error("주문 매칭 처리 중 오류 발생: {}", e.getMessage(), e);
             // 오류가 발생해도 이벤트는 이미 저장되어 있으므로 복구 가능
@@ -155,7 +156,7 @@ public class MatchingServiceV5 implements MatchingService {
         );
 
         // 복구를 위한 주문 접수 이벤트는 이미 발행되었으므로 삭제 가능
-        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_RECEIVED);
+        eventPublisherV5.deleteEvent(correlationId, MatchingEventType.ORDER_RECEIVED);
 
         // 결과 파싱
         boolean matched = "true".equals(results.get(0));
@@ -163,7 +164,7 @@ public class MatchingServiceV5 implements MatchingService {
         if (!matched) {
             // 미체결 상황이라면 복구를 위한 미체결 event 발행
             MatchingEvent unmatchedEvent = MatchingEvent.orderUnmatched(order, correlationId);
-            eventPublisher.publish(unmatchedEvent);
+            eventPublisherV5.publish(unmatchedEvent);
 
             return new MatchingResult(false, null, null, BigDecimal.ZERO, order.getQuantity());
         }
@@ -185,13 +186,13 @@ public class MatchingServiceV5 implements MatchingService {
         // 체결 상황이라면 복구를 위한 체결 event 발행
         MatchingEvent matchedEvent = MatchingEvent.orderMatched(
                 order, oppositeOrder, matchedQuantity, matchPrice, correlationId);
-        eventPublisher.publish(matchedEvent);
+        eventPublisherV5.publish(matchedEvent);
 
         // 잔여 수량이 있을 경우 복구를 위한 잔여 체결 event 발행
         if (remainingQuantity.compareTo(BigDecimal.ZERO) > 0) {
             MatchingEvent remainingEvent = MatchingEvent.orderRemaining(
                     order, remainingQuantity, correlationId);
-            eventPublisher.publish(remainingEvent);
+            eventPublisherV5.publish(remainingEvent);
         }
 
         return new MatchingResult(
@@ -208,10 +209,10 @@ public class MatchingServiceV5 implements MatchingService {
      */
     private void saveUnmatchedOrder(MatchingOrder order, String correlationId) {
         // Kafka로 미체결 주문 데이터 전달
-        kafkaMessageSender.sendUnmatchedOrderMessage(order, correlationId);
+        messageSenderV5.sendUnmatchedOrderMessage(order, correlationId);
 
         // 미체결 이벤트 처리 완료로 표시 (이벤트 삭제)
-        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_UNMATCHED);
+        eventPublisherV5.deleteEvent(correlationId, MatchingEventType.ORDER_UNMATCHED);
 
         log.info("{} 미체결 : {}원 {}개 (주문ID: {}, 사용자ID: {})",
                 order.getOrderType(), order.getPrice(),
@@ -229,11 +230,11 @@ public class MatchingServiceV5 implements MatchingService {
         MatchingOrder sellOrder = OrderType.SELL.equals(order.getOrderType()) ? order : oppositeOrder;
 
         // Kafka로 체결 정보 전달
-        kafkaMessageSender.sendMatchedOrderMessage(
+        messageSenderV5.sendMatchedOrderMessage(
                 buyOrder, sellOrder, matchedQuantity, executionPrice, correlationId);
 
         // 체결 이벤트 처리 완료로 표시 (이벤트 삭제)
-        eventPublisher.deleteEvent(correlationId, MatchingEventType.ORDER_MATCHED);
+        eventPublisherV5.deleteEvent(correlationId, MatchingEventType.ORDER_MATCHED);
 
         // 잔여 수량 이벤트가 있으면 처리 (삭제하지 않고 다음 매칭 단계에서 사용)
 

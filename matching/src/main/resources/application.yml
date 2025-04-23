@@ -20,6 +20,8 @@ spring:
     host: ${KAFKA_HOST}
     username: ${KAFKA_NAME}
     password: ${KAFKA_PASSWORD}
+    consumer:
+      auto-offset-reset: earliest
 
   data:
     redis:

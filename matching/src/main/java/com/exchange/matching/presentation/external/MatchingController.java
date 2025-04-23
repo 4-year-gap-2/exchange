@@ -16,33 +16,41 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class MatchingController {
 
-    private final KafkaTemplate<String, KafkaMatchingEvent> matchingEventKafkaTemplate;
+    private final KafkaTemplate<String, KafkaMatchingEvent> orderDeliveryKafkaTemplate;
 
     @PostMapping("/v1")
     public ResponseEntity<ResponseDto<String>> matchV1(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v1",
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v1",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
     @PostMapping("/v2")
     public ResponseEntity<ResponseDto<String>> matchV2(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v2",
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v2",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
     @PostMapping("/v4")
     public ResponseEntity<ResponseDto<String>> matchV4(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v4",
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v4",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
     @PostMapping("/v5")
     public ResponseEntity<ResponseDto<String>> matchV5(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        matchingEventKafkaTemplate.send("user-to-matching.execute-order-delivery.v5",
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v5",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
+
+    @PostMapping("/v6")
+    public ResponseEntity<ResponseDto<String>> matchV6(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
 }

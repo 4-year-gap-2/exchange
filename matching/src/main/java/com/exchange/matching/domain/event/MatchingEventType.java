@@ -8,5 +8,6 @@ public enum MatchingEventType {
     ORDER_UNMATCHED,     // 미체결
     ORDER_MATCHED,       // 체결
     ORDER_REMAINING,     // 잔여 주문
-    PROCESSING_COMPLETED // 처리 완료
+    PROCESSING_COMPLETED, // 처리 완료
+    ERROR // 에러
 }

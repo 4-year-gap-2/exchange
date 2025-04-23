@@ -6,10 +6,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 
+/**
+ * 특정 이벤트 타입에 대한 Kafka 설정 클래스
+ */
 @Configuration
 public class KafkaConfig {
+
+    private static final int DEFAULT_CONCURRENCY = 3;
+    private static final int RECOVERY_CONCURRENCY = 2;
 
     private final KafkaCommonConfig kafkaCommonConfig;
 
@@ -17,43 +22,43 @@ public class KafkaConfig {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
 
+    /**
+     * 매칭 이벤트 리스너 컨테이너 팩토리
+     */
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> matchingEventKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
-
-        factory.setConsumerFactory(
-                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-                }, "matching-service")
-        );
-
-        return factory;
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> orderDeliveryKafkaListenerContainerFactory() {
+        return kafkaCommonConfig.createAutoCommitListenerFactory(
+                new TypeReference<>() {
+                }, "matching-service", DEFAULT_CONCURRENCY);
     }
 
+    /**
+     * 복구 이벤트 리스너 컨테이너 팩토리
+     */
     @Bean
-    public KafkaTemplate<String, KafkaMatchingEvent> matchingEventKafkaTemplate() {
-        ProducerFactory<String, KafkaMatchingEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, String> recoveryEventKafkaListenerContainerFactory() {
+        return kafkaCommonConfig.createManualCommitListenerFactory(
+                new TypeReference<>() {
+                }, "recovery-service", RECOVERY_CONCURRENCY);
+    }
+
+    /**
+     * 매칭 이벤트 전용 Kafka 템플릿
+     */
+    @Bean
+    public KafkaTemplate<String, KafkaMatchingEvent> orderDeliveryKafkaTemplate() {
+        return new KafkaTemplate<>(
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
-                });
-        return new KafkaTemplate<>(factory);
+                }));
     }
 
+    /**
+     * 제네릭 객체 전송용 Kafka 템플릿
+     */
     @Bean
-    public KafkaTemplate<String, Object> genericKafkaTemplate() {
-        ProducerFactory<String, Object> factory =
+    public KafkaTemplate<String, Object> kafkaTemplate() {
+        return new KafkaTemplate<>(
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
-                });
-        return new KafkaTemplate<>(factory);
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> recoveryEventKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
-
-        factory.setConsumerFactory(
-                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-                }, "recovery-service")
-        );
-
-        return factory;
+                }));
     }
 }

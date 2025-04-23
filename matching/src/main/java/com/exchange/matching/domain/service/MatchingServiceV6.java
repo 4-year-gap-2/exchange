@@ -21,22 +21,24 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class MatchingServiceV4 implements MatchingService {
+public class MatchingServiceV6 implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "v4:orders:sell:";
-    private static final String BUY_ORDER_KEY = "v4:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v6:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v6:orders:buy:";
+    private static final String MATCH_STREAM_KEY = "v6:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6:stream:unmatched";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
 
-    public MatchingServiceV4(RedisTemplate<String, String> redisTemplate) {
+    public MatchingServiceV6(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
 
         // Lua 스크립트 로드
         DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
         script.setResultType((Class) List.class);
         try {
-            ClassPathResource resource = new ClassPathResource("scripts/matching.lua");
+            ClassPathResource resource = new ClassPathResource("scripts/matchingV6.lua");
             String scriptText = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             script.setScriptText(scriptText);
         } catch (IOException e) {
@@ -118,11 +120,17 @@ public class MatchingServiceV4 implements MatchingService {
         // Lua 스크립트 실행
         List<Object> results = redisTemplate.execute(
                 matchingScript,
-                Arrays.asList(oppositeOrderKey, currentOrderKey),
+                Arrays.asList(
+                        oppositeOrderKey,
+                        currentOrderKey,
+                        MATCH_STREAM_KEY,
+                        UNMATCH_STREAM_KEY
+                ),
                 order.getOrderType().toString(),
                 order.getPrice().toString(),
                 order.getQuantity().toString(),
-                orderDetails
+                orderDetails,
+                order.getTradingPair()
         );
 
         // 결과 파싱

@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.service;
+package com.exchange.matching.infrastructure.kafka;
 
 import com.exchange.matching.domain.service.MatchingServiceV5.MatchingOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaMessageSender {
+public class MessageSenderV5 {
 
     private static final String UNMATCHED_ORDER_TOPIC = "matching-to-matching.execute-unmatched-orders";
     private static final String MATCHED_ORDER_TOPIC = "matching-to-matching.execute-matched-orders";
