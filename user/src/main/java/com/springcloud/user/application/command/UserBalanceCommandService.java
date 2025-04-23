@@ -99,31 +99,26 @@ public class UserBalanceCommandService {
             String targetCoin = command.getOrderType().equals(OrderType.BUY)
                     ? currencies[1] // 매수 → KRW 확인
                     : currencies[0]; // 매도 → BTC 확인
-            log.info("Symbol 분리 성공"+ currencies[1]);
-
 
             // 3. 필요 금액 계산
             BigDecimal requiredAmount = command.getOrderType().equals(OrderType.BUY)
                     ? command.getPrice()   // 매수 → 총 가격
                     : command.getQuantity(); // 매도 → 수량
-            log.info("필요 금액 계산"+ requiredAmount);
 
             User user = userRepository.findById(command.getUserId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다: "+ command.getUserId()));
-            log.info("유저 객체 생성");
             //비관적 락 적용
             UserBalance balance = userBalanceRepository.findByUserAndCoinSymbolForUpdate(user, targetCoin)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 자산입니다: " + targetCoin));
-            log.info("밸런스 생성");
 
             //자산의 사용 가능 금액
             BigDecimal availableBalance = balance.getAvailableBalance();
 
             // 6. 잔액 검증 및 잔액 차감(도메인에서)
             balance.decrease(requiredAmount);
-            log.info("잔액 차감 에러");
+            log.error("잔액 차감 완료");
             kafkaTemplate.send("user-to-matching.execute-order-delivery",KafkaOrderFormEvent.fromEvent(command));
-
+            log.error("매칭서버로 주문서 전달 완료");
         } catch (Exception e) {
             log.error("자산 차감 중 문제 발생 유저에게 문제 사항 전송",e);
             //소켓 서버로 문제 보내기
