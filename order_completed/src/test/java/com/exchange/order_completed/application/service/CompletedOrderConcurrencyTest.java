@@ -2,6 +2,7 @@ package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
 import com.exchange.order_completed.infrastructure.repository.CompletedOrderReaderRepository;
+import com.exchange.order_completed.infrastructure.repository.CompletedOrderStoreRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class CompletedOrderConcurrencyTest {
 
     @Autowired
-    private CompletedOrderReaderRepository repository;
+    private CompletedOrderReaderRepository readerRepository;
+
+    @Autowired
+    private CompletedOrderStoreRepository storeRepository;
 
     @Autowired
     private CassandraTemplate cassandraTemplate;    // 직접 쿼리용
@@ -46,7 +50,7 @@ class CompletedOrderConcurrencyTest {
 
         List<Future<Void>> futures = IntStream.range(0, 2).mapToObj(i -> exec.<Void>submit(() -> {
             // 동시 find
-            CompletedOrder existing = repository.findByUserIdAndOrderId(userId, orderId);
+            CompletedOrder existing = readerRepository.findByUserIdAndOrderId(userId, orderId);
             barrier.await();    // 두 스레드 모두 find 끝날 때까지 대기
 
             if (existing != null) {
@@ -64,7 +68,7 @@ class CompletedOrderConcurrencyTest {
                     .tradingPair("BTC-USD")
                     .build();
 
-            repository.save(order);
+            storeRepository.save(order);
             return null;
         })).toList();
 
