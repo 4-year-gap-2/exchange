@@ -1,8 +1,5 @@
 package com.exchange.order_completed.common.exception;
 
-import com.exchange.order_completed.common.exception.CustomConflictException;
-import com.exchange.order_completed.common.exception.CustomForbiddenException;
-import com.exchange.order_completed.common.exception.CustomNotFoundException;
 import com.exchange.order_completed.common.response.ResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +17,8 @@ public class GlobalExceptionHandler {
                     Exception.class,
                     CustomForbiddenException.class,
                     CustomConflictException.class,
-                    CustomTimeoutException.class
+                    CustomTimeoutException.class,
+                    DuplicateOrderCompletionException.class
             })
     @ResponseBody
     public ResponseEntity<ResponseDto<Object>> handleExceptions(Exception e) {
@@ -39,6 +37,8 @@ public class GlobalExceptionHandler {
             return HttpStatus.CONFLICT;
         } else if (e instanceof CustomTimeoutException) {
             return HttpStatus.GATEWAY_TIMEOUT;
+        } else if (e instanceof DuplicateOrderCompletionException) {
+            return HttpStatus.CONFLICT;
         }
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
