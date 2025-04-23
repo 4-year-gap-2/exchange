@@ -1,6 +1,7 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 
 import java.math.BigDecimal;
@@ -36,5 +37,14 @@ public record CreateOrderStoreCommand(
                 .orderId(orderId)
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+    public Chart toChartData(){
+        return new Chart(
+                UUID.randomUUID(),
+                this.price,
+                this.quantity,
+                this.orderType,
+                this.tradingPair
+        );
     }
 }

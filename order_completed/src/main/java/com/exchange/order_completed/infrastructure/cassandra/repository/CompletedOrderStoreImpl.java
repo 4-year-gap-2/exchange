@@ -1,4 +1,4 @@
-package com.exchange.order_completed.infrastructure.repository;
+package com.exchange.order_completed.infrastructure.cassandra.repository;
 
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
 import com.exchange.order_completed.domain.repository.CompletedOrderStore;
