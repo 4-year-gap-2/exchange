@@ -1,4 +1,4 @@
-package com.exchange.order_completed.infrastructure.repository;
+package com.exchange.order_completed.infrastructure.mysql.repository;
 
 import com.exchange.order_completed.domain.entiry.TransactionV2;
 import org.springframework.data.domain.Page;

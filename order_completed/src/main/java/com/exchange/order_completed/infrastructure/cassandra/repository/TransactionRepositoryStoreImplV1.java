@@ -1,4 +1,4 @@
-package com.exchange.order_completed.infrastructure.repository;
+package com.exchange.order_completed.infrastructure.cassandra.repository;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.exchange.order_completed.domain.entiry.TransactionV1;
