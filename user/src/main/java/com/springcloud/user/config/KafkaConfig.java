@@ -50,7 +50,7 @@ public class KafkaConfig {
 
     // 유저 -> 매칭 주문서 전달
     @Bean
-    public KafkaTemplate<String, KafkaOrderFormEvent> OrederEventKafkaTemplate() {
+    public KafkaTemplate<String, KafkaOrderFormEvent> orederEventKafkaTemplate() { //KafkaTemplate 빈 메서드명은 소문자로 시작하도록 변경
         ProducerFactory<String, KafkaOrderFormEvent> factory =
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 });

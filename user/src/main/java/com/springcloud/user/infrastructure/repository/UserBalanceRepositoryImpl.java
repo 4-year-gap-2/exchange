@@ -29,6 +29,7 @@ public class UserBalanceRepositoryImpl implements UserBalanceRepository {
         return userBalanceJpaRepository.findByWalletWithLock(wallet);
     }
 
+
     @Override
     public Optional<UserBalance> findByUserAndCoinSymbolForUpdate(User user, String targetCoin) {
         return userBalanceJpaRepository.findByUserAndCoinSymbolForUpdate(user, targetCoin);

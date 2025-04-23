@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
     private final OrderService orderService;
     @PostMapping
-    public CreateOrderResponse creteOrder(HttpServletRequest request, @RequestBody CreateOrderRequest orderRequest) {
+    public CreateOrderResponse createOrder(HttpServletRequest request, @RequestBody CreateOrderRequest orderRequest) {
         // 권한 체크
         UserInfoHeader userInfo = new UserInfoHeader(request);
         CreateOrderCommand command = orderRequest.toCommand(userInfo.getUserId());

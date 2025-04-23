@@ -19,6 +19,7 @@ public class CreateOrderRequest {
     private BigDecimal price; //총 가격
     @DecimalMin("0.0001")
     private BigDecimal quantity; // 수량
+    @Pattern(regexp = "^[A-Z]{3,4}/[A-Z]{3,4}$", message = "거래 쌍은 'BTC/USD'와 같은 형식이어야 합니다")
     private String tradingPair; //거래소 명칭
 
     public CreateOrderCommand toCommand(UUID userId) {

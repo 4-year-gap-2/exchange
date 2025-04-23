@@ -32,7 +32,7 @@ public class KafkaConfig {
 //    }
 
     @Bean
-    public KafkaTemplate<String, KafkaUserBalanceDecreaseEvent> BalanceEventKafkaTemplate() {
+    public KafkaTemplate<String, KafkaUserBalanceDecreaseEvent> balanceEventKafkaTemplate() {
         ProducerFactory<String, KafkaUserBalanceDecreaseEvent> factory =
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 });
