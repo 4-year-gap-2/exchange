@@ -90,8 +90,6 @@ public class MatchingServiceV4 implements MatchingService {
                 break;
             }
         }
-
-        // 프로세스 종료 이벤트 발행
     }
 
     /**

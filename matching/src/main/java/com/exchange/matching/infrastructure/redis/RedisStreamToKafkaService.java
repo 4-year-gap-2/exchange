@@ -1,11 +1,13 @@
 package com.exchange.matching.infrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.lettuce.core.RedisException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Range;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
@@ -64,6 +66,7 @@ public class RedisStreamToKafkaService {
                 StreamMessageListenerContainer.StreamMessageListenerContainerOptions
                         .builder()
                         .pollTimeout(Duration.ofSeconds(1))
+                        .errorHandler((e) -> log.info("Redis Streams Listener 종료"))
                         .build();
 
         this.listenerContainer = StreamMessageListenerContainer.create(
@@ -94,38 +97,38 @@ public class RedisStreamToKafkaService {
         new Thread(this::processPendingMessages).start();
     }
 
-//    @PreDestroy
-//    public void shutdown() {
-//        log.info("Redis Stream Consumer 종료 중...");
-//        shuttingDown = true;
-//
-//        // 모든 pending 메시지가 처리될 때까지 대기 (최대 30초)
-//        int maxWaitSeconds = 30;
-//        for (int i = 0; i < maxWaitSeconds; i++) {
-//            int count = pendingCount.get();
-//            if (count <= 0) {
-//                break;
-//            }
-//            log.info("Pending 메시지 처리 대기 중: {}", count);
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                break;
-//            }
-//        }
-//
-//        if (matchSubscription != null) {
-//            matchSubscription.cancel();
-//        }
-//        if (unmatchSubscription != null) {
-//            unmatchSubscription.cancel();
-//        }
-//        if (listenerContainer != null) {
-//            listenerContainer.stop();
-//        }
-//        log.info("Redis Stream Consumer 종료 완료");
-//    }
+    @PreDestroy
+    public void shutdown() {
+        log.info("Redis Stream Consumer 종료 중...");
+        shuttingDown = true;
+
+        // 모든 pending 메시지가 처리될 때까지 대기 (최대 30초)
+        int maxWaitSeconds = 30;
+        for (int i = 0; i < maxWaitSeconds; i++) {
+            int count = pendingCount.get();
+            if (count <= 0) {
+                break;
+            }
+            log.info("Pending 메시지 처리 대기 중: {}", count);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        if (matchSubscription != null) {
+            matchSubscription.cancel();
+        }
+        if (unmatchSubscription != null) {
+            unmatchSubscription.cancel();
+        }
+        if (listenerContainer != null) {
+            listenerContainer.stop();
+        }
+        log.info("Redis Stream Consumer 종료 완료");
+    }
 
     private void createConsumerGroupIfNotExists(String streamKey, String groupName) {
         try {
