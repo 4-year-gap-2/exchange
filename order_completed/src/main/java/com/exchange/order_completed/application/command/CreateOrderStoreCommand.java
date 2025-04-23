@@ -45,7 +45,7 @@ public record CreateOrderStoreCommand(
                 this.quantity,
                 this.orderType,
                 this.tradingPair,
-                null
+                null // createdAt 값은 엔티티 내부에서 자동 생성됨
         );
     }
 }

@@ -17,10 +17,8 @@ import java.util.Map;
 public class TransactionFacade {
 
     private final Map<String, TransactionService> transactionServiceMap;
-    private final ChartRepositoryReader chartRepositoryReader;
-    public TransactionFacade(Map<String, TransactionService> transactionServiceMap, ChartRepositoryReader chartRepositoryReader) {
+    public TransactionFacade(Map<String, TransactionService> transactionServiceMap) {
         this.transactionServiceMap = transactionServiceMap;
-        this.chartRepositoryReader = chartRepositoryReader;
     }
 
     public TransactionService getService(String type) {

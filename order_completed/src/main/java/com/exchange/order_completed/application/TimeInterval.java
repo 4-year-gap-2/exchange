@@ -31,29 +31,4 @@ public enum TimeInterval {
         return interval;
     }
 
-    public static String toShortCode(TimeInterval interval) {
-        if (interval == null) {
-            return null;
-        }
-        return interval.getShortCode();
-    }
-
-    // 필요하다면 역방향 변환 메서드도 추가 가능
-    public static TimeInterval fromShortCode(String shortCode) {
-        for (TimeInterval interval : TimeInterval.values()) {
-            if (interval.shortCode.equalsIgnoreCase(shortCode)) {
-                return interval;
-            }
-        }
-        return null; // 또는 예외 처리
-    }
-
-    public static String convertToShortCode(String enumValue) {
-        try {
-            TimeInterval interval = TimeInterval.valueOf(enumValue.toUpperCase().replace("_", ""));
-            return interval.getShortCode();
-        } catch (IllegalArgumentException e) {
-            return null; // 또는 예외 처리
-        }
-    }
 }
