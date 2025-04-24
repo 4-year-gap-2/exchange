@@ -4,9 +4,9 @@ import com.springcloud.user.application.command.*;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.result.FindUserResult;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -24,4 +24,6 @@ public interface UserService {
     void internalDecrementBalance(DecreaseBalanceCommand command);
 
     void internalIncrementBalance(IncreaseBalanceCommand command);
+
+    Page<FindUserBalanceResult> findBalance(UUID userId, int page, int size);
 }

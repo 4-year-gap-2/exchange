@@ -14,7 +14,7 @@ import java.util.UUID;
 @Builder
 @Setter
 @Table(name = "p_user_balances")
-public class UserBalance {
+public class UserBalance extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID balanceId;// 별도의 PK 사용

@@ -4,6 +4,8 @@ import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserBalanceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -38,5 +40,10 @@ public class UserBalanceRepositoryImpl implements UserBalanceRepository {
     @Override
     public Optional<UserBalance> findUserBalanceWithUserAndCoin(UUID userId, String coinId) {
         return userBalanceJpaRepository.findUserBalanceWithUserAndCoin(userId,coinId);
+    }
+
+    @Override
+    public Page<UserBalance> findByUser(User user, Pageable pageable) {
+        return userBalanceJpaRepository.findByUser(user, pageable);
     }
 }

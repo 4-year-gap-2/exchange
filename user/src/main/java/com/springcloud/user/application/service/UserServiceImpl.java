@@ -1,14 +1,14 @@
 package com.springcloud.user.application.service;
 
 import com.springcloud.user.application.command.*;
-import com.springcloud.user.application.query.UserQueryService;
+import com.springcloud.user.application.query.UserBalanceQueryService;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.application.result.FindUserResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -16,8 +16,8 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService{
 
     private final UserCommandService userCommandService;
-    private final UserQueryService userQueryService;
     private final UserBalanceCommandService userBalanceCommandService;
+    private final UserBalanceQueryService userBalanceQueryService;
 //    private final ManagementCommandService managementCommandService;
 
 
@@ -54,5 +54,10 @@ public class UserServiceImpl implements UserService{
     @Override
     public void internalIncrementBalance(IncreaseBalanceCommand command) {
         userBalanceCommandService.internalIncrementBalance(command);
+    }
+
+    @Override
+    public Page<FindUserBalanceResult> findBalance(UUID userId, int page, int size) {
+        return userBalanceQueryService.findBalance(userId, page, size);
     }
 }
