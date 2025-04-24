@@ -4,6 +4,8 @@ import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -35,4 +37,6 @@ public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUI
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
                                                          @Param("coinId") String coinId);
+
+    Page<UserBalance> findByUser(User user, Pageable pageable);
 }
