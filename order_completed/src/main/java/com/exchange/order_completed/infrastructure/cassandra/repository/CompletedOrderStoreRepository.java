@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.exchange.order_completed.domain.entiry;
+package com.exchange.order_completed.domain.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -4,7 +4,7 @@ import com.exchange.order_completed.application.command.CreateTransactionCommand
 import com.exchange.order_completed.application.query.FindTransactionQuery;
 import com.exchange.order_completed.application.response.TransactionResponse;
 import com.exchange.order_completed.application.response.ListTransactionResponse;
-import com.exchange.order_completed.domain.entiry.TransactionV2;
+import com.exchange.order_completed.domain.entity.TransactionV2;
 import com.exchange.order_completed.infrastructure.mysql.repository.TransactionRepositoryReaderV2;
 import com.exchange.order_completed.infrastructure.mysql.repository.TransactionRepositoryStoreV2;
 import lombok.RequiredArgsConstructor;
