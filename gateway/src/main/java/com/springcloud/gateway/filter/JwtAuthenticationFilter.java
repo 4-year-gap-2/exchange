@@ -53,11 +53,11 @@ public class JwtAuthenticationFilter implements GlobalFilter {
 
         // 토큰 추출 위치: Authorization 헤더에서 토큰 추출 -> 쿠키에서 토큰 추출
         String rawAuthTokenFromCookie = getTokenFromCookie(request);
-        log.info("[RAW_AUTH_TOKEN_FROM_COOKIE] {}", rawAuthTokenFromCookie);
+        log.info("[AUTH_TOKEN] Cookie token exists: {}", rawAuthTokenFromCookie != null);
 
         // Bearer 접두어 제거
         String extractedToken = substringToken(rawAuthTokenFromCookie);
-        log.info("[EXTRACTED_TOKEN] {}", extractedToken);
+        log.info("[EXTRACTED_TOKEN] Length: {}", extractedToken != null ? extractedToken.length() : 0);
 
         // JWT 토큰 유효성 검증
         if(!validateToken(extractedToken)){
@@ -92,7 +92,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     private boolean validateToken(String token) {
         try {
             // parseSignedClaims() 사용 -> parseClaimsJws() 사용으로 변경
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parser().setSigningKey(key).build().parseSignedClaims(token);
             return true;
         } catch (SecurityException | MalformedJwtException e) {
             log.error("[JWT_SIGNATURE_ERROR] {}", e.getMessage());
@@ -107,6 +107,6 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     }
 
     private Claims getUserInfoFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 }

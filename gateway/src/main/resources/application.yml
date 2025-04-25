@@ -16,13 +16,13 @@ spring:
         - id: user-service-auth
           uri: lb://user-service
           predicates:
-          - Path=/api/auth/**
+            - Path=/api/auth/**
         - id: user-service-balances
           uri: lb://user-service
           predicates:
-                - Path=/api/balances/**
-        - id: order_completed          # 라우트 식별자
-          uri: lb://order_completed          # 'product-service'라는 이름으로 로드 밸런싱된 서비스로 라우팅
+            - Path=/api/balances/**
+        - id: order_completed-service          # 라우트 식별자
+          uri: lb://order_completed-service          # 'order-completed-service' 서비스로 로드 밸런싱
           predicates:
             - Path=/api/order_completed/**  # /product/** 경로로 들어오는 요청을 이 라우트로 처리
       discovery:
