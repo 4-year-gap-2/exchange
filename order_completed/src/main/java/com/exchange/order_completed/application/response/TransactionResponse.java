@@ -1,7 +1,7 @@
 package com.exchange.order_completed.application.response;
 
-import com.exchange.order_completed.domain.entiry.TransactionV1;
-import com.exchange.order_completed.domain.entiry.TransactionV2;
+import com.exchange.order_completed.domain.entity.TransactionV1;
+import com.exchange.order_completed.domain.entity.TransactionV2;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

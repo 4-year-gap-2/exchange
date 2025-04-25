@@ -1,11 +1,9 @@
 package com.exchange.order_completed.domain.postgresEntity;
 
 
-import com.exchange.order_completed.domain.entiry.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
-import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;

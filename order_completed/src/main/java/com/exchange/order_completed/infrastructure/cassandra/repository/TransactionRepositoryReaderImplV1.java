@@ -1,25 +1,20 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.datastax.oss.driver.api.core.cql.PagingState;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.exchange.order_completed.application.query.FindTransactionQuery;
-import com.exchange.order_completed.domain.entiry.TransactionV1;
+import com.exchange.order_completed.domain.entity.TransactionV1;
 import com.exchange.order_completed.domain.repository.TransactionReaderV1;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraOperations;
-import org.springframework.data.cassandra.core.cql.QueryOptions;
 import org.springframework.data.cassandra.core.query.CassandraPageRequest;
-import org.springframework.data.domain.OffsetScrollPosition;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Repository;
 
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
