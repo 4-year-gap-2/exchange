@@ -38,8 +38,8 @@ public class UserBalanceRepositoryImpl implements UserBalanceRepository {
     }
 
     @Override
-    public Optional<UserBalance> findUserBalanceWithUserAndCoin(UUID userId, String coinId) {
-        return userBalanceJpaRepository.findUserBalanceWithUserAndCoin(userId,coinId);
+    public Optional<UserBalance> findUserBalanceWithUserAndCoin(UUID userId, String symbol) {
+        return userBalanceJpaRepository.findUserBalanceWithUserAndCoin(userId, symbol);
     }
 
     @Override

@@ -21,7 +21,7 @@ public interface UserBalanceRepository {
     Optional<UserBalance> findByUserAndCoinSymbolForUpdate(User user, String targetCoin);
 
     Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
-                                                         @Param("coinId") String coinId);
+                                                         @Param("coinName") String coinName);
 
     Page<UserBalance> findByUser(User user, Pageable pageable);
 }
