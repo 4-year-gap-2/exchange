@@ -1,5 +1,6 @@
 package com.springcloud.user.domain.entity;
 
+import com.springcloud.user.common.exception.InsufficientBalanceException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -49,7 +50,7 @@ public class UserBalance extends BaseEntity {
 
     public void decrease(BigDecimal requiredAmount) {
         if (this.availableBalance.compareTo(requiredAmount) < 0) {
-            throw new IllegalArgumentException("잔액이 부족합니다.");
+            throw new InsufficientBalanceException("잔액이 부족합니다.",this.getAvailableBalance());
         }
         this.availableBalance = this.availableBalance.subtract(requiredAmount);
     }

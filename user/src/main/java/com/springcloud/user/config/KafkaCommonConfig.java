@@ -13,10 +13,12 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +37,9 @@ public class KafkaCommonConfig {
     @Value("${spring.kafka.password}")
     private String kafkaPassword;
 
+    @Value("${spring.kafka.consumer.auto-offset-reset:earliest}")
+    private String autoOffsetReset;
+
     public KafkaCommonConfig(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
@@ -44,26 +49,17 @@ public class KafkaCommonConfig {
      */
     public Map<String, Object> getBaseProducerConfig() {
         Map<String, Object> configProps = new HashMap<>();
-
-        // 기본 설정
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost + ":9092");
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        // 안정적인 메시지 전송을 위한 설정 추가
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
 
         // SASL 인증 관련 설정 추가
         addSaslConfig(configProps);
-
         return configProps;
-    }
-
-    /**
-     * 커스텀 직렬화기를 사용하는 Producer Factory 생성
-     */
-    public <T> ProducerFactory<String, T> createCustomProducerFactory(TypeReference<T> typeReference) {
-        Map<String, Object> configProps = getBaseProducerConfig();
-        return new DefaultKafkaProducerFactory<>(
-                configProps,
-                new StringSerializer(),
-                new CustomJsonSerializer<>(objectMapper, typeReference)
-        );
     }
 
     /**
@@ -71,27 +67,83 @@ public class KafkaCommonConfig {
      */
     public Map<String, Object> getBaseConsumerConfig(String groupId) {
         Map<String, Object> configProps = new HashMap<>();
-
-        // 기본 설정
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost + ":9092");
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         // SASL 인증 관련 설정 추가
         addSaslConfig(configProps);
-
         return configProps;
     }
 
     /**
-     * 커스텀 역직렬화기를 사용하는 Consumer Factory 생성
+     * 수동 커밋 방식의 Consumer 설정 맵 생성
      */
-    public <T> ConsumerFactory<String, T> createCustomConsumerFactory(TypeReference<T> typeReference, String groupId) {
+    public Map<String, Object> getManualCommitConsumerConfig(String groupId) {
         Map<String, Object> configProps = getBaseConsumerConfig(groupId);
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        return configProps;
+    }
+
+    /**
+     * 자동 커밋 방식의 Consumer 설정 맵 생성
+     */
+    public Map<String, Object> getAutoCommitConsumerConfig(String groupId) {
+        Map<String, Object> configProps = getBaseConsumerConfig(groupId);
+        configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
+        configProps.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, 5000); // 자동 커밋 주기 설정 (5초)
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        return configProps;
+    }
+
+
+
+    /**
+     * 커스텀 역직렬화기를 사용하는 Consumer Factory 생성 (수동 커밋)
+     */
+    public <T> ConsumerFactory<String, T> createManualCommitConsumerFactory(TypeReference<T> typeReference, String groupId) {
+        Map<String, Object> configProps = getManualCommitConsumerConfig(groupId);
         return new DefaultKafkaConsumerFactory<>(
                 configProps,
                 new StringDeserializer(),
                 new CustomJsonDeserializer<>(objectMapper, typeReference)
         );
+    }
+
+    /**
+     * 커스텀 역직렬화기를 사용하는 Consumer Factory 생성 (자동 커밋)
+     */
+    public <T> ConsumerFactory<String, T> createAutoCommitConsumerFactory(TypeReference<T> typeReference, String groupId) {
+        Map<String, Object> configProps = getAutoCommitConsumerConfig(groupId);
+        return new DefaultKafkaConsumerFactory<>(
+                configProps,
+                new StringDeserializer(),
+                new CustomJsonDeserializer<>(objectMapper, typeReference)
+        );
+    }
+
+    /**
+     * 수동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.setConcurrency(concurrency);
+        return factory;
+    }
+
+    /**
+     * 자동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createAutoCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createAutoCommitConsumerFactory(typeReference, groupId));
+        factory.setConcurrency(concurrency);
+        return factory;
     }
 
     /**

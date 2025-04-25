@@ -2,10 +2,7 @@ package com.springcloud.user.config;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.springcloud.user.infrastructure.dto.KafkaOrderFormEvent;
-import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
-import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
-import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
+import com.springcloud.user.infrastructure.dto.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -14,6 +11,9 @@ import org.springframework.kafka.core.ProducerFactory;
 
 @Configuration
 public class KafkaConfig {
+
+    private static final int DEFAULT_CONCURRENCY = 3;
+    private static final int RECOVERY_CONCURRENCY = 2;
 
     private final KafkaCommonConfig kafkaCommonConfig;
 
@@ -24,28 +24,27 @@ public class KafkaConfig {
 
     // 주문 시 자산 감소
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> orderEventKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> balanceDecreaseKafkaListenerContainerFactory() {
 
-        factory.setConsumerFactory(
-                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-                }, "user-service")
-        );
-
-        return factory;
+        return kafkaCommonConfig.createManualCommitListenerFactory(new TypeReference<>() {}, "user-service",DEFAULT_CONCURRENCY);
     }
 
     // 체결 시 자산 증가
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        return kafkaCommonConfig.createAutoCommitListenerFactory(new TypeReference<>() {}, "user-service",DEFAULT_CONCURRENCY);
 
-        factory.setConsumerFactory(
-                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-                }, "user-service")
-        );
 
-        return factory;
+
+    }
+
+    // 유저 -> 자산감소 실패 큐
+    @Bean
+    public KafkaTemplate<String, KafkaInsufficientBalanceEvent> insufficientBalanceEventKafkaTemplate() { //KafkaTemplate 빈 메서드명은 소문자로 시작하도록 변경
+        ProducerFactory<String, KafkaInsufficientBalanceEvent> factory =
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                });
+        return new KafkaTemplate<>(factory);
     }
 
     // 유저 -> 매칭 주문서 전달
@@ -60,14 +59,7 @@ public class KafkaConfig {
     // 체결 실패 보상
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> matchingCompensatorEventKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
-
-        factory.setConsumerFactory(
-                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-                }, "user-service")
-        );
-
-        return factory;
+        return kafkaCommonConfig.createAutoCommitListenerFactory(new TypeReference<>() {}, "user-service",DEFAULT_CONCURRENCY);
     }
 
     // 사용 안 함
