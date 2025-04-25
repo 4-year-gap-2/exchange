@@ -50,6 +50,12 @@ spring:
       connect-timeout: 10s
       init-query-timeout: 10s
 
+datastax-java-driver:
+#  basic.request:
+#    timeout: 5 seconds
+  advanced.request:
+    timeout: 5 seconds
+
 server:
   port: 19091
 

@@ -1,5 +1,4 @@
 package com.springcloud.user.common;
-
 import com.springcloud.user.domain.entity.UserRole;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;

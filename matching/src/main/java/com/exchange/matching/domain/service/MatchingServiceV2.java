@@ -25,8 +25,6 @@ public class MatchingServiceV2 implements MatchingService {
     @Override
     @Transactional
     public void matchOrders(CreateMatchingCommand command) {
-        // 카프카에서 값 읽기 토픽은 [4yearGap.order.orderEvent.match]
-
         V2MatchOrder v2MatchOrder = V2MatchOrder.fromCommand(command);
         matchingProcess(v2MatchOrder);
     }
@@ -67,7 +65,7 @@ public class MatchingServiceV2 implements MatchingService {
     }
 
     private V2MatchOrder findMatchingOrder(String stockCode, OrderType orderType) {
-        String key = orderType.equals(OrderType.SELL) ? "kj_buy_orders:" + stockCode : "kj_sell_orders:" + stockCode;
+        String key = orderType.equals(OrderType.SELL) ? "v2:orders:buy:" + stockCode : "v2:orders:sell:" + stockCode;
 
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         ZSetOperations.TypedTuple<String> strOrder = null;
@@ -107,15 +105,15 @@ public class MatchingServiceV2 implements MatchingService {
     }
 
     private void saveOrderToRedis(V2MatchOrder order) {
-        String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
+        String key = order.getOrderType().equals(OrderType.BUY) ? "v2:orders:buy:" + order.getTradingPair() : "v2:orders:sell:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
-        order.setTimeRecord(order.getOrderType().equals(OrderType.SELL) ?  System.currentTimeMillis() : TIME_STAMP_NUMERIC -System.currentTimeMillis());
+        order.setTimeRecord(order.getOrderType().equals(OrderType.SELL) ? System.currentTimeMillis() : TIME_STAMP_NUMERIC - System.currentTimeMillis());
         String strOrder = serializeOrder(order);
         zSetOperations.add(key, strOrder, order.getPrice().doubleValue());
     }
 
     private void resaveOrderToRedis(V2MatchOrder order) {
-        String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
+        String key = order.getOrderType().equals(OrderType.BUY) ? "v2:orders:buy:" + order.getTradingPair() : "v2:orders:sell:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         String strOrder = serializeOrder(order);
         zSetOperations.add(key, strOrder, order.getScore());
@@ -127,7 +125,7 @@ public class MatchingServiceV2 implements MatchingService {
 
 
     private void removeOrderFromRedis(V2MatchOrder order) {
-        String key = order.getOrderType().equals(OrderType.BUY) ? "kj_buy_orders:" + order.getTradingPair() : "kj_sell_orders:" + order.getTradingPair();
+        String key = order.getOrderType().equals(OrderType.BUY) ? "v2:orders:buy:" + order.getTradingPair() : "v2:orders:sell:" + order.getTradingPair();
         ZSetOperations<String, String> zSetOperations = redisTemplate.opsForZSet();
         String strOrder = serializeOrder(order);
         log.info("{} 삭제" , strOrder);
@@ -173,7 +171,5 @@ public class MatchingServiceV2 implements MatchingService {
                     0,
                     0L);
         }
-
     }
-
 }

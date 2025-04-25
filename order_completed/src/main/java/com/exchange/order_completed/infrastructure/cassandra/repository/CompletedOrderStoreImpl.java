@@ -15,4 +15,9 @@ public class CompletedOrderStoreImpl implements CompletedOrderStore {
     public void save(CompletedOrder completedOrder) {
         completedOrderStoreRepository.save(completedOrder);
     }
+
+    @Override
+    public void deleteAll() {
+        completedOrderStoreRepository.deleteAll();
+    }
 }

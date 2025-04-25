@@ -20,6 +20,8 @@ spring:
     host: ${KAFKA_HOST}
     username: ${KAFKA_NAME}
     password: ${KAFKA_PASSWORD}
+    consumer:
+      auto-offset-reset: earliest
 
   data:
     redis:
@@ -56,7 +58,3 @@ management:
   endpoint:
     health:
       show-details: always # 헬스 체크 엔드포인트에서 상세 정보 표시
-
-
-kafka:
-  topic: 4yearGap.order.orderEvent.match
