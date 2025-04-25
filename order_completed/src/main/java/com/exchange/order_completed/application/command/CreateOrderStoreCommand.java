@@ -1,6 +1,7 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.Builder;
 
@@ -38,5 +39,15 @@ public record CreateOrderStoreCommand(
                 .orderId(orderId)
                 .createdAt(LocalDateTime.now())
                 .build();
+    }
+    public Chart toChartData(){
+        return new Chart(
+                UUID.randomUUID(),
+                this.price,
+                this.quantity,
+                this.orderType,
+                this.tradingPair,
+                null // createdAt 값은 엔티티 내부에서 자동 생성됨
+        );
     }
 }

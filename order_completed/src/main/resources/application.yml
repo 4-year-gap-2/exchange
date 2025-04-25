@@ -1,12 +1,20 @@
 spring:
+  mysql:
+    datasource:
+      url: ${DB_HOST}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: ${DB_NAME}
+      password: ${DB_PASSWORD}
+  postgres:
+    datasource:
+      url: ${POSTGRES_HOST}
+      driver-class-name: org.postgresql.Driver
+      username: ${DB_NAME}
+      password: ${DB_PASSWORD}
   application:
     name: order_completed
 
-  datasource:
-    url: ${DB_HOST}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_NAME}
-    password: ${DB_PASSWORD}
+
 
   jpa:
     properties:
@@ -14,7 +22,7 @@ spring:
         show-sql: true
         format-sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
   kafka:
     host: ${KAFKA_HOST}

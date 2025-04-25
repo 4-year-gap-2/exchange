@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+
+    <property name="security.protocol" value="SASL_PLAINTEXT"/>
+
+    <property name="sasl.mechanism" value="PLAIN"/>
+
+    <property name="sasl.jaas.config"
+              value="org.apache.kafka.common.security.plain.PlainLoginModule required username=&quot;default&quot; password=&quot;thforjdlszh!2#4&quot;;"/>
+
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+
+        <encoder>
+
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+
+        </encoder>
+
+    </appender>
+
+
+    <appender name="kafkaAppender" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+
+        <bootstrapServers>39.112.24.48:9092</bootstrapServers>
+
+        <topic>cassandra-change-events</topic>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+
+            <providers>
+
+                <timestamp/>
+
+                <pattern>
+
+                    <pattern>
+
+                        {
+
+                        "level": "%level",
+
+                        "logger": "%logger{36}",
+
+                        "thread": "%thread",
+
+                        "message": "%msg"
+
+                        }
+
+                    </pattern>
+
+                </pattern>
+
+            </providers>
+
+        </encoder>
+
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+
+            <evaluator>
+
+                <expression>message.containsIgnoreCase("INSERT") || message.containsIgnoreCase("UPDATE")</expression>
+
+            </evaluator>
+
+            <OnMatch>ACCEPT</OnMatch>
+
+            <OnMismatch>DENY</OnMismatch>
+
+        </filter>
+
+
+    </appender>
+
+
+    <logger name="org.springframework.data.cassandra.core.cql.CqlTemplate" level="DEBUG" additivity="false">
+
+        <appender-ref ref="STDOUT"/>
+
+        <appender-ref ref="KAFKA_LOG_APPENDER"/>
+
+    </logger>
+
+
+    <root level="INFO">
+
+        <appender-ref ref="STDOUT"/>
+
+    </root>
+
+</configuration>

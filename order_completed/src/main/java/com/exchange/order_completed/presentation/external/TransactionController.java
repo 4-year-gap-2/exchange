@@ -1,9 +1,12 @@
 package com.exchange.order_completed.presentation.external;
 
+import com.exchange.order_completed.application.TimeInterval;
 import com.exchange.order_completed.application.response.TransactionResponse;
 import com.exchange.order_completed.application.response.ListTransactionResponse;
+import com.exchange.order_completed.application.service.TradeService;
 import com.exchange.order_completed.application.service.TransactionFacade;
 import com.exchange.order_completed.common.response.ResponseDto;
+import com.exchange.order_completed.domain.postgresEntity.TradeDataInfo;
 import com.exchange.order_completed.presentation.dto.CreateTransactionRequest;
 import com.exchange.order_completed.presentation.dto.FindTransactionRequest;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
@@ -24,6 +28,7 @@ import java.util.UUID;
 public class TransactionController {
 
     private final TransactionFacade facade;
+    private final TradeService tradeService;
 
     @PostMapping
     public ResponseEntity<ResponseDto<TransactionResponse>> createTransaction(@RequestBody CreateTransactionRequest request) {
@@ -58,6 +63,12 @@ public class TransactionController {
                                                                                         Pageable pageable) {
         ListTransactionResponse transactionV1s = facade.getTransactionsByUserId(request, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(transactionV1s));
+    }
+
+    @GetMapping(value = "/chart/{pair}/{interval}")
+    public ResponseEntity<ResponseDto<List<TradeDataInfo>>> getChartData(@PathVariable(value = "pair") String pair, @PathVariable(value = "interval") TimeInterval interval) {
+
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(tradeService.getTradeInfo(pair,interval)));
     }
 }
 
