@@ -1,6 +1,6 @@
 spring:
   application:
-    name: User-service
+    name: user-service
 
   datasource:
     url: ${DB_HOST}
