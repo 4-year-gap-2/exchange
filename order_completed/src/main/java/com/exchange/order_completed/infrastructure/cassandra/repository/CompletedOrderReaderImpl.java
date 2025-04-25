@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 import com.exchange.order_completed.domain.repository.CompletedOrderReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -20,7 +20,7 @@ public class CompletedOrderReaderImpl implements CompletedOrderReader {
     }
 
     @Override
-    public Optional<Object> findByOrderId(UUID orderId) {
+    public Optional<CompletedOrder> findByOrderId(UUID orderId) {
         return completedOrderReaderRepository.findByOrderId(orderId);
     }
 }

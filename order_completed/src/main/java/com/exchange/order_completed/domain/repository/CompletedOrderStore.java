@@ -1,6 +1,6 @@
 package com.exchange.order_completed.domain.repository;
 
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 
 public interface CompletedOrderStore {
 

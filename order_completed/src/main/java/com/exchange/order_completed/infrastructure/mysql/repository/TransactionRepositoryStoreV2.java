@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.mysql.repository;
 
-import com.exchange.order_completed.domain.entiry.TransactionV2;
+import com.exchange.order_completed.domain.entity.TransactionV2;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

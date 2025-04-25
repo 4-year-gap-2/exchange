@@ -2,7 +2,7 @@ package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateOrderCompletionException;
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.domain.repository.CompletedOrderReader;
 import com.exchange.order_completed.domain.repository.CompletedOrderStore;

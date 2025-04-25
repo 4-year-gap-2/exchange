@@ -20,7 +20,7 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = TOPIC,
             groupId = GROUP_ID,
-            containerFactory = "kafkaListenerContainerFactory")
+            containerFactory = "completeOrderKafkaListenerContainerFactory")
     public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
         KafkaOrderStoreEvent event = record.value();
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
