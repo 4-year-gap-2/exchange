@@ -3,11 +3,13 @@ package com.exchange.order_completed.application.command;
 import com.exchange.order_completed.domain.entiry.CompletedOrder;
 import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Builder
 public record CreateOrderStoreCommand(
         String tradingPair,
         String orderType,

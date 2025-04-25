@@ -23,8 +23,8 @@ import java.util.UUID;
 @Slf4j
 public class MatchingServiceV4 implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "mjy:orders:sell:";
-    private static final String BUY_ORDER_KEY = "mjy:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v4:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v4:orders:buy:";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
@@ -60,8 +60,10 @@ public class MatchingServiceV4 implements MatchingService {
      * 주문 매칭 프로세스 시작
      */
     private void matchingProcess(MatchingOrder order) {
+
         // 남은 수량이 있는 동안 매칭 시도
         while (order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
+
             // Lua 스크립트 실행으로 매칭 처리
             MatchingResult result = tryMatch(order);
 
@@ -81,7 +83,7 @@ public class MatchingServiceV4 implements MatchingService {
             BigDecimal remainingQuantity = result.getRemainingQuantity();
 
             if (remainingQuantity.compareTo(BigDecimal.ZERO) > 0) {
-                //내 주문이 남았을때
+                // 내 주문이 남았을 때 - 다음 반복 준비
                 order.setQuantity(remainingQuantity);
             } else {
                 // 남은 수량이 없으면 루프 종료
@@ -168,7 +170,7 @@ public class MatchingServiceV4 implements MatchingService {
      */
     private void saveMatchOrder(MatchingOrder order, MatchingOrder oppositeOrder,
                              BigDecimal matchedQuantity, BigDecimal executionPrice) {
-        // kafka로 체결 서버로 데이터 전달 필요
+        // 체결 내역 이벤트 발행
 
         // 매수/매도 주문 식별
         MatchingOrder buyOrder = OrderType.BUY.equals(order.getOrderType()) ? order : oppositeOrder;

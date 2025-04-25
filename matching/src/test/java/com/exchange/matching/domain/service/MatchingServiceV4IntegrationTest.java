@@ -31,8 +31,8 @@ class MatchingServiceV4IntegrationTest {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
-    private static final String SELL_ORDER_KEY = "mjy:orders:sell:";
-    private static final String BUY_ORDER_KEY = "mjy:orders:buy:";
+    private static final String SELL_ORDER_KEY = "v4:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v4:orders:buy:";
     private static final String TRADING_PAIR = "BTC/KRW";
 
     @BeforeEach
@@ -237,8 +237,8 @@ class MatchingServiceV4IntegrationTest {
     @DisplayName("동일 가격 주문의 시간 우선순위 테스트")
     void testTimeBasedPriority() {
         // 1. Redis 초기화
-        String buyOrderKey = "mjy:orders:buy:" + TRADING_PAIR;
-        String sellOrderKey = "mjy:orders:sell:" + TRADING_PAIR;
+        String buyOrderKey = "v4:orders:buy:" + TRADING_PAIR;
+        String sellOrderKey = "v4:orders:sell:" + TRADING_PAIR;
         redisTemplate.delete(buyOrderKey);
         redisTemplate.delete(sellOrderKey);
 

@@ -2,6 +2,8 @@ package com.springcloud.user.domain.repository;
 
 import com.springcloud.user.domain.entity.User;
 import com.springcloud.user.domain.entity.UserBalance;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,10 +18,10 @@ public interface UserBalanceRepository {
 
     Optional<UserBalance> findByWalletWithLock(@Param("wallet") String wallet);
 
-    Optional<UserBalance> findByUserAndCoinForUpdate(User user, String targetCoin);
-
-
+    Optional<UserBalance> findByUserAndCoinSymbolForUpdate(User user, String targetCoin);
 
     Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
                                                          @Param("coinId") String coinId);
+
+    Page<UserBalance> findByUser(User user, Pageable pageable);
 }

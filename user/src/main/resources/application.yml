@@ -15,7 +15,7 @@ spring:
         format-sql: true
         dialect: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
   kafka:
     host: ${KAFKA_HOST}
@@ -30,7 +30,7 @@ spring:
       password: ${REDIS_PASSWORD}
 
 server:
-  port: 19091
+  port: 19092
 
 eureka:
   client:
