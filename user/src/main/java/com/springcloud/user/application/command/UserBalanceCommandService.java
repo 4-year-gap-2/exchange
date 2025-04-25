@@ -149,7 +149,7 @@ public class UserBalanceCommandService {
             buyerBalance.increase(command.getQuantity());
 
             //이건 확인 필요
-            sellerBalance.increase(command.getQuantity().multiply(command.getPrice()));
+            sellerBalance.increase(command.getPrice());
         } catch (Exception e) {
             log.error("자산 증가 중 문제 발생 유저에게 문제 사항 전송",e);
             //소켓 서버로 문제 보내기

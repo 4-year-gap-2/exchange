@@ -29,14 +29,13 @@ public interface UserBalanceJpaRepository extends JpaRepository<UserBalance, UUI
     @Query("SELECT b FROM UserBalance b JOIN b.coin c WHERE b.user = :user AND c.symbol = :symbol")
     Optional<UserBalance> findByUserAndCoinSymbolForUpdate(@Param("user") User user, @Param("symbol") String symbol);
 
-    @Query("SELECT ub FROM UserBalance ub " +
+    @Query(value = "SELECT ub FROM UserBalance ub " +
             "JOIN FETCH ub.user u " +
             "JOIN FETCH ub.coin c " +
-            "WHERE u.userId = :userId AND c.coinName = :coinId")
-    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000")) // 락 타임아웃 설정(고부하 환경의 데드락 가능성 감소)
+            "WHERE u.userId = :userId AND c.symbol = :symbol")
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserBalance> findUserBalanceWithUserAndCoin(@Param("userId") UUID userId,
-                                                         @Param("coinId") String coinId);
+                                                         @Param("symbol") String symbol);
 
     Page<UserBalance> findByUser(User user, Pageable pageable);
 }
