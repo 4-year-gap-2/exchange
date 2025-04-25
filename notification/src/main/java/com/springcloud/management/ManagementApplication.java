@@ -1,17 +1,15 @@
-package com.exchange.order_completed;
+package com.springcloud.management;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableFeignClients
-@EnableJpaAuditing
-public class OrderCompletedApplication {
+public class ManagementApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(OrderCompletedApplication.class, args);
+		SpringApplication.run(ManagementApplication.class, args);
 	}
 
 }

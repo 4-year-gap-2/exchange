@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: management-service
+  datasource:
+    url: ${DB_HOST}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_NAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    properties:
+      hibernate:
+        show-sql: true
+        format-sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: create
+  kafka:
+    host: ${KAFKA_HOST}
+    username: ${KAFKA_NAME}
+    password: ${KAFKA_PASSWORD}
+
+#management:
+#  zipkin:
+#    tracing:
+#      endpoint: "http://localhost:9411/api/v2/spans"
+#  tracing:
+#    sampling:
+#      probability: 1.0
+
+slack:
+  key: ${SLACK_KEY}
+  channel: ${SLACK_CHANNEL}
+
+ai:
+  api:
+    key: test
+    url: test
+
+server:
+  port: 19094
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
+#  instance:
+#    hostname: ${My_host}
+#    securePortEnabled: true
+#    nonSecurePortEnabled: false
+#    securePort: 443
+#    statusPageUrl: https://${eureka.instance.hostname}/actuator/info
+#    healthCheckUrl: https://${eureka.instance.hostname}/actuator/health
+#    homePageUrl: https://${eureka.instance.hostname}/
+#    preferIpAddress: false
+#    secureVirtualHostName: ${spring.application.name}
+
