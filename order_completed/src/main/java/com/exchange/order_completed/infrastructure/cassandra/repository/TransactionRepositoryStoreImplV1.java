@@ -1,7 +1,7 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
-import com.exchange.order_completed.domain.entiry.TransactionV1;
+import com.exchange.order_completed.domain.entity.TransactionV1;
 import com.exchange.order_completed.domain.repository.TransactionStoreV1;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraOperations;

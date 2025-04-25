@@ -1,0 +1,76 @@
+package com.exchange.order_completed.config;
+
+import com.exchange.order_completed.infrastructure.dto.KafkaBalanceIncreaseEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+
+/**
+ * 특정 이벤트 타입에 대한 Kafka 설정 클래스
+ */
+@Configuration
+public class KafkaConfig {
+
+    private static final int DEFAULT_CONCURRENCY = 3;
+    private static final int RECOVERY_CONCURRENCY = 2;
+
+    private final KafkaCommonConfig kafkaCommonConfig;
+
+    public KafkaConfig(KafkaCommonConfig kafkaCommonConfig) {
+        this.kafkaCommonConfig = kafkaCommonConfig;
+    }
+
+    /**
+     * 주문 완료 이벤트 리스너 컨테이너 팩토리
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> completeOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
+        return kafkaCommonConfig.createManualCommitListenerFactory(
+                new TypeReference<>() {
+                }, "matching-service", DEFAULT_CONCURRENCY, errorHandler);
+    }
+
+    /**
+     * 복구 이벤트 리스너 컨테이너 팩토리
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> recoveryEventKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
+        return kafkaCommonConfig.createManualCommitListenerFactory(
+                new TypeReference<>() {
+                }, "recovery-service", RECOVERY_CONCURRENCY, errorHandler);
+    }
+
+    /**
+     * 제네릭 객체 전송용 프로듀서 템플릿
+     */
+    @Bean
+    public KafkaTemplate<String, Object> kafkaTemplate() {
+        return new KafkaTemplate<>(
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                }));
+    }
+
+    /**
+     * 자산 증가 이벤트 전용 프로듀서 템플릿
+     */
+    @Bean
+    public KafkaTemplate<String, KafkaBalanceIncreaseEvent> balanceIncreaseKafkaTemplate() {
+        return new KafkaTemplate<>(
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                }));
+    }
+
+    /**
+     * 주문 완료 이벤트 전용 프로듀서 템플릿
+     */
+    @Bean
+    public KafkaTemplate<String, KafkaOrderStoreEvent> orderStoreKafkaTemplate() {
+        return new KafkaTemplate<>(
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                }));
+    }
+}

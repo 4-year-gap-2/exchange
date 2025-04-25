@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 import com.exchange.order_completed.domain.repository.CompletedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

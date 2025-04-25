@@ -64,7 +64,7 @@ public class MysqlConfig {
 
         return builder
                 .dataSource(dataSource)
-                .packages("com.exchange.order_completed.domain.entiry")
+                .packages("com.exchange.order_completed.domain.entity")
                 .properties(properties)
                 .build();
     }

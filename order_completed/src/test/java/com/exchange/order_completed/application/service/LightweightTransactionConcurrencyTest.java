@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.service;
 
-import com.exchange.order_completed.domain.entiry.CompletedOrder;
+import com.exchange.order_completed.domain.entity.CompletedOrder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
