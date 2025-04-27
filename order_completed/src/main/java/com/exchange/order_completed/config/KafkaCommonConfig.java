@@ -134,6 +134,18 @@ public class KafkaCommonConfig {
      * 수동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.setConcurrency(concurrency);
+        return factory;
+    }
+
+    /**
+     * 수동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용) - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
@@ -147,6 +159,17 @@ public class KafkaCommonConfig {
      * 자동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createAutoCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createAutoCommitConsumerFactory(typeReference, groupId));
+        factory.setConcurrency(concurrency);
+        return factory;
+    }
+
+    /**
+     * 자동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용) - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createAutoCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createAutoCommitConsumerFactory(typeReference, groupId));
@@ -154,6 +177,7 @@ public class KafkaCommonConfig {
         factory.setCommonErrorHandler(errorHandler);
         return factory;
     }
+
 
     /**
      * SASL 인증 설정을 추가
