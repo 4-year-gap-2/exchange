@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class OrderCompletedFacade {
+public class OrderCompletedService {
 
     private final CompletedOrderStore completedOrderStore;
     private final CompletedOrderReader completedOrderReader;

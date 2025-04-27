@@ -1,7 +1,7 @@
 package com.exchange.order_completed.infrastructure.external;
 
 import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
-import com.exchange.order_completed.application.service.OrderCompletedFacade;
+import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KafkaEventConsumer {
 
-    private final OrderCompletedFacade orderCompletedFacade;
+    private final OrderCompletedService orderCompletedService;
     private static final String TOPIC = "matching-to-order_completed.execute-order-info-save";
     private static final String GROUP_ID = "matching-service";
 
@@ -26,7 +26,7 @@ public class KafkaEventConsumer {
     public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
         KafkaOrderStoreEvent event = record.value();
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
-        orderCompletedFacade.completeOrder(command, attempt);
+        orderCompletedService.completeOrder(command, attempt);
         ack.acknowledge();
     }
 }
