@@ -19,7 +19,7 @@ public class OrderCompletedFacade {
     private final ChartRepositoryStore chartRepositoryStore;
 
     public void completeOrder(CreateOrderStoreCommand command, Integer attempt) {
-        CompletedOrder persistentOrder = completedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId());
+        CompletedOrder persistentOrder = completedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
 
         if (persistentOrder != null) {
             throw new DuplicateOrderCompletionException("이미 완료된 주문입니다. orderId: " + command.orderId());

@@ -14,9 +14,16 @@ public class CompletedOrderReaderImpl implements CompletedOrderReader {
 
     private final CompletedOrderReaderRepository completedOrderReaderRepository;
 
+    /**
+     * attempt == 1 : LOCAL_ONE
+     * attempt > 1  : LOCAL_QUORUM
+     */
     @Override
-    public CompletedOrder findByUserIdAndOrderId(UUID userId, UUID orderId) {
-        return completedOrderReaderRepository.findByUserIdAndOrderId(userId, orderId);
+    public CompletedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt) {
+        return (attempt == 1
+                ? completedOrderReaderRepository.findByUserAndOrderWithLocalOne(userId, orderId)
+                : completedOrderReaderRepository.findByUserAndOrderWithLocalQuorum(userId, orderId)
+        ).orElse(null);
     }
 
     @Override
