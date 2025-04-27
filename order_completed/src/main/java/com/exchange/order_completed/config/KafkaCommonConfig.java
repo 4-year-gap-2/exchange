@@ -1,35 +1,26 @@
 package com.exchange.order_completed.config;
 
-import com.exchange.order_completed.common.exception.DuplicateOrderCompletionException;
-import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import com.exchange.order_completed.util.CustomJsonDeserializer;
 import com.exchange.order_completed.util.CustomJsonSerializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@Slf4j
 public class KafkaCommonConfig {
 
     private final ObjectMapper objectMapper;
@@ -143,6 +134,18 @@ public class KafkaCommonConfig {
      * 수동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.setConcurrency(concurrency);
+        return factory;
+    }
+
+    /**
+     * 수동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용) - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
@@ -156,6 +159,17 @@ public class KafkaCommonConfig {
      * 자동 커밋 리스너 컨테이너 팩토리 생성 - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createAutoCommitListenerFactory(
+            TypeReference<T> typeReference, String groupId, int concurrency) {
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(createAutoCommitConsumerFactory(typeReference, groupId));
+        factory.setConcurrency(concurrency);
+        return factory;
+    }
+
+    /**
+     * 자동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용) - 재사용 가능한 메서드
+     */
+    public <T> ConcurrentKafkaListenerContainerFactory<String, T> createAutoCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createAutoCommitConsumerFactory(typeReference, groupId));
@@ -163,6 +177,7 @@ public class KafkaCommonConfig {
         factory.setCommonErrorHandler(errorHandler);
         return factory;
     }
+
 
     /**
      * SASL 인증 설정을 추가
@@ -173,49 +188,5 @@ public class KafkaCommonConfig {
         configProps.put(SaslConfigs.SASL_JAAS_CONFIG,
                 "org.apache.kafka.common.security.plain.PlainLoginModule required " +
                         "username=\"" + kafkaName + "\" password=\"" + kafkaPassword + "\";");
-    }
-
-    @Bean
-    public DefaultErrorHandler errorHandler(KafkaTemplate<String, KafkaOrderStoreEvent> template) {
-        // 1초 간격으로 최대 3회 재시도
-        FixedBackOff backOff = new FixedBackOff(1_000L, 3L);
-
-        // 예외별 DLT 전송 여부 결정
-        // 최대 재시도 횟수 초과 시 보상 트랜잭션 큐(Dead Letter Queue)로 메시지 이동
-        // 3회 재시도 실패 시 order_completed-to-user.execute-order-info-save-compensation 토픽으로 publish
-        DeadLetterPublishingRecoverer recoverer =
-                new DeadLetterPublishingRecoverer(template,
-                        (record, ex) -> {
-                            // 1) 래퍼를 풀어서 실제 원인 확인
-                            Throwable cause = ex.getCause() instanceof ListenerExecutionFailedException
-                                    ? ex.getCause().getCause()
-                                    : ex.getCause();
-
-                            // 2) DuplicateOrderCompletionException 이면 DLT 스킵
-                            if (cause instanceof DuplicateOrderCompletionException) {
-                                return null;
-                            }
-                            // 3) 그 외는 compensation 토픽으로 전송
-                            return new TopicPartition(
-                                    "order_completed-to-user.execute-order-info-save-compensation",
-                                    record.partition()
-                            );
-                        }
-                );
-
-        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
-
-        // 특정 예외를 재시도하지 않도록 설정
-        handler.addNotRetryableExceptions(DuplicateOrderCompletionException.class);
-
-        // 재시도가 모두 실패한 메시지의 오프셋을 커밋해 컨슈머 그룹 오프셋을 다음 메시지로 이동
-        // 보상 트랜잭션 큐로 이동한 메시지는 다시 처리하지 않도록 설정
-        handler.setCommitRecovered(true);
-        handler.setAckAfterHandle(true);
-        handler.setRetryListeners((record, ex, deliveryAttempt) -> {
-            log.error("Retry #{} for record {} failed", deliveryAttempt, record, ex);
-        });
-
-        return handler;
     }
 }
