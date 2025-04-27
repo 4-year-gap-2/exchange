@@ -12,7 +12,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 /**
  * 특정 이벤트 타입에 대한 Kafka 설정 클래스
  */
-@Configuration
+@Configuration(enforceUniqueMethods = false)
 public class KafkaConfig {
 
     private static final int DEFAULT_CONCURRENCY = 3;
@@ -27,7 +27,7 @@ public class KafkaConfig {
     /**
      * 주문 완료 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
      */
-    @Bean
+    @Bean("completeOrderKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> completeOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
@@ -37,7 +37,7 @@ public class KafkaConfig {
     /**
      * 주문 완료 이벤트 리스너 컨테이너 팩토리
      */
-    @Bean
+    @Bean("defaultCompleteOrderKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> completeOrderKafkaListenerContainerFactory() {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
@@ -47,7 +47,7 @@ public class KafkaConfig {
     /**
      * 복구 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
      */
-    @Bean
+    @Bean("recoveryEventKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, String> recoveryEventKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
@@ -57,7 +57,7 @@ public class KafkaConfig {
     /**
      * 복구 이벤트 리스너 컨테이너 팩토리
      */
-    @Bean
+    @Bean("defaultRecoveryEventKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, String> recoveryEventKafkaListenerContainerFactory() {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {

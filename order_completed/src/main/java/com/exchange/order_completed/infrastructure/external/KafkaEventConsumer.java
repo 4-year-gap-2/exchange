@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,10 +23,10 @@ public class KafkaEventConsumer {
             topics = TOPIC,
             groupId = GROUP_ID,
             containerFactory = "completeOrderKafkaListenerContainerFactory")
-    public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack) {
+    public void consumeMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
         KafkaOrderStoreEvent event = record.value();
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
-        orderCompletedFacade.completeOrder(command);
+        orderCompletedFacade.completeOrder(command, attempt);
         ack.acknowledge();
     }
 }

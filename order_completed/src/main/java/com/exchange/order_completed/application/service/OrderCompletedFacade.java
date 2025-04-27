@@ -32,7 +32,7 @@ public class OrderCompletedFacade {
     private final CassandraTemplate cassandraTemplate;
     private final RedissonClient redissonClient;
 
-    public void completeOrder(CreateOrderStoreCommand command) {
+    public void completeOrder(CreateOrderStoreCommand command, Integer attempt) {
         String lockKey = "order:" + command.orderId() + ":lock";
         RLock lock = redissonClient.getLock(lockKey);
         boolean acquired = false;

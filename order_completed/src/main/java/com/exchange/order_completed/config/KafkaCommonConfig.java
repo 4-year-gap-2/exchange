@@ -143,7 +143,7 @@ public class KafkaCommonConfig {
     }
 
     /**
-     * 수동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용) - 재사용 가능한 메서드
+     * 수동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용, 헤더 활성화) - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
@@ -152,6 +152,7 @@ public class KafkaCommonConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
         factory.setCommonErrorHandler(errorHandler);
+        factory.getContainerProperties().setDeliveryAttemptHeader(true);
         return factory;
     }
 
