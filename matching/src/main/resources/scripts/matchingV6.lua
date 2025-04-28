@@ -37,24 +37,34 @@ end
 -- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
 -- KEYS[3]: 매칭 Stream 키 (v6:stream:matches)
 -- KEYS[4]: 미체결 Stream 키 (v6:stream:unmatched)
+-- KEYS[5]: 멱등성 체크를 위한 키 (v6:idempotency:orders)
 -- ARGV[1]: 주문 타입 (BUY 또는 SELL)
 -- ARGV[2]: 주문 가격
 -- ARGV[3]: 주문 수량
 -- ARGV[4]: 주문 상세 정보 (timestamp|quantity|userId|orderId 형식)
 -- ARGV[5]: 거래 쌍 (trading pair)
+-- ARGV[6]: 주문 ID
+
 local oppositeOrderKey = KEYS[1]
 local currentOrderKey = KEYS[2]
 local matchStreamKey = KEYS[3]
 local unmatchStreamKey = KEYS[4]
+local idempotencyKey = KEYS[5]
 local orderType = ARGV[1]
 local orderPrice = tonumber(ARGV[2])
 local orderQuantity = tonumber(ARGV[3])
 local orderDetails = ARGV[4]
 local tradingPair = ARGV[5]
+local orderId = ARGV[6]
+
+-- 멱등성 체크: 이미 처리된 주문인지 확인
+if redis.call("SISMEMBER", idempotencyKey, orderId) == 1 then
+    -- 이미 처리된 주문이면 early return
+    return true
+end
 
 -- 미리 계산된 상수
 local isBuy = orderType == "BUY"
-local oppositeType = isBuy and "SELL" or "BUY"
 
 -- 반대 주문 가져오기
 local oppositeOrders = redis.call(isBuy and "ZRANGE" or "ZREVRANGE", oppositeOrderKey, 0, 0, "WITHSCORES")
@@ -69,7 +79,7 @@ if #oppositeOrders == 0 then
 
     -- 미체결 Stream에 발행
     local unmatchFields = {
-        ["orderId"] = orderInfo.orderId,
+        ["orderId"] = orderId,
         ["userId"] = orderInfo.userId,
         ["tradingPair"] = tradingPair,
         ["orderType"] = orderType,
@@ -78,9 +88,13 @@ if #oppositeOrders == 0 then
         ["timestamp"] = orderInfo.timestamp,
         ["status"] = "UNMATCHED"
     }
-    local unmatchMsgId = redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchFields)))
+    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchFields)))
 
-    return {"false", "", "", "", "", unmatchMsgId}
+    -- 멱등성 키추가
+    redis.call("SADD", idempotencyKey, orderId)
+    redis.call("EXPIRE", idempotencyKey, 86400)
+
+    return true
 end
 
 -- 반대 주문 정보 처리
@@ -98,7 +112,7 @@ if not isPriceMatched then
 
     -- 미체결 Stream에 발행
     local unmatchFields = {
-        ["orderId"] = orderInfo.orderId,
+        ["orderId"] = orderId,
         ["userId"] = orderInfo.userId,
         ["tradingPair"] = tradingPair,
         ["orderType"] = orderType,
@@ -107,9 +121,13 @@ if not isPriceMatched then
         ["timestamp"] = orderInfo.timestamp,
         ["status"] = "UNMATCHED"
     }
-    local unmatchMsgId = redis.call("XADD", unmatchStreamKey, "*", unpack(flattenMap(unmatchFields)))
+    redis.call("XADD", unmatchStreamKey, "*", unpack(flattenMap(unmatchFields)))
 
-    return {"false", "", "", "", "", unmatchMsgId}
+    -- 멱등성 키추가
+    redis.call("SADD", idempotencyKey, orderId)
+    redis.call("EXPIRE", idempotencyKey, 86400)
+
+    return true
 end
 
 
@@ -151,13 +169,27 @@ if remainingOrderQuantity > 0 then
             currentOrder.userId,
             currentOrder.orderId
     )
+
+    -- 현재 주문 리스트에 추가
+    redis.call("ZADD", currentOrderKey, orderPrice, updatedCurrentDetails)
+
+    -- 남은 수량을 미체결 Stream에 발행
+    local unmatchedFields = {
+        ["orderId"] = currentOrder.orderId,
+        ["userId"] = currentOrder.userId,
+        ["tradingPair"] = tradingPair,
+        ["orderType"] = orderType,
+        ["price"] = tostring(orderPrice),
+        ["quantity"] = tostring(remainingOrderQuantity),
+        ["timestamp"] = currentOrder.timestamp,
+        ["status"] = "PARTIAL_MATCHED"
+    }
+    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchedFields)))
 end
 
 -- 매칭 결과를 Stream에 발행
 local buyOrder = isBuy and currentOrder or oppositeOrder
 local sellOrder = isBuy and oppositeOrder or currentOrder
-local buyPrice = isBuy and orderPrice or oppositeOrderPrice
-local sellPrice = isBuy and oppositeOrderPrice or orderPrice
 
 local matchFields = {
     ["buyOrderId"] = buyOrder.orderId,
@@ -173,14 +205,11 @@ local matchFields = {
 }
 
 -- Redis Stream에 매칭 정보 추가
-local msgId = redis.call("XADD", matchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(matchFields)))
+redis.call("XADD", matchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(matchFields)))
+
+-- 멱등성 키추가
+redis.call("SADD", idempotencyKey, orderId)
+redis.call("EXPIRE", idempotencyKey, 86400)
 
 -- 결과 데이터 (필수 정보만 단순한 리스트로 반환)
-return {
-    "true",                            -- 1. 매칭 성공 여부
-    oppositeOrderDetails,              -- 2. 원본 반대 주문 정보
-    tostring(oppositeOrderPrice),      -- 3. 반대 주문 가격 (체결 가격)
-    tostring(matchedQuantity),         -- 4. 체결 수량
-    tostring(remainingOrderQuantity),  -- 5. 현재 주문 남은 수량
-    msgId                              -- 6. 생성된 Stream 메시지 ID
-}
+return true
