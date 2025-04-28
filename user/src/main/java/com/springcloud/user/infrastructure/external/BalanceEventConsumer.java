@@ -11,8 +11,10 @@ import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -41,7 +43,9 @@ public class BalanceEventConsumer {
                 kafkaTemplate.send("user-to-socket.execute-balance-decrease-fail",kafkaInsufficientBalanceEvent);
             } else {
                 // 그 외 예외는 별도 처리(로깅, 알림 등)
-                log.error("예상치 못한 예외 발생", e);
+                log.error("예상치 못한 예외 발생, DLQ 이동", e);
+                // 시스템 예외: throw e → DLQ로 이동
+                throw e;
             }
         }
         log.info("11111");

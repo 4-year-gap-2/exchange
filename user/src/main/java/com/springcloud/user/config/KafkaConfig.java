@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 
 @Configuration
 public class KafkaConfig {
@@ -22,19 +23,36 @@ public class KafkaConfig {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
 
+
+
     // 주문 시 자산 감소
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> balanceDecreaseKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> balanceDecreaseKafkaListenerContainerFactory(
+            DefaultErrorHandler errorHandler) {
 
-        return kafkaCommonConfig.createManualCommitListenerFactory(new TypeReference<>() {}, "user-service",DEFAULT_CONCURRENCY);
+        ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> factory =
+                kafkaCommonConfig.createManualCommitListenerFactory(new TypeReference<>() {}, "user-service", DEFAULT_CONCURRENCY);
+
+        factory.setCommonErrorHandler(errorHandler); // DLQ 적용
+        return factory;
     }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> balanceDecreaseDLTListenerContainerFactory(
+            DefaultErrorHandler errorHandler) {
+        // groupId는 DLT 전용으로 별도 지정
+        return kafkaCommonConfig.createManualCommitListenerFactory(
+                new TypeReference<KafkaUserBalanceDecreaseEvent>() {},
+                "user-service-dlt", // DLT 전용 groupId
+                RECOVERY_CONCURRENCY // concurrency
+        );
+    }
+
 
     // 체결 시 자산 증가
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaListenerContainerFactory() {
         return kafkaCommonConfig.createAutoCommitListenerFactory(new TypeReference<>() {}, "user-service",DEFAULT_CONCURRENCY);
-
-
 
     }
 
@@ -46,6 +64,8 @@ public class KafkaConfig {
                 });
         return new KafkaTemplate<>(factory);
     }
+
+
 
     // 유저 -> 매칭 주문서 전달
     @Bean

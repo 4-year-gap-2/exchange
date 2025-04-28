@@ -8,17 +8,19 @@ import com.springcloud.user.util.CustomJsonSerializer;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,6 +47,7 @@ public class KafkaCommonConfig {
     }
 
     /**
+     *
      * 기본 Producer 설정 맵
      */
     public Map<String, Object> getBaseProducerConfig() {
@@ -97,7 +100,17 @@ public class KafkaCommonConfig {
         return configProps;
     }
 
-
+    /**
+     * 커스텀 직렬화기를 사용하는 Producer Factory 생성
+     */
+    public <T> ProducerFactory<String, T> createCustomProducerFactory(TypeReference<T> typeReference) {
+        Map<String, Object> configProps = getBaseProducerConfig();
+        return new DefaultKafkaProducerFactory<>(
+                configProps,
+                new StringSerializer(),
+                new CustomJsonSerializer<>(objectMapper, typeReference)
+        );
+    }
 
     /**
      * 커스텀 역직렬화기를 사용하는 Consumer Factory 생성 (수동 커밋)
@@ -156,4 +169,26 @@ public class KafkaCommonConfig {
                 "org.apache.kafka.common.security.plain.PlainLoginModule required " +
                         "username=\"" + kafkaName + "\" password=\"" + kafkaPassword + "\";");
     }
+
+    // DeadLetterPublishingRecoverer 빈
+    @Bean
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<String, Object> kafkaTemplate) {
+        return new DeadLetterPublishingRecoverer(
+                kafkaTemplate,
+                (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition())
+        );
+    }
+
+    // DefaultErrorHandler 빈
+    @Bean
+    public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer) {
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 9)); // 10회 시도
+    }
+
+    @Bean
+    public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
+    }
+
+
 }
