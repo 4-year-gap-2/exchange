@@ -1,6 +1,7 @@
 package com.exchange.order_completed.config;
 
-import com.exchange.order_completed.common.exception.DuplicateOrderCompletionException;
+import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
+import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;
@@ -31,8 +32,11 @@ public class KafkaErrorHandlerConfig {
                                     ? ex.getCause().getCause()
                                     : ex.getCause();
 
-                            // 2) DuplicateOrderCompletionException 이면 DLT 스킵
-                            if (cause instanceof DuplicateOrderCompletionException) {
+                            // 2) 특정 예외는 null을 반환하여 DLT 스킵
+                            if (cause instanceof DuplicateMatchedOrderInformationException) {
+                                return null;
+                            }
+                            if (cause instanceof DuplicateUnmatchedOrderInformationException) {
                                 return null;
                             }
                             // 3) 그 외는 compensation 토픽으로 전송
@@ -46,7 +50,8 @@ public class KafkaErrorHandlerConfig {
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
 
         // 특정 예외를 재시도하지 않도록 설정
-        handler.addNotRetryableExceptions(DuplicateOrderCompletionException.class);
+        handler.addNotRetryableExceptions(DuplicateMatchedOrderInformationException.class);
+        handler.addNotRetryableExceptions(DuplicateUnmatchedOrderInformationException.class);
 
         // 재시도가 모두 실패한 메시지의 오프셋을 커밋해 컨슈머 그룹 오프셋을 다음 메시지로 이동
         // 보상 트랜잭션 큐로 이동한 메시지는 다시 처리하지 않도록 설정

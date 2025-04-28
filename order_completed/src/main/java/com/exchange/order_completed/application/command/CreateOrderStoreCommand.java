@@ -1,6 +1,7 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.domain.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.Builder;
@@ -29,7 +30,7 @@ public record CreateOrderStoreCommand(
         );
     }
 
-    public MatchedOrder toEntity() {
+    public MatchedOrder toMatchedOrderEntity() {
         return MatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)
@@ -40,6 +41,19 @@ public record CreateOrderStoreCommand(
                 .createdAt(LocalDateTime.now())
                 .build();
     }
+
+    public UnmatchedOrder toUnmatchedOrderEntity() {
+        return UnmatchedOrder.builder()
+                .tradingPair(tradingPair)
+                .orderType(orderType)
+                .price(price)
+                .quantity(quantity)
+                .userId(userId)
+                .orderId(orderId)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
     public Chart toChartData(){
         return new Chart(
                 UUID.randomUUID(),
