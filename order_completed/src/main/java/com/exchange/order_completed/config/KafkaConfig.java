@@ -1,5 +1,6 @@
 package com.exchange.order_completed.config;
 
+import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaBalanceIncreaseEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +23,16 @@ public class KafkaConfig {
 
     public KafkaConfig(KafkaCommonConfig kafkaCommonConfig) {
         this.kafkaCommonConfig = kafkaCommonConfig;
+    }
+
+
+    @Bean("chartKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, CompletedOrderChangeEvent> chartKafkaListenerContainerFactory() {
+        System.out.println("차트 컨테이너 생성");
+
+        return kafkaCommonConfig.createAutoCommitListenerFactory(
+                new TypeReference<>() {
+                }, "matching-service", DEFAULT_CONCURRENCY);
     }
 
     /**

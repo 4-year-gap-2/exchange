@@ -1,6 +1,7 @@
 package com.exchange.order_completed.domain.postgresEntity;
 
 
+import com.exchange.order_completed.application.command.ChartCommand;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -43,4 +44,13 @@ public class Chart {
     @Comment("레코드 생성 일시")
     private LocalDateTime createdAt;
 
+    public static Chart from(ChartCommand command) {
+        return Chart.builder()
+                .chartId(UUID.randomUUID())
+                .price(command.getPrice())
+                .amount(command.getAmount())
+                .transactionType(command.getTransactionType())
+                .pair(command.getPair())
+                .build(); // chartId는 데이터베이스에서 자동 생성
+    }
 }
