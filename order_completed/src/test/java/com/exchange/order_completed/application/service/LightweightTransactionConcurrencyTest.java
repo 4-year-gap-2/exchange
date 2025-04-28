@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.service;
 
-import com.exchange.order_completed.domain.entity.CompletedOrder;
+import com.exchange.order_completed.domain.entity.MatchedOrder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +25,8 @@ class LightweightTransactionConcurrencyTest {
     @Autowired
     private CassandraTemplate cassandraTemplate;
 
-    private CompletedOrder buildOrder() {
-        return CompletedOrder.builder()
+    private MatchedOrder buildOrder() {
+        return MatchedOrder.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .createdAt(LocalDateTime.now())
@@ -40,7 +40,7 @@ class LightweightTransactionConcurrencyTest {
     @Test
     @DisplayName("PK(userId, orderId, createdAt)가 스레드별로 같은 경우 경량 트랜잭션을 적용하면 동시 insert 시 한 건만 성공해야 한다.")
     void testIfNotExistsIsAtomic() throws Exception {
-        CompletedOrder order = buildOrder();
+        MatchedOrder order = buildOrder();
 
         // LWT(Lightweight Transaction) 옵션
         InsertOptions options = InsertOptions.builder()
@@ -84,8 +84,8 @@ class LightweightTransactionConcurrencyTest {
         assertNotEquals(results.get(0).get(), results.get(1).get(), "두 스레드의 wasApplied() 결과는 서로 달라야 한다.");
     }
 
-    private CompletedOrder buildOrder(UUID userId, UUID orderId, LocalDateTime createdAt) {
-        return CompletedOrder.builder()
+    private MatchedOrder buildOrder(UUID userId, UUID orderId, LocalDateTime createdAt) {
+        return MatchedOrder.builder()
                 .userId(userId)
                 .orderId(orderId)
                 .createdAt(createdAt)
@@ -123,7 +123,7 @@ class LightweightTransactionConcurrencyTest {
 
                     // 스레드마다 다른 createdAt 설정
                     LocalDateTime createdAt = (i == 0 ? ts1 : ts2);
-                    CompletedOrder order = buildOrder(userId, orderId, createdAt);
+                    MatchedOrder order = buildOrder(userId, orderId, createdAt);
 
                     return cassandraTemplate.insert(order, options).wasApplied();
                 }))

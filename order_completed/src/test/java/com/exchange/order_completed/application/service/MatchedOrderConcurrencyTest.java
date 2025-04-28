@@ -1,8 +1,8 @@
 package com.exchange.order_completed.application.service;
 
-import com.exchange.order_completed.domain.entity.CompletedOrder;
-import com.exchange.order_completed.infrastructure.cassandra.repository.CompletedOrderReaderRepository;
-import com.exchange.order_completed.infrastructure.cassandra.repository.CompletedOrderStoreRepository;
+import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.infrastructure.cassandra.repository.MatchedOrderReaderRepository;
+import com.exchange.order_completed.infrastructure.cassandra.repository.MatchedOrderStoreRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +23,13 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class CompletedOrderConcurrencyTest {
+class MatchedOrderConcurrencyTest {
 
     @Autowired
-    private CompletedOrderReaderRepository readerRepository;
+    private MatchedOrderReaderRepository readerRepository;
 
     @Autowired
-    private CompletedOrderStoreRepository storeRepository;
+    private MatchedOrderStoreRepository storeRepository;
 
     @Autowired
     private CassandraTemplate cassandraTemplate;    // 직접 쿼리용
@@ -50,7 +50,7 @@ class CompletedOrderConcurrencyTest {
 
         List<Future<Void>> futures = IntStream.range(0, 2).mapToObj(i -> exec.<Void>submit(() -> {
             // 동시 find
-            CompletedOrder existing = readerRepository.findByUserIdAndOrderId(userId, orderId);
+            MatchedOrder existing = readerRepository.findByUserIdAndOrderId(userId, orderId);
             barrier.await();    // 두 스레드 모두 find 끝날 때까지 대기
 
             if (existing != null) {
@@ -58,7 +58,7 @@ class CompletedOrderConcurrencyTest {
             }
 
             Instant chooseTs = (i == 0 ? ts1 : ts2);
-            CompletedOrder order = CompletedOrder.builder()
+            MatchedOrder order = MatchedOrder.builder()
                     .userId(userId)
                     .orderId(orderId)
                     .createdAt(LocalDateTime.ofInstant(chooseTs, ZoneId.systemDefault()))
@@ -79,12 +79,12 @@ class CompletedOrderConcurrencyTest {
         exec.shutdownNow();
 
         // 검증
-        List<CompletedOrder> all = cassandraTemplate.select(
+        List<MatchedOrder> all = cassandraTemplate.select(
                 Query.query(
                         Criteria.where("user_id").is(userId),
                         Criteria.where("order_id").is(orderId)
                 ),
-                CompletedOrder.class
+                MatchedOrder.class
         );
         assertEquals(2, all.size(), "멱등성 보장에 실패하여 두 row가 생성돼야 한다.");
     }

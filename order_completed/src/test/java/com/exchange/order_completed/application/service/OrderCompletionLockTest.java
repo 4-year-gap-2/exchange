@@ -1,7 +1,7 @@
 package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
-import com.exchange.order_completed.common.exception.DuplicateOrderCompletionException;
+import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,9 +71,9 @@ class OrderCompletionLockTest {
                 startLatch.await();
 
                 try {
-                    orderCompletedService.completeOrder(command, attempt);
+                    orderCompletedService.completeMatchedOrder(command, attempt);
                     return true;    // 정상 저장된 스레드
-                } catch (DuplicateOrderCompletionException e) {
+                } catch (DuplicateMatchedOrderInformationException e) {
                     return false;   // 락 실패 or 이미 처리된 경우
                 }
             }));
