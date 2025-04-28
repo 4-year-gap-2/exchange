@@ -1,7 +1,9 @@
 
+-- select create_hypertable('chart','created_at');
+
 
 -- 1분 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS  BTCKRW_m1_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_m1_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 minute', created_at) AS minute,
     pair,
@@ -20,7 +22,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_m1_trades',
                                        schedule_interval => INTERVAL '1 MINUTE');
 
 -- 3분 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_m3_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_m3_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('3 minute', created_at) AS minute,
     pair,
@@ -39,7 +41,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_m3_trades',
                                        schedule_interval => INTERVAL '3 MINUTE');
 
 -- 5분 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_m5_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_m5_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('5 minute', created_at) AS minute,
     pair,
@@ -58,7 +60,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_m5_trades',
                                        schedule_interval => INTERVAL '5 MINUTE');
 
 -- 15분 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_m15_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_m15_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('15 minute', created_at) AS fifteen_minute,
     pair,
@@ -77,7 +79,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_m15_trades',
                                        schedule_interval => INTERVAL '15 MINUTE');
 
 -- 30분 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_m30_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_m30_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('30 minute', created_at) AS thirty_minute,
     pair,
@@ -96,7 +98,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_m30_trades',
                                        schedule_interval => INTERVAL '30 MINUTE');
 
 -- 1시간 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_h1_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_h1_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 hour', created_at) AS hour,
     pair,
@@ -115,7 +117,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_h1_trades',
                                        schedule_interval => INTERVAL '1 HOUR');
 
 -- 3시간 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_h3_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_h3_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('3 hour', created_at) AS three_hour,
     pair,
@@ -134,7 +136,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_h3_trades',
                                        schedule_interval => INTERVAL '3 HOUR');
 
 -- 6시간 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_h6_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_h6_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('6 hour', created_at) AS six_hour,
     pair,
@@ -153,7 +155,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_h6_trades',
                                        schedule_interval => INTERVAL '6 HOUR');
 
 -- 12시간 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_h12_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_h12_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('12 hour', created_at) AS twelve_hour,
     pair,
@@ -172,7 +174,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_h12_trades',
                                        schedule_interval => INTERVAL '12 HOUR');
 
 -- 1일 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_d1_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_d1_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 day', created_at) AS day,
     pair,
@@ -191,7 +193,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_d1_trades',
                                        schedule_interval => INTERVAL '1 DAY');
 
 -- 1주일 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_w1_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_w1_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 week', created_at) AS week,
     pair,
@@ -210,7 +212,7 @@ SELECT add_continuous_aggregate_policy('BTCKRW_w1_trades',
                                        schedule_interval => INTERVAL '1 WEEK');
 
 -- 1달 단위
-CREATE MATERIALIZED VIEW IF NOT EXISTS BTCKRW_mon1_trades WITH (timescaledb.continuous) AS
+CREATE MATERIALIZED VIEW if not exists BTCKRW_mon1_trades WITH (timescaledb.continuous) AS
 SELECT
     time_bucket('1 month', created_at) AS month,
     pair,
@@ -227,5 +229,3 @@ SELECT add_continuous_aggregate_policy('BTCKRW_mon1_trades',
                                        start_offset => INTERVAL '3 YEAR',
                                        end_offset => INTERVAL '1 MONTH',
                                        schedule_interval => INTERVAL '1 MONTH');
---
-

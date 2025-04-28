@@ -26,8 +26,6 @@ public class OrderCompletedService {
         }
 
         CompletedOrder newCompletedOrder = command.toEntity();
-        Chart chart = command.toChartData();
         completedOrderStore.save(newCompletedOrder);
-        chartRepositoryStore.save(chart);
     }
 }
