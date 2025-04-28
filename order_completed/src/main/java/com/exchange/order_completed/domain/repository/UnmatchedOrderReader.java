@@ -6,6 +6,5 @@ import java.util.UUID;
 
 public interface UnmatchedOrderReader {
 
-    UnmatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt);
-
+    UnmatchedOrder findUnmatchedOrder(UUID userId, UUID orderId, Integer attempt);
 }

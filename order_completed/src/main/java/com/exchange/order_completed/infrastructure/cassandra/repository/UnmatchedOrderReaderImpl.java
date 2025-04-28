@@ -14,7 +14,7 @@ public class UnmatchedOrderReaderImpl implements UnmatchedOrderReader {
     private final UnmatchedOrderReaderRepository unmatchedOrderReaderRepository;
 
     @Override
-    public UnmatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt) {
+    public UnmatchedOrder findUnmatchedOrder(UUID userId, UUID orderId, Integer attempt) {
         return (attempt == 1
                 ? unmatchedOrderReaderRepository.findByUserAndOrderWithLocalOne(userId, orderId)
                 : unmatchedOrderReaderRepository.findByUserAndOrderWithLocalQuorum(userId, orderId)

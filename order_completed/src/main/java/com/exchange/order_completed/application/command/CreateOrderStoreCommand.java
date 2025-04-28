@@ -7,7 +7,10 @@ import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Builder
@@ -38,7 +41,8 @@ public record CreateOrderStoreCommand(
                 .quantity(quantity)
                 .userId(userId)
                 .orderId(orderId)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .createdDate(LocalDate.now(ZoneId.of("UTC")))
                 .build();
     }
 
@@ -50,7 +54,8 @@ public record CreateOrderStoreCommand(
                 .quantity(quantity)
                 .userId(userId)
                 .orderId(orderId)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .createdDate(LocalDate.now(ZoneId.of("UTC")))
                 .build();
     }
 

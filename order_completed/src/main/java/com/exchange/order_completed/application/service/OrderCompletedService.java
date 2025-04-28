@@ -12,6 +12,8 @@ import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class OrderCompletedService {
@@ -22,20 +24,44 @@ public class OrderCompletedService {
     private final UnmatchedOrderStore unmatchedOrderStore;
 
     public void completeMatchedOrder(CreateOrderStoreCommand command, Integer attempt) {
-        MatchedOrder persistentOrder = matchedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
+        MatchedOrder persistentMatchedOrder = matchedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
 
-        if (persistentOrder != null) {
+        if (persistentMatchedOrder != null) {
             throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.orderId());
         }
 
         MatchedOrder newMatchedOrder = command.toMatchedOrderEntity();
-        matchedOrderStore.save(newMatchedOrder);
+        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
+
+        if (persistentUnmatchedOrder == null) {
+            matchedOrderStore.save(newMatchedOrder);
+        } else {
+            updateUnmatchedOrderQuantity(newMatchedOrder, persistentUnmatchedOrder);
+            // 카산드라 배치 쿼리 수행
+            matchedOrderStore.saveMatchedOrderAndUpdateUnmatchedOrder(newMatchedOrder, persistentUnmatchedOrder);
+        }
+    }
+
+    public void updateUnmatchedOrderQuantity(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
+        BigDecimal matchedOrderQuantity = matchedOrder.getQuantity();
+        BigDecimal unmatchedOrderQuantity = unmatchedOrder.getQuantity();
+
+        // 체결된 주문의 수량이 미체결 주문의 수량보다 적은 경우
+        if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) < 0) {
+            // 체결된 주문의 수량을 미체결 주문의 수량에서 빼줌
+            unmatchedOrder.setQuantity(unmatchedOrderQuantity.subtract(matchedOrderQuantity));
+
+            // 체결된 주문의 수량이 미체결 주문의 수량과 같은 경우
+        } else if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) == 0) {
+            // 미체결 주문의 수량을 0으로 설정
+            unmatchedOrder.setQuantity(BigDecimal.ZERO);
+        }
     }
 
     public void completeUnmatchedOrder(CreateOrderStoreCommand command, Integer attempt) {
-        UnmatchedOrder persistentOrder = unmatchedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
+        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
 
-        if (persistentOrder != null) {
+        if (persistentMatchedOrder != null) {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 

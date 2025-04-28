@@ -16,10 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class SandMessageTestController {
 
     private final KafkaTemplate<String, KafkaOrderStoreEvent> kafkaTemplate;
-    private static final String TOPIC = "matching-to-order_completed.execute-order-matched";
+    private static final String TOPIC_MATCHED = "matching-to-order_completed.execute-order-matched";
+    private static final String TOPIC_UNMATCHED = "matching-to-order_completed.execute-order-unmatched";
 
-    @PostMapping
-    public ResponseEntity<ResponseDto<String>> store(@RequestBody CreateOrderStoreRequest request) {
+    @PostMapping("/matched")
+    public ResponseEntity<ResponseDto<String>> storeMatched(@RequestBody CreateOrderStoreRequest request) {
         KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
                 .tradingPair(request.tradingPair())
                 .orderType(request.orderType())
@@ -29,7 +30,23 @@ public class SandMessageTestController {
                 .orderId(request.orderId())
                 .build();
 
-        kafkaTemplate.send(TOPIC, event);
+        kafkaTemplate.send(TOPIC_MATCHED, event);
+
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
+    @PostMapping("/unmatched")
+    public ResponseEntity<ResponseDto<String>> storeUnmatched(@RequestBody CreateOrderStoreRequest request) {
+        KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
+                .tradingPair(request.tradingPair())
+                .orderType(request.orderType())
+                .price(request.price())
+                .quantity(request.quantity())
+                .userId(request.userId())
+                .orderId(request.orderId())
+                .build();
+
+        kafkaTemplate.send(TOPIC_UNMATCHED, event);
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }

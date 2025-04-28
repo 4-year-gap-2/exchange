@@ -11,7 +11,8 @@ import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -29,7 +30,10 @@ public class UnmatchedOrder {
 
     @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+
+    @Column("created_date")
+    private LocalDate createdDate;
 
     @Column("price")
     private BigDecimal price;
