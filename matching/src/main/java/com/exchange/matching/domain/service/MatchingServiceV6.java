@@ -98,6 +98,7 @@ public class MatchingServiceV6 implements MatchingService {
             order.getTradingPair(),
             order.getOrderId()
         );
+
     }
 
     /**
