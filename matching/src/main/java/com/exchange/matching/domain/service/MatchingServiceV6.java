@@ -23,8 +23,6 @@ import java.util.UUID;
 @Slf4j
 public class MatchingServiceV6 implements MatchingService {
 
-
-
     private static final String SELL_ORDER_KEY = "v6:orders:sell:";
     private static final String BUY_ORDER_KEY = "v6:orders:buy:";
     private static final String MATCH_STREAM_KEY = "v6:stream:matches";
