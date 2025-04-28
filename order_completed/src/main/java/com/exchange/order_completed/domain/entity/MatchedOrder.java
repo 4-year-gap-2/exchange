@@ -18,8 +18,8 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("completed_order")
-public class CompletedOrder {
+@Table("matched_order")
+public class MatchedOrder {
 
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
@@ -37,7 +37,7 @@ public class CompletedOrder {
     @Column("quantity")
     private BigDecimal quantity;
 
-    @Column("type")
+    @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
     private String orderType;
 

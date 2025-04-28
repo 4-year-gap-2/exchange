@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.CompletedOrder;
+import com.exchange.order_completed.domain.entity.MatchedOrder;
 import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.Builder;
@@ -29,8 +29,8 @@ public record CreateOrderStoreCommand(
         );
     }
 
-    public CompletedOrder toEntity() {
-        return CompletedOrder.builder()
+    public MatchedOrder toEntity() {
+        return MatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)
                 .price(price)

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SandMessageTestController {
 
     private final KafkaTemplate<String, KafkaOrderStoreEvent> kafkaTemplate;
-    private static final String TOPIC = "matching-to-order_completed.execute-order-info-save";
+    private static final String TOPIC = "matching-to-order_completed.execute-order-matched";
 
     @PostMapping
     public ResponseEntity<ResponseDto<String>> store(@RequestBody CreateOrderStoreRequest request) {

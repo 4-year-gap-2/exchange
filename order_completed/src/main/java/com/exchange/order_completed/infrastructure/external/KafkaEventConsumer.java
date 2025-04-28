@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 public class KafkaEventConsumer {
 
     private final OrderCompletedService orderCompletedService;
-    private static final String TOPIC = "matching-to-order_completed.execute-order-info-save";
+    private static final String TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String GROUP_ID = "matching-service";
 
     @KafkaListener(
