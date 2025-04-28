@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface CompletedOrderReader {
 
-    CompletedOrder findByUserIdAndOrderId(UUID userId, UUID orderId);
+    CompletedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt);
 
     Optional<CompletedOrder> findByOrderId(UUID orderId);
 }

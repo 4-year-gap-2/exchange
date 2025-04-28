@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class OrderCompletionLockTest {
 
     @Autowired
-    private OrderCompletedFacade orderCompletedFacade;
+    private OrderCompletedService orderCompletedService;
 
     @Autowired
     private RedissonClient redissonClient;
@@ -56,6 +56,7 @@ class OrderCompletionLockTest {
     @DisplayName("동시 주문 완료 요청 시, 락을 통해 중복 저장이 방지되어야 한다.")
     void whenConcurrentCompleteOrder_thenOnlyOneSucceeds() throws InterruptedException, ExecutionException {
         CreateOrderStoreCommand command = buildCreateOrderStoreCommand();
+        int attempt = 1;
 
         int threadCount = 5;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -70,7 +71,7 @@ class OrderCompletionLockTest {
                 startLatch.await();
 
                 try {
-                    orderCompletedFacade.completeOrder(command);
+                    orderCompletedService.completeOrder(command, attempt);
                     return true;    // 정상 저장된 스레드
                 } catch (DuplicateOrderCompletionException e) {
                     return false;   // 락 실패 or 이미 처리된 경우
