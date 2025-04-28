@@ -1,3 +1,30 @@
+-- 주문 정보 파싱 함수
+local function parseOrderDetails(details)
+    local pos = {}
+    local val = {}
+    local start = 1
+
+    for i = 1, 3 do
+        pos[i] = string.find(details, "|", start, true)
+        val[i] = string.sub(details, start, pos[i] - 1)
+        start = pos[i] + 1
+    end
+
+    val[4] = string.sub(details, start)
+
+    return {
+        timestamp = val[1],
+        quantity = tonumber(val[2]),
+        userId = val[3],
+        orderId = val[4]
+    }
+end
+
+-- 주문 정보 구성 함수
+local function buildOrderDetails(timestamp, quantity, userId, orderId)
+    return timestamp .. "|" .. quantity .. "|" .. userId .. "|" .. orderId
+end
+
 -- 주문 매칭 Lua 스크립트
 -- KEYS[1]: 반대 주문 키 (매수면 SELL_ORDER_KEY, 매도면 BUY_ORDER_KEY)
 -- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
@@ -35,33 +62,6 @@ local isPriceMatched = isBuy and orderPrice >= oppositeOrderPrice or orderPrice 
 if not isPriceMatched then
     redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
     return {"false", "", "", "", ""}
-end
-
--- 주문 정보 파싱 함수
-local function parseOrderDetails(details)
-    local pos = {}
-    local val = {}
-    local start = 1
-
-    for i = 1, 3 do
-        pos[i] = string.find(details, "|", start, true)
-        val[i] = string.sub(details, start, pos[i] - 1)
-        start = pos[i] + 1
-    end
-
-    val[4] = string.sub(details, start)
-
-    return {
-        timestamp = val[1],
-        quantity = tonumber(val[2]),
-        userId = val[3],
-        orderId = val[4]
-    }
-end
-
--- 주문 정보 구성 함수
-local function buildOrderDetails(timestamp, quantity, userId, orderId)
-    return timestamp .. "|" .. quantity .. "|" .. userId .. "|" .. orderId
 end
 
 -- 양쪽 주문 정보 파싱

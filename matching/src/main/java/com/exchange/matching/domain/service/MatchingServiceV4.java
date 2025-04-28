@@ -36,7 +36,7 @@ public class MatchingServiceV4 implements MatchingService {
         DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
         script.setResultType((Class) List.class);
         try {
-            ClassPathResource resource = new ClassPathResource("scripts/matching.lua");
+            ClassPathResource resource = new ClassPathResource("scripts/matchingV4.lua");
             String scriptText = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             script.setScriptText(scriptText);
         } catch (IOException e) {
