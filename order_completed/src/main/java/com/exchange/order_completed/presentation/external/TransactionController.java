@@ -70,5 +70,8 @@ public class TransactionController {
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(tradeService.getTradeInfo(pair,interval)));
     }
+    
+    // buy 체결 주문 조회
+    
 }
 
