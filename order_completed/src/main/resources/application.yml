@@ -25,7 +25,7 @@ spring:
         show-sql: true
         format-sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
   kafka:
     host: ${KAFKA_HOST}
