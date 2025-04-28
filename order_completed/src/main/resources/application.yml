@@ -13,7 +13,10 @@ spring:
       password: ${DB_PASSWORD}
   application:
     name: order_completed
-
+  sql:
+    init:
+      mode: always
+      schema-locations: data.sql
 
 
   jpa:
@@ -22,7 +25,7 @@ spring:
         show-sql: true
         format-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
 
   kafka:
     host: ${KAFKA_HOST}
