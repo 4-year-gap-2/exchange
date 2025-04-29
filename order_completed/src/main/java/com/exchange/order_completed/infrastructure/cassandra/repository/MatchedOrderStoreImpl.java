@@ -1,0 +1,85 @@
+package com.exchange.order_completed.infrastructure.cassandra.repository;
+
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.domain.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.repository.MatchedOrderStore;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.cassandra.core.CassandraTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.math.BigDecimal;
+
+@Repository
+@RequiredArgsConstructor
+public class MatchedOrderStoreImpl implements MatchedOrderStore {
+
+    private final MatchedOrderStoreRepository matchedOrderStoreRepository;
+    private final CassandraTemplate cassandraTemplate;
+
+    @Override
+    public void save(MatchedOrder matchedOrder) {
+        matchedOrderStoreRepository.save(matchedOrder);
+    }
+
+    @Override
+    public void saveMatchedOrderAndUpdateUnmatchedOrder(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
+        // 1. INSERT INTO matched_order
+        SimpleStatement insertMatchedOrderStatement = SimpleStatement.builder(
+                        "INSERT INTO matched_order (user_id, order_id, created_at, created_date, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+                .addPositionalValues(
+                        matchedOrder.getUserId(),
+                        matchedOrder.getOrderId(),
+                        matchedOrder.getCreatedAt(),
+                        matchedOrder.getCreatedDate(),
+                        matchedOrder.getPrice(),
+                        matchedOrder.getQuantity(),
+                        matchedOrder.getOrderType(),
+                        matchedOrder.getTradingPair()
+                )
+                .build();
+
+        // 2. UPDATE 또는 DELETE 결정
+        SimpleStatement unmatchedOrderStatement;
+
+        if (unmatchedOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
+            // quantity == 0 이면 DELETE
+            unmatchedOrderStatement = SimpleStatement.builder(
+                            "DELETE FROM unmatched_order WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                    .addPositionalValues(
+                            unmatchedOrder.getUserId(),
+                            unmatchedOrder.getOrderId(),
+                            unmatchedOrder.getCreatedAt()
+                    )
+                    .build();
+        } else {
+            // quantity > 0 이면 UPDATE
+            unmatchedOrderStatement = SimpleStatement.builder(
+                            "UPDATE unmatched_order SET quantity = ? WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                    .addPositionalValues(
+                            unmatchedOrder.getQuantity(),
+                            unmatchedOrder.getUserId(),
+                            unmatchedOrder.getOrderId(),
+                            unmatchedOrder.getCreatedAt()
+                    )
+                    .build();
+        }
+
+        // 3. LOGGED BATCH로 묶기
+        BatchStatementBuilder batch = BatchStatement.builder(DefaultBatchType.LOGGED);
+        batch.addStatement(insertMatchedOrderStatement);
+        batch.addStatement(unmatchedOrderStatement);
+
+        // 4. 실행
+        cassandraTemplate.getCqlOperations().execute(batch.build());
+    }
+
+    @Override
+    public void deleteAll() {
+        matchedOrderStoreRepository.deleteAll();
+    }
+}

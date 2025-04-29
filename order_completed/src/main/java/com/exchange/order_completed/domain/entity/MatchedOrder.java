@@ -11,15 +11,16 @@ import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("completed_order")
-public class CompletedOrder {
+@Table("matched_order")
+public class MatchedOrder {
 
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
@@ -29,7 +30,10 @@ public class CompletedOrder {
 
     @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("created_at")
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+
+    @Column("created_date")
+    private LocalDate createdDate;
 
     @Column("price")
     private BigDecimal price;
@@ -37,7 +41,7 @@ public class CompletedOrder {
     @Column("quantity")
     private BigDecimal quantity;
 
-    @Column("type")
+    @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
     private String orderType;
 

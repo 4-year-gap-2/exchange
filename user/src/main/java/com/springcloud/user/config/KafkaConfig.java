@@ -31,7 +31,7 @@ public class KafkaConfig {
             DefaultErrorHandler errorHandler) {
 
         ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> factory =
-                kafkaCommonConfig.createManualCommitListenerFactory(new TypeReference<>() {}, "user-service", DEFAULT_CONCURRENCY);
+                kafkaCommonConfig.createAutoCommitListenerFactory(new TypeReference<>() {}, "user-service", DEFAULT_CONCURRENCY);
 
         factory.setCommonErrorHandler(errorHandler); // DLQ 적용
         return factory;
@@ -44,7 +44,7 @@ public class KafkaConfig {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<KafkaUserBalanceDecreaseEvent>() {},
                 "user-service-dlt", // DLT 전용 groupId
-                RECOVERY_CONCURRENCY // concurrency
+                DEFAULT_CONCURRENCY // concurrency
         );
     }
 
@@ -64,8 +64,6 @@ public class KafkaConfig {
                 });
         return new KafkaTemplate<>(factory);
     }
-
-
 
     // 유저 -> 매칭 주문서 전달
     @Bean

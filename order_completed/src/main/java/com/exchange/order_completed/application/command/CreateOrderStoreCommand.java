@@ -1,12 +1,16 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.CompletedOrder;
+import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.domain.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Builder
@@ -29,17 +33,32 @@ public record CreateOrderStoreCommand(
         );
     }
 
-    public CompletedOrder toEntity() {
-        return CompletedOrder.builder()
+    public MatchedOrder toMatchedOrderEntity() {
+        return MatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)
                 .price(price)
                 .quantity(quantity)
                 .userId(userId)
                 .orderId(orderId)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .createdDate(LocalDate.now(ZoneId.of("UTC")))
                 .build();
     }
+
+    public UnmatchedOrder toUnmatchedOrderEntity() {
+        return UnmatchedOrder.builder()
+                .tradingPair(tradingPair)
+                .orderType(orderType)
+                .price(price)
+                .quantity(quantity)
+                .userId(userId)
+                .orderId(orderId)
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .createdDate(LocalDate.now(ZoneId.of("UTC")))
+                .build();
+    }
+
     public Chart toChartData(){
         return new Chart(
                 UUID.randomUUID(),

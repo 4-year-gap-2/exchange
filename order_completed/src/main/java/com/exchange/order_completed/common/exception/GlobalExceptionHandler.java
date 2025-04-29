@@ -18,7 +18,8 @@ public class GlobalExceptionHandler {
                     CustomForbiddenException.class,
                     CustomConflictException.class,
                     CustomTimeoutException.class,
-                    DuplicateOrderCompletionException.class
+                    DuplicateMatchedOrderInformationException.class,
+                    DuplicateUnmatchedOrderInformationException.class
             })
     @ResponseBody
     public ResponseEntity<ResponseDto<Object>> handleExceptions(Exception e) {
@@ -37,7 +38,9 @@ public class GlobalExceptionHandler {
             return HttpStatus.CONFLICT;
         } else if (e instanceof CustomTimeoutException) {
             return HttpStatus.GATEWAY_TIMEOUT;
-        } else if (e instanceof DuplicateOrderCompletionException) {
+        } else if (e instanceof DuplicateMatchedOrderInformationException) {
+            return HttpStatus.CONFLICT;
+        } else if (e instanceof DuplicateUnmatchedOrderInformationException) {
             return HttpStatus.CONFLICT;
         }
         return HttpStatus.INTERNAL_SERVER_ERROR;
