@@ -5,6 +5,7 @@ import com.exchange.matching.util.CustomJsonSerializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -14,10 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
 
 import java.util.HashMap;
@@ -102,6 +100,7 @@ public class KafkaCommonConfig {
      */
     public <T> ProducerFactory<String, T> createCustomProducerFactory(TypeReference<T> typeReference) {
         Map<String, Object> configProps = getBaseProducerConfig();
+
         return new DefaultKafkaProducerFactory<>(
                 configProps,
                 new StringSerializer(),
@@ -165,5 +164,25 @@ public class KafkaCommonConfig {
         configProps.put(SaslConfigs.SASL_JAAS_CONFIG,
                 "org.apache.kafka.common.security.plain.PlainLoginModule required " +
                         "username=\"" + kafkaName + "\" password=\"" + kafkaPassword + "\";");
+    }
+
+    @Bean
+    public KafkaAdmin kafkaAdmin() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost + ":9092");
+
+        // SASL 인증 관련 설정 추가 (기존 메서드 활용)
+        addSaslConfig(configs);
+
+        // AdminClient 특화 설정
+        configs.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000); // 30초 타임아웃
+        configs.put(AdminClientConfig.RETRIES_CONFIG, 5); // 재시도 횟수
+
+        KafkaAdmin admin = new KafkaAdmin(configs);
+
+        // 필요시 클러스터 ID 수동 설정 (observation 문제 해결용)
+        // admin.setClusterId("your-cluster-id");
+
+        return admin;
     }
 }

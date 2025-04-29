@@ -222,7 +222,7 @@ public class RedisStreamToKafkaService {
             // 1. 매수 주문 이벤트 생성
             KafkaOrderStoreEvent buyEvent = KafkaOrderStoreEvent.builder()
                     .tradingPair(body.get("tradingPair"))
-                    .orderType("BUY")
+                    .orderType(OrderType.valueOf("BUY"))
                     .price(new BigDecimal(body.get("executionPrice")))
                     .quantity(new BigDecimal(body.get("matchedQuantity")))
                     .userId(UUID.fromString(body.get("buyUserId")))
@@ -233,7 +233,7 @@ public class RedisStreamToKafkaService {
             // 2. 매도 주문 이벤트 생성
             KafkaOrderStoreEvent sellEvent = KafkaOrderStoreEvent.builder()
                     .tradingPair(body.get("tradingPair"))
-                    .orderType("SELL")
+                    .orderType(OrderType.valueOf("SELL"))
                     .price(new BigDecimal(body.get("executionPrice")))
                     .quantity(new BigDecimal(body.get("matchedQuantity")))
                     .userId(UUID.fromString(body.get("sellUserId")))
@@ -275,7 +275,7 @@ public class RedisStreamToKafkaService {
 
             KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
                     .tradingPair(body.get("tradingPair"))
-                    .orderType(body.get("orderType"))
+                    .orderType(OrderType.valueOf(body.get("orderType")))
                     .price(new BigDecimal(body.get("price")))
                     .quantity(new BigDecimal(body.get("quantity")))
                     .userId(UUID.fromString(body.get("userId")))
@@ -309,34 +309,18 @@ public class RedisStreamToKafkaService {
             String messageId = message.getId().getValue();
             Map<String, String> body = message.getValue();
 
-            // Extract values from the map
-            String tradingPair = body.get("tradingPair");
-            String orderTypeStr = body.get("orderType");
-            String priceStr = body.get("price");
-            String quantityStr = body.get("quantity");
-            String userIdStr = body.get("userId");
-            String orderIdStr = body.get("orderId");
-
-            // Convert values to appropriate types
-            OrderType orderType = OrderType.valueOf(orderTypeStr);
-            BigDecimal price = new BigDecimal(priceStr);
-            BigDecimal quantity = new BigDecimal(quantityStr);
-            UUID userId = UUID.fromString(userIdStr);
-            UUID orderId = UUID.fromString(orderIdStr);
-
-            // Create KafkaMatchingEvent object
-            KafkaMatchingEvent matchingEvent = new KafkaMatchingEvent(
-                    tradingPair,
-                    orderType,
-                    price,
-                    quantity,
-                    userId,
-                    orderId
-            );
+            KafkaMatchingEvent event = KafkaMatchingEvent.builder()
+                    .tradingPair(body.get("tradingPair"))
+                    .orderType(OrderType.valueOf(body.get("orderType")))
+                    .price(new BigDecimal(body.get("price")))
+                    .quantity(new BigDecimal(body.get("quantity")))
+                    .userId(UUID.fromString(body.get("userId")))
+                    .orderId(UUID.fromString(body.get("orderId")))
+                    .build();
 
             // Kafka로 메시지 전송
             CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(PARTIAL_MATCHED_KAFKA_TOPIC, body.get("orderId"), matchingEvent);
+                    kafkaTemplate.send(PARTIAL_MATCHED_KAFKA_TOPIC, body.get("orderId"), event);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {

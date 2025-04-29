@@ -1,7 +1,6 @@
 package com.exchange.matching.config;
 
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
-import com.exchange.matching.infrastructure.dto.KafkaOrderStoreEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,9 +47,12 @@ public class KafkaConfig {
      */
     @Bean
     public KafkaTemplate<String, KafkaMatchingEvent> orderDeliveryKafkaTemplate() {
-        return new KafkaTemplate<>(
+        KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate = new KafkaTemplate<>(
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 }));
+
+        kafkaTemplate.setObservationEnabled(true);
+        return kafkaTemplate;
     }
 
     /**

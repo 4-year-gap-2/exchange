@@ -3,6 +3,7 @@ package com.exchange.matching.infrastructure.dto;
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.dto.enums.OrderType;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
+@Builder
 @NoArgsConstructor
 public class KafkaMatchingEvent {
 

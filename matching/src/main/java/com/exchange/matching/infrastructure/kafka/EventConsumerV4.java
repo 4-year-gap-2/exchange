@@ -5,7 +5,6 @@ import com.exchange.matching.application.service.MatchingFacade;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -46,10 +45,7 @@ public class EventConsumerV4 {
         Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
-            String topic = record.topic();
             KafkaMatchingEvent event = record.value();
-
-            System.out.println("topic 이름: " + topic);
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV1(command);
@@ -72,10 +68,7 @@ public class EventConsumerV4 {
         Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
-            String topic = record.topic();
             KafkaMatchingEvent event = record.value();
-
-            System.out.println("topic 이름: " + topic);
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV2(command);
@@ -98,10 +91,7 @@ public class EventConsumerV4 {
         Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
-            String topic = record.topic();
             KafkaMatchingEvent event = record.value();
-
-            System.out.println("topic 이름: " + topic);
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV4(command);
@@ -124,10 +114,7 @@ public class EventConsumerV4 {
         Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
-            String topic = record.topic();
             KafkaMatchingEvent event = record.value();
-
-            System.out.println("topic 이름: " + topic);
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV5(command);
@@ -143,17 +130,14 @@ public class EventConsumerV4 {
     @KafkaListener(
             topics = {"user-to-matching.execute-order-delivery.v6"},
             containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "1"
+            concurrency = "3"
     )
     public void consumeV6(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
 
         try {
-            String topic = record.topic();
             KafkaMatchingEvent event = record.value();
-
-            System.out.println("topic 이름: " + topic);
 
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
             matchingFacade.matchV6(command);

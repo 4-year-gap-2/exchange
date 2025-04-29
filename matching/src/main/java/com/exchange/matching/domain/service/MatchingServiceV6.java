@@ -101,14 +101,15 @@ public class MatchingServiceV6 implements MatchingService {
             order.getQuantity().toString(),
             orderDetails,
             order.getTradingPair(),
-            UUID.randomUUID().toString(),
-//            order.getOrderId().toString()
+// 새로운 주문으로 들어온다고 가정
+//            UUID.randomUUID().toString(),
+            order.getOrderId().toString(),
             partialOrderId
         );
     }
 
     /**
-     * 주문을 직렬화
+     * 주문 직렬화
      * 형식: timestamp|quantity|userId|orderId
      */
     private String serializeOrder(MatchingOrder order) {
