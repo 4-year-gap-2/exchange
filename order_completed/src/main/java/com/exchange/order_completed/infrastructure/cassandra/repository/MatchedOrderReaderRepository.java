@@ -12,18 +12,18 @@ import java.util.UUID;
 
 public interface MatchedOrderReaderRepository extends CassandraRepository<MatchedOrder, UUID> {
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND order_id = :orderId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND idempotency_id = :idempotencyId")
     @Consistency(DefaultConsistencyLevel.LOCAL_ONE)
-    Optional<MatchedOrder> findByUserAndOrderWithLocalOne(
+    Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalOne(
             @Param("userId") UUID userId,
-            @Param("orderId") UUID orderId
+            @Param("idempotencyId") UUID idempotencyId
     );
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND order_id = :orderId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND idempotency_id = :idempotencyId")
     @Consistency(DefaultConsistencyLevel.LOCAL_QUORUM)
-    Optional<MatchedOrder> findByUserAndOrderWithLocalQuorum(
+    Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalQuorum(
             @Param("userId") UUID userId,
-            @Param("orderId") UUID orderId
+            @Param("idempotencyId") UUID idempotencyId
     );
 
     MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId);

@@ -2,7 +2,8 @@ package com.exchange.order_completed.config;
 
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaBalanceIncreaseEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,20 +37,30 @@ public class KafkaConfig {
     }
 
     /**
-     * 주문 완료 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
+     * 미체결 주문 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
      */
-    @Bean("completeOrderKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> completeOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
+    @Bean("unmatchedOrderKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaUnmatchedOrderStoreEvent> unmatchedOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
                 }, "matching-service", DEFAULT_CONCURRENCY, errorHandler);
     }
 
     /**
-     * 주문 완료 이벤트 리스너 컨테이너 팩토리
+     * 체결 주문 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
+     */
+    @Bean("matchedOrderKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchedOrderStoreEvent> matchedOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
+        return kafkaCommonConfig.createManualCommitListenerFactory(
+                new TypeReference<>() {
+                }, "matching-service", DEFAULT_CONCURRENCY, errorHandler);
+    }
+
+    /**
+     * 체결 주문 이벤트 리스너 컨테이너 팩토리
      */
     @Bean("defaultCompleteOrderKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaOrderStoreEvent> completeOrderKafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchedOrderStoreEvent> matchedOrderKafkaListenerContainerFactory() {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
                 }, "matching-service", DEFAULT_CONCURRENCY);
@@ -99,7 +110,7 @@ public class KafkaConfig {
      * 주문 완료 이벤트 전용 프로듀서 템플릿
      */
     @Bean
-    public KafkaTemplate<String, KafkaOrderStoreEvent> orderStoreKafkaTemplate() {
+    public KafkaTemplate<String, KafkaMatchedOrderStoreEvent> orderStoreKafkaTemplate() {
         return new KafkaTemplate<>(
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 }));

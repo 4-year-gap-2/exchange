@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.dto;
 
-import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -18,14 +18,14 @@ public class KafkaBalanceIncreaseEvent {
     private UUID userId;
     private UUID orderId;
 
-    public static KafkaBalanceIncreaseEvent from(CreateOrderStoreCommand createOrderStoreCommand) {
+    public static KafkaBalanceIncreaseEvent from(CreateMatchedOrderStoreCommand createMatchedOrderStoreCommand) {
         return KafkaBalanceIncreaseEvent.builder()
-                .tradingPair(createOrderStoreCommand.tradingPair())
-                .orderType(createOrderStoreCommand.orderType())
-                .price(createOrderStoreCommand.price())
-                .quantity(createOrderStoreCommand.quantity())
-                .userId(createOrderStoreCommand.userId())
-                .orderId(createOrderStoreCommand.orderId())
+                .tradingPair(createMatchedOrderStoreCommand.tradingPair())
+                .orderType(createMatchedOrderStoreCommand.orderType())
+                .price(createMatchedOrderStoreCommand.price())
+                .quantity(createMatchedOrderStoreCommand.quantity())
+                .userId(createMatchedOrderStoreCommand.userId())
+                .orderId(createMatchedOrderStoreCommand.orderId())
                 .build();
     }
 }

@@ -1,23 +1,25 @@
 spring:
+  application:
+    name: order_completed
+
   mysql:
     datasource:
       url: ${DB_HOST}
       driver-class-name: com.mysql.cj.jdbc.Driver
       username: ${DB_NAME}
       password: ${DB_PASSWORD}
+
   postgres:
     datasource:
       url: ${POSTGRES_HOST}
       driver-class-name: org.postgresql.Driver
       username: ${DB_NAME}
       password: ${DB_PASSWORD}
-  application:
-    name: order_completed
+
   sql:
     init:
       mode: never
       data-locations: classpath:data.sql
-
 
   jpa:
     properties:
@@ -61,7 +63,7 @@ datastax-java-driver:
     timeout: 5 seconds
 
 server:
-  port: 19091
+  port: 19094
 
 eureka:
   client:

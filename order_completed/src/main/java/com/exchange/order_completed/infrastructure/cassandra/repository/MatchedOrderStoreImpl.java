@@ -29,13 +29,14 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
     public void saveMatchedOrderAndUpdateUnmatchedOrder(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
         // 1. INSERT INTO matched_order
         SimpleStatement insertMatchedOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, order_id, created_at, created_date, price, quantity, order_type, trading_pair) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         matchedOrder.getUserId(),
-                        matchedOrder.getOrderId(),
+                        matchedOrder.getIdempotencyId(),
                         matchedOrder.getCreatedAt(),
                         matchedOrder.getCreatedDate(),
+                        matchedOrder.getOrderId(),
                         matchedOrder.getPrice(),
                         matchedOrder.getQuantity(),
                         matchedOrder.getOrderType(),
