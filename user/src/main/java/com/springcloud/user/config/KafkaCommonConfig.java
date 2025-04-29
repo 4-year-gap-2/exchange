@@ -170,11 +170,27 @@ public class KafkaCommonConfig {
                         "username=\"" + kafkaName + "\" password=\"" + kafkaPassword + "\";");
     }
 
-    // DeadLetterPublishingRecoverer 빈
+    // DeadLetter 전용 ProducerFactory 생성
     @Bean
-    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<String, Object> kafkaTemplate) {
+    public ProducerFactory<String, Object> deadLetterProducerFactory() {
+        return new DefaultKafkaProducerFactory<>(
+                getBaseProducerConfig(),
+                new StringSerializer(),
+                new CustomJsonSerializer<>(objectMapper, new TypeReference<Object>() {})
+        );
+    }
+
+    // DeadLetter 전용 KafkaTemplate
+    @Bean
+    public KafkaTemplate<String, Object> deadLetterKafkaTemplate() {
+        return new KafkaTemplate<>(deadLetterProducerFactory());
+    }
+
+    // DeadLetterPublishingRecoverer 빈 (DLQ 전용 KafkaTemplate 사용)
+    @Bean
+    public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer() {
         return new DeadLetterPublishingRecoverer(
-                kafkaTemplate,
+                deadLetterKafkaTemplate(),
                 (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition())
         );
     }
@@ -182,13 +198,8 @@ public class KafkaCommonConfig {
     // DefaultErrorHandler 빈
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer) {
-        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 9)); // 10회 시도
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 9)); // 10회 재시도
     }
-
-    @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> producerFactory) {
-        return new KafkaTemplate<>(producerFactory);
-    }
-
 
 }
+

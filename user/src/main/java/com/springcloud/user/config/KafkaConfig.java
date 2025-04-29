@@ -44,7 +44,7 @@ public class KafkaConfig {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<KafkaUserBalanceDecreaseEvent>() {},
                 "user-service-dlt", // DLT 전용 groupId
-                RECOVERY_CONCURRENCY // concurrency
+                DEFAULT_CONCURRENCY // concurrency
         );
     }
 
