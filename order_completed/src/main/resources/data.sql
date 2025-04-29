@@ -1,6 +1,11 @@
 
--- select create_hypertable('chart','created_at');
+alter table public.chart
+drop constraint chart_pkey;
 
+alter table public.chart
+    add primary key (chart_id, created_at);
+
+select create_hypertable('chart','created_at');
 
 -- 1분 단위
 CREATE MATERIALIZED VIEW if not exists BTCKRW_m1_trades WITH (timescaledb.continuous) AS

@@ -20,9 +20,7 @@ public class TradeServiceImpl implements TradeService {
         String formattedPair = pair.toLowerCase().replace("/", "");
         String timeFormat = timeInterval.getShortCode();
         String viewName = String.format("%s_%s_trades", formattedPair, timeFormat);
-        if (!isValidIdentifier(viewName) || !isValidIdentifier(timeFormat)) {
-            throw new IllegalArgumentException("Invalid SQL identifier");
-        }
+
         return chartRepositoryReader.searchDataFromView(viewName, timeInterval.getInterval());
     }
 

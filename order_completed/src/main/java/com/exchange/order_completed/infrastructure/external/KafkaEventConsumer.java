@@ -1,7 +1,9 @@
 package com.exchange.order_completed.infrastructure.external;
 
+import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
+import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -40,5 +42,20 @@ public class KafkaEventConsumer {
         CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
         orderCompletedService.completeUnmatchedOrder(command, attempt);
         ack.acknowledge();
+    }
+
+    @KafkaListener(
+            topics = "cassandra.exchange.completed_order",
+            containerFactory = "chartKafkaListenerContainerFactory")
+    public void savaChart(CompletedOrderChangeEvent record) {
+
+        if (!"i".equals(record.getOp())) {
+            return ;
+        }
+
+        ChartCommand command = ChartCommand.fromEvent(record);
+
+        orderCompletedService.saveChart(command);
+        System.out.println("chart saved" + command.getPair());
     }
 }

@@ -1,16 +1,20 @@
 package com.exchange.order_completed.application.service;
 
+import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.entity.MatchedOrder;
 import com.exchange.order_completed.domain.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.postgresEntity.Chart;
 import com.exchange.order_completed.domain.repository.MatchedOrderReader;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
+import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -22,6 +26,7 @@ public class OrderCompletedService {
     private final MatchedOrderReader matchedOrderReader;
     private final UnmatchedOrderReader unmatchedOrderReader;
     private final UnmatchedOrderStore unmatchedOrderStore;
+    private final ChartRepositoryStore chartRepositoryStore;
 
     public void completeMatchedOrder(CreateOrderStoreCommand command, Integer attempt) {
         MatchedOrder persistentMatchedOrder = matchedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
@@ -67,5 +72,11 @@ public class OrderCompletedService {
 
         UnmatchedOrder newUnmatchedOrder = command.toUnmatchedOrderEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
+    }
+
+    @Transactional
+    public void saveChart(ChartCommand command) {
+        Chart chart = Chart.from(command);
+        chartRepositoryStore.save(chart);
     }
 }
