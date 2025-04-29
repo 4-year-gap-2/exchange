@@ -15,8 +15,8 @@ spring:
     name: order_completed
   sql:
     init:
-      mode: always
-      schema-locations: data.sql
+      mode: never
+      data-locations: classpath:data.sql
 
 
   jpa:
@@ -26,6 +26,7 @@ spring:
         format-sql: true
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true
 
   kafka:
     host: ${KAFKA_HOST}

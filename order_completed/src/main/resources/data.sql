@@ -7,8 +7,6 @@ alter table public.chart
 
 select create_hypertable('chart','created_at');
 
-SET TIME ZONE 'Asia/Seoul';
-
 -- 1분 단위
 CREATE MATERIALIZED VIEW if not exists BTCKRW_m1_trades WITH (timescaledb.continuous) AS
 SELECT

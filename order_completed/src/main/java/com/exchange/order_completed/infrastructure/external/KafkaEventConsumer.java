@@ -37,6 +37,10 @@ public class KafkaEventConsumer {
             containerFactory = "chartKafkaListenerContainerFactory")
     public void savaChart(CompletedOrderChangeEvent record) {
 
+        if (!"i".equals(record.getOp())) {
+            return ;
+        }
+
         ChartCommand command = ChartCommand.fromEvent(record);
 
         orderCompletedService.saveChart(command);
