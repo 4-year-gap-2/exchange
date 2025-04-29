@@ -340,7 +340,7 @@ public class MatchingServiceV5 implements MatchingService {
                     command.price(),
                     command.quantity(),
                     command.userId(),
-                    UUID.randomUUID()
+                    command.orderId()
             );
         }
     }

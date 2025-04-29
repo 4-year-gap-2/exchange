@@ -47,7 +47,7 @@ public class KafkaMatchingEvent {
                 command.price(),
                 command.quantity(),
                 command.userId(),
-                UUID.randomUUID()
+                command.orderId()
         );
     }
 }

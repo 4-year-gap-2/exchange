@@ -143,7 +143,7 @@ public class EventConsumerV4 {
     @KafkaListener(
             topics = {"user-to-matching.execute-order-delivery.v6"},
             containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
+            concurrency = "1"
     )
     public void consumeV6(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작

@@ -1,6 +1,7 @@
 package com.exchange.matching.config;
 
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
+import com.exchange.matching.infrastructure.dto.KafkaOrderStoreEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
