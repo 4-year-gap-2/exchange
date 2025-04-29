@@ -38,7 +38,7 @@ ai:
     url: test
 
 server:
-  port: 19094
+  port: 19095
 
 eureka:
   client:
