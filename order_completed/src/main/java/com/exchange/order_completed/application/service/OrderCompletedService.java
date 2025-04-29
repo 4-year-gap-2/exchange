@@ -1,7 +1,8 @@
 package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.application.command.ChartCommand;
-import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.entity.MatchedOrder;
@@ -28,14 +29,14 @@ public class OrderCompletedService {
     private final UnmatchedOrderStore unmatchedOrderStore;
     private final ChartRepositoryStore chartRepositoryStore;
 
-    public void completeMatchedOrder(CreateOrderStoreCommand command, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findByUserIdAndOrderId(command.userId(), command.orderId(), attempt);
+    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, Integer attempt) {
+        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), command.idempotencyId(), attempt);
 
         if (persistentMatchedOrder != null) {
-            throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.orderId());
+            throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
         }
 
-        MatchedOrder newMatchedOrder = command.toMatchedOrderEntity();
+        MatchedOrder newMatchedOrder = command.toEntity();
         UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
 
         if (persistentUnmatchedOrder == null) {
@@ -63,14 +64,14 @@ public class OrderCompletedService {
         }
     }
 
-    public void completeUnmatchedOrder(CreateOrderStoreCommand command, Integer attempt) {
+    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, Integer attempt) {
         UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
 
         if (persistentMatchedOrder != null) {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 
-        UnmatchedOrder newUnmatchedOrder = command.toUnmatchedOrderEntity();
+        UnmatchedOrder newUnmatchedOrder = command.toEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
     }
 

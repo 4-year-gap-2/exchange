@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface MatchedOrderReader {
 
-    MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt);
+    MatchedOrder findMatchedOrder(UUID userId, UUID idempotencyId, Integer attempt);
 
     Optional<MatchedOrder> findByOrderId(UUID orderId);
 }

@@ -19,10 +19,10 @@ public class MatchedOrderReaderImpl implements MatchedOrderReader {
      * attempt > 1  : LOCAL_QUORUM
      */
     @Override
-    public MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId, Integer attempt) {
+    public MatchedOrder findMatchedOrder(UUID userId, UUID idempotencyId, Integer attempt) {
         return (attempt == 1
-                ? matchedOrderReaderRepository.findByUserAndOrderWithLocalOne(userId, orderId)
-                : matchedOrderReaderRepository.findByUserAndOrderWithLocalQuorum(userId, orderId)
+                ? matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalOne(userId, idempotencyId)
+                : matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalQuorum(userId, idempotencyId)
         ).orElse(null);
     }
 

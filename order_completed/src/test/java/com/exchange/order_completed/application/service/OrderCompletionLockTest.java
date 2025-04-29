@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.service;
 
-import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -34,8 +34,8 @@ class OrderCompletionLockTest {
     private final UUID orderId = UUID.randomUUID();
     private final UUID userId = UUID.randomUUID();
 
-    private CreateOrderStoreCommand buildCreateOrderStoreCommand () {
-        return CreateOrderStoreCommand.builder()
+    private CreateMatchedOrderStoreCommand buildCreateOrderStoreCommand () {
+        return CreateMatchedOrderStoreCommand.builder()
                 .userId(userId)
                 .orderId(orderId)
                 .price(BigDecimal.TEN)
@@ -55,7 +55,7 @@ class OrderCompletionLockTest {
     @Test
     @DisplayName("동시 주문 완료 요청 시, 락을 통해 중복 저장이 방지되어야 한다.")
     void whenConcurrentCompleteOrder_thenOnlyOneSucceeds() throws InterruptedException, ExecutionException {
-        CreateOrderStoreCommand command = buildCreateOrderStoreCommand();
+        CreateMatchedOrderStoreCommand command = buildCreateOrderStoreCommand();
         int attempt = 1;
 
         int threadCount = 5;

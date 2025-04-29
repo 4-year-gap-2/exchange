@@ -1,10 +1,12 @@
 package com.exchange.order_completed.infrastructure.external;
 
 import com.exchange.order_completed.application.command.ChartCommand;
-import com.exchange.order_completed.application.command.CreateOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -25,10 +27,10 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = TOPIC_MATCHED,
             groupId = GROUP_ID,
-            containerFactory = "completeOrderKafkaListenerContainerFactory")
-    public void consumeMatchedMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
-        KafkaOrderStoreEvent event = record.value();
-        CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
+            containerFactory = "matchedOrderKafkaListenerContainerFactory")
+    public void consumeMatchedMessage(ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
+        KafkaMatchedOrderStoreEvent event = record.value();
+        CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
         orderCompletedService.completeMatchedOrder(command, attempt);
         ack.acknowledge();
     }
@@ -36,10 +38,10 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = TOPIC_UNMATCHED,
             groupId = GROUP_ID,
-            containerFactory = "completeOrderKafkaListenerContainerFactory")
-    public void consumeUnmatchedMessage(ConsumerRecord<String, KafkaOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
-        KafkaOrderStoreEvent event = record.value();
-        CreateOrderStoreCommand command = CreateOrderStoreCommand.from(event);
+            containerFactory = "unmatchedOrderKafkaListenerContainerFactory")
+    public void consumeUnmatchedMessage(ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
+        KafkaUnmatchedOrderStoreEvent event = record.value();
+        CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(event);
         orderCompletedService.completeUnmatchedOrder(command, attempt);
         ack.acknowledge();
     }

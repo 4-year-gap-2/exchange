@@ -9,6 +9,7 @@ public record CreateOrderStoreRequest(
         BigDecimal price,
         BigDecimal quantity,
         UUID userId,
-        UUID orderId
+        UUID orderId,
+        UUID idempotencyId
 ) {
 }

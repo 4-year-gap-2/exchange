@@ -25,8 +25,8 @@ public class MatchedOrder {
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
-    @PrimaryKeyColumn(name = "order_id", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
-    private UUID orderId;
+    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
+    private UUID idempotencyId;
 
     @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("created_at")
@@ -34,6 +34,9 @@ public class MatchedOrder {
 
     @Column("created_date")
     private LocalDate createdDate;
+
+    @Column("order_id")
+    private UUID orderId;
 
     @Column("price")
     private BigDecimal price;
@@ -46,7 +49,7 @@ public class MatchedOrder {
     private String orderType;
 
     @Column("trading_pair")
-    @Comment("거래 쌍 (BTC-USD)")
+    @Comment("거래 쌍 (BTC/USD)")
     private String tradingPair;
 
 }
