@@ -7,6 +7,9 @@ import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,8 +18,9 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
-@RequiredArgsConstructor
 public class KafkaEventConsumer {
 
     private final OrderCompletedService orderCompletedService;
@@ -24,14 +28,45 @@ public class KafkaEventConsumer {
     private static final String TOPIC_UNMATCHED = "matching-to-order_completed.execute-order-unmatched";
     private static final String GROUP_ID = "matching-service";
 
+    private final Counter endToEndCounter;
+    private final Timer endToEndTimer;
+
+    public KafkaEventConsumer(OrderCompletedService orderCompletedService, MeterRegistry meterRegistry) {
+        this.orderCompletedService = orderCompletedService;
+
+        // 전체 체인 처리 카운터 (A→B→C 전체 TPS)
+        this.endToEndCounter = Counter.builder("matching_chain_completed_total")
+                .description("Total number of completed event processing chains (A→B→C)")
+                .register(meterRegistry);
+
+        // 전체 체인 처리 시간 (A→B→C 전체 처리 시간)
+        this.endToEndTimer = Timer.builder("matching_chain_processing_time")
+                .description("Total time from message creation to final processing (A→B→C)")
+                .register(meterRegistry);
+    }
+
     @KafkaListener(
             topics = TOPIC_MATCHED,
             groupId = GROUP_ID,
             containerFactory = "matchedOrderKafkaListenerContainerFactory")
     public void consumeMatchedMessage(ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
         KafkaMatchedOrderStoreEvent event = record.value();
+        long startTime;
+
+        if ("BUY".equals(event.getOrderType())) {
+            startTime = 9999999999999L - event.getStartTime();
+        } else {
+            startTime = event.getStartTime();
+        }
+
+        long endToEndDuration = System.currentTimeMillis() - startTime;
+
         CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
+
         orderCompletedService.completeMatchedOrder(command, attempt);
+
+        // 전체 체인 처리 시간 기록
+        endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
         ack.acknowledge();
     }
 
@@ -41,8 +76,15 @@ public class KafkaEventConsumer {
             containerFactory = "unmatchedOrderKafkaListenerContainerFactory")
     public void consumeUnmatchedMessage(ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
         KafkaUnmatchedOrderStoreEvent event = record.value();
+        long startTime = event.getStartTime();
+        long endToEndDuration = System.currentTimeMillis() - startTime;
+
         CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(event);
         orderCompletedService.completeUnmatchedOrder(command, attempt);
+
+        // 전체 체인 처리 시간 기록
+        endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
+
         ack.acknowledge();
     }
 

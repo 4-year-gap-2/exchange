@@ -21,4 +21,5 @@ public class KafkaMatchedOrderStoreEvent {
     private UUID userId;
     private UUID orderId;
     private UUID idempotencyId;
+    private long startTime;
 }

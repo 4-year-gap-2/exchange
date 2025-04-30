@@ -17,7 +17,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 @Configuration(enforceUniqueMethods = false)
 public class KafkaConfig {
 
-    private static final int DEFAULT_CONCURRENCY = 3;
+    private static final int DEFAULT_CONCURRENCY = 10;
     private static final int RECOVERY_CONCURRENCY = 2;
 
     private final KafkaCommonConfig kafkaCommonConfig;
@@ -53,7 +53,7 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchedOrderStoreEvent> matchedOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
-                }, "matching-service", DEFAULT_CONCURRENCY, errorHandler);
+                }, "matching-service", 20, errorHandler);
     }
 
     /**

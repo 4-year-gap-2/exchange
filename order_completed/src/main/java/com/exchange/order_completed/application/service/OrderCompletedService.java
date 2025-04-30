@@ -30,22 +30,22 @@ public class OrderCompletedService {
     private final ChartRepositoryStore chartRepositoryStore;
 
     public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), command.idempotencyId(), attempt);
-
-        if (persistentMatchedOrder != null) {
-            throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
-        }
+//        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), command.idempotencyId(), attempt);
+//
+//        if (persistentMatchedOrder != null) {
+//            throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
+//        }
 
         MatchedOrder newMatchedOrder = command.toEntity();
-        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
-
-        if (persistentUnmatchedOrder == null) {
+//        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
+//
+//        if (persistentUnmatchedOrder == null) {
             matchedOrderStore.save(newMatchedOrder);
-        } else {
-            updateUnmatchedOrderQuantity(newMatchedOrder, persistentUnmatchedOrder);
-            // 카산드라 배치 쿼리 수행
-            matchedOrderStore.saveMatchedOrderAndUpdateUnmatchedOrder(newMatchedOrder, persistentUnmatchedOrder);
-        }
+//        } else {
+//            updateUnmatchedOrderQuantity(newMatchedOrder, persistentUnmatchedOrder);
+//            // 카산드라 배치 쿼리 수행
+//            matchedOrderStore.saveMatchedOrderAndUpdateUnmatchedOrder(newMatchedOrder, persistentUnmatchedOrder);
+//        }
     }
 
     public void updateUnmatchedOrderQuantity(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
@@ -65,11 +65,11 @@ public class OrderCompletedService {
     }
 
     public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, Integer attempt) {
-        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
-
-        if (persistentMatchedOrder != null) {
-            throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
-        }
+//        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
+//
+//        if (persistentMatchedOrder != null) {
+//            throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
+//        }
 
         UnmatchedOrder newUnmatchedOrder = command.toEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
