@@ -51,7 +51,7 @@ public class KafkaConfig {
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 }));
 
-        kafkaTemplate.setObservationEnabled(true);
+//        kafkaTemplate.setObservationEnabled(true);
         return kafkaTemplate;
     }
 

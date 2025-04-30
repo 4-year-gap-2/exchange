@@ -16,8 +16,8 @@ spring:
       hibernate:
         show-sql: true
         format-sql: true
-    hibernate:
-      ddl-auto: create
+#    hibernate:
+#      ddl-auto: create
 
   kafka:
     host: ${KAFKA_HOST}
@@ -59,9 +59,16 @@ management:
     health:
       show-details: always # 헬스 체크 엔드포인트에서 상세 정보 표시
 
-  zipkin:
-    tracing:
-      endpoint: "http://localhost:9411/api/v2/spans"
-  tracing:
-    sampling:
-      probability: 1.0
+#  zipkin:
+#    tracing:
+#      endpoint: "http://localhost:9411/api/v2/spans"
+#  tracing:
+#    sampling:
+#      probability: 1.0
+
+redis:
+  stream:
+    worker:
+      thread-count: 4  # 처리할 스레드 수
+    message:
+      batch-size: 10   # 한 번에 가져올 메시지 수
