@@ -58,7 +58,7 @@ local oppositeOrderDetails = oppositeOrders[1]
 local oppositeOrderPrice = tonumber(oppositeOrders[2])
 
 -- 가격 조건 확인
-local isPriceMatched = isBuy and orderPrice >= oppositeOrderPrice or orderPrice <= oppositeOrderPrice
+local isPriceMatched = isBuy and (orderPrice >= oppositeOrderPrice) or (not isBuy and orderPrice <= oppositeOrderPrice)
 if not isPriceMatched then
     redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
     return {"false", "", "", "", ""}

@@ -47,9 +47,12 @@ public class KafkaConfig {
      */
     @Bean
     public KafkaTemplate<String, KafkaMatchingEvent> orderDeliveryKafkaTemplate() {
-        return new KafkaTemplate<>(
+        KafkaTemplate<String, KafkaMatchingEvent> kafkaTemplate = new KafkaTemplate<>(
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 }));
+
+        kafkaTemplate.setObservationEnabled(true);
+        return kafkaTemplate;
     }
 
     /**

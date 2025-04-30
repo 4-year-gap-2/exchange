@@ -44,18 +44,21 @@ end
 -- ARGV[4]: 주문 상세 정보 (timestamp|quantity|userId|orderId 형식)
 -- ARGV[5]: 거래 쌍 (trading pair)
 -- ARGV[6]: 주문 ID
+-- ARGV[7]: 부분 체결을 위한 ID
 
 local oppositeOrderKey = KEYS[1]
 local currentOrderKey = KEYS[2]
 local matchStreamKey = KEYS[3]
 local unmatchStreamKey = KEYS[4]
-local idempotencyKey = KEYS[5]
+local partialMatchedStreamKey = KEYS[5]
+local idempotencyKey = KEYS[6]
 local orderType = ARGV[1]
 local orderPrice = tonumber(ARGV[2])
 local orderQuantity = tonumber(ARGV[3])
 local orderDetails = ARGV[4]
 local tradingPair = ARGV[5]
 local orderId = ARGV[6]
+local partialOrderId = ARGV[7]
 
 -- 멱등성 체크: 이미 처리된 주문인지 확인
 if redis.call("SISMEMBER", idempotencyKey, orderId) == 1 then
@@ -101,8 +104,8 @@ end
 local oppositeOrderDetails = oppositeOrders[1]
 local oppositeOrderPrice = tonumber(oppositeOrders[2])
 
--- 가격 조건 확인
-local isPriceMatched = isBuy and orderPrice >= oppositeOrderPrice or orderPrice <= oppositeOrderPrice
+-- 반대 주문과 매칭 가격 조건 확인
+local isPriceMatched = isBuy and (orderPrice >= oppositeOrderPrice) or (not isBuy and orderPrice <= oppositeOrderPrice)
 if not isPriceMatched then
     -- 현재 주문을 저장
     redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
@@ -119,9 +122,8 @@ if not isPriceMatched then
         ["price"] = tostring(orderPrice),
         ["quantity"] = tostring(orderQuantity),
         ["timestamp"] = orderInfo.timestamp,
-        ["status"] = "UNMATCHED"
     }
-    redis.call("XADD", unmatchStreamKey, "*", unpack(flattenMap(unmatchFields)))
+    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchFields)))
 
     -- 멱등성 키추가
     redis.call("SADD", idempotencyKey, orderId)
@@ -170,21 +172,17 @@ if remainingOrderQuantity > 0 then
             currentOrder.orderId
     )
 
-    -- 현재 주문 리스트에 추가
-    redis.call("ZADD", currentOrderKey, orderPrice, updatedCurrentDetails)
-
     -- 남은 수량을 미체결 Stream에 발행
-    local unmatchedFields = {
-        ["orderId"] = currentOrder.orderId,
+    local partialMatchedFields = {
+        ["orderId"] = partialOrderId,
         ["userId"] = currentOrder.userId,
         ["tradingPair"] = tradingPair,
         ["orderType"] = orderType,
         ["price"] = tostring(orderPrice),
         ["quantity"] = tostring(remainingOrderQuantity),
         ["timestamp"] = currentOrder.timestamp,
-        ["status"] = "PARTIAL_MATCHED"
     }
-    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchedFields)))
+    redis.call("XADD", partialMatchedStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(partialMatchedFields)))
 end
 
 -- 매칭 결과를 Stream에 발행
@@ -201,7 +199,6 @@ local matchFields = {
     ["matchedQuantity"] = tostring(matchedQuantity),
     ["buyTimestamp"] = isBuy and currentOrder.timestamp or oppositeOrder.timestamp,
     ["sellTimestamp"] = isBuy and oppositeOrder.timestamp or currentOrder.timestamp,
-    ["status"] = "MATCHED"
 }
 
 -- Redis Stream에 매칭 정보 추가

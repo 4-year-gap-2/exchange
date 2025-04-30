@@ -19,14 +19,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-@Service
 @Slf4j
+@Service
 public class MatchingServiceV6 implements MatchingService {
 
     private static final String SELL_ORDER_KEY = "v6:orders:sell:";
     private static final String BUY_ORDER_KEY = "v6:orders:buy:";
     private static final String MATCH_STREAM_KEY = "v6:stream:matches";
     private static final String UNMATCH_STREAM_KEY = "v6:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6:stream:partialMatched";
     private static final String IDEMPOTENCY_KEY = "v6:idempotency:orders";
 
     private final RedisTemplate<String, String> redisTemplate;
@@ -81,6 +82,9 @@ public class MatchingServiceV6 implements MatchingService {
         // 주문 정보 직렬화 (타임스탬프 포함)
         String orderDetails = serializeOrder(order);
 
+        // 부분 체결을 위한 새 ID 생성
+        String partialOrderId = UUID.randomUUID().toString();
+
         // Lua 스크립트 실행
         redisTemplate.execute(
             matchingScript,
@@ -89,6 +93,7 @@ public class MatchingServiceV6 implements MatchingService {
                     currentOrderKey,
                     MATCH_STREAM_KEY,
                     UNMATCH_STREAM_KEY,
+                    PARTIAL_MATCHED_STREAM_KEY,
                     IDEMPOTENCY_KEY
             ),
             order.getOrderType().toString(),
@@ -96,13 +101,15 @@ public class MatchingServiceV6 implements MatchingService {
             order.getQuantity().toString(),
             orderDetails,
             order.getTradingPair(),
-            order.getOrderId()
+// 새로운 주문으로 들어온다고 가정
+//            UUID.randomUUID().toString(),
+            order.getOrderId().toString(),
+            partialOrderId
         );
-
     }
 
     /**
-     * 주문을 직렬화
+     * 주문 직렬화
      * 형식: timestamp|quantity|userId|orderId
      */
     private String serializeOrder(MatchingOrder order) {
@@ -154,7 +161,7 @@ public class MatchingServiceV6 implements MatchingService {
                     command.price(),
                     command.quantity(),
                     command.userId(),
-                    UUID.randomUUID()
+                    command.orderId()
             );
         }
     }

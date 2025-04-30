@@ -34,7 +34,7 @@ public class EventConsumerV6 {
     }
 
     @KafkaListener(
-            topics = {"matching-to-matching.execute-matching-callback-test"},
+            topics = {"matching-to-matching.execute-matching-event-callback"},
             containerFactory = "recoveryEventKafkaListenerContainerFactory",
             concurrency = "3"
     )
@@ -61,7 +61,7 @@ public class EventConsumerV6 {
     }
 
     @KafkaListener(
-            topics = {"matching-to-matching.execute-unmatched-callback-test"},
+            topics = {"matching-to-matching.execute-unmatched-event-callback"},
             containerFactory = "recoveryEventKafkaListenerContainerFactory",
             concurrency = "3"
     )

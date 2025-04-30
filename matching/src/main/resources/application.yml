@@ -1,3 +1,6 @@
+server:
+  port: 19093
+
 spring:
   application:
     name: matching-service
@@ -31,9 +34,6 @@ spring:
       username: ${REDIS_NAME}
       password: ${REDIS_PASSWORD}
 
-server:
-  port: 19091
-
 eureka:
   client:
     service-url:
@@ -58,3 +58,10 @@ management:
   endpoint:
     health:
       show-details: always # 헬스 체크 엔드포인트에서 상세 정보 표시
+
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  tracing:
+    sampling:
+      probability: 1.0
