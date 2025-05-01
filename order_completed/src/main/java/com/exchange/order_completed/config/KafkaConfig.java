@@ -1,9 +1,6 @@
 package com.exchange.order_completed.config;
 
-import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaBalanceIncreaseEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +47,7 @@ public class KafkaConfig {
      * 체결 주문 이벤트 리스너 컨테이너 팩토리 (커스텀 에러 핸들러 적용)
      */
     @Bean("matchedOrderKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchedOrderStoreEvent> matchedOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchedOrderEvent> matchedOrderKafkaListenerContainerFactory(DefaultErrorHandler errorHandler) {
         return kafkaCommonConfig.createManualCommitListenerFactory(
                 new TypeReference<>() {
                 }, "matching-service", 20, errorHandler);

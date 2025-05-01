@@ -13,6 +13,7 @@ import org.springframework.data.cassandra.core.CassandraTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         command.buyUserId(),
-                        command.matchId(),
+                        UUID.randomUUID(),
                         command.createdAt(),
                         command.createdDate(),
                         command.buyOrderId(),
@@ -46,7 +47,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         command.sellUserId(),
-                        command.matchId(),
+                        UUID.randomUUID(),
                         command.createdAt(),
                         command.createdDate(),
                         command.sellOrderId(),

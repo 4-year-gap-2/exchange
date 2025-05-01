@@ -55,11 +55,7 @@ public class KafkaEventConsumer {
         KafkaMatchedOrderEvent event = record.value();
         long startTime;
 
-        if ("BUY".equals(event.getBuyTimestamp())) {
-            startTime = 9999999999999L - event.getBuyTimestamp();
-        } else {
-            startTime = event.getSellTimestamp();
-        }
+        startTime = 9999999999999L - event.getBuyTimestamp();
 
         long endToEndDuration = System.currentTimeMillis() - startTime;
 
