@@ -1,6 +1,7 @@
 package com.exchange.order_completed.infrastructure.redis;
 
 import com.exchange.order_completed.application.OrderType;
+import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchingEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
 import jakarta.annotation.PostConstruct;
@@ -228,62 +229,43 @@ public class RedisStreamToKafkaServiceV2 {
             String messageId = message.getId().getValue();
             Map<String, String> body = message.getValue();
 
-            // 1. 매수 주문 이벤트 생성
-            KafkaOrderStoreEvent buyEvent = KafkaOrderStoreEvent.builder()
+            // 매칭된 주문 정보를 하나의 DTO로 생성
+            KafkaMatchedOrderEvent matchedEvent = KafkaMatchedOrderEvent.builder()
                     .tradingPair(body.get("tradingPair"))
-                    .orderType(OrderType.valueOf("BUY"))
-                    .price(new BigDecimal(body.get("executionPrice")))
-                    .quantity(new BigDecimal(body.get("matchedQuantity")))
-                    .userId(UUID.fromString(body.get("buyUserId")))
-                    .orderId(UUID.fromString(body.get("buyOrderId")))
-                    .idempotencyId(UUID.randomUUID())
-                    .startTime(Long.parseLong(body.get("buyTimestamp")))
+                    .executionPrice(new BigDecimal(body.get("executionPrice")))
+                    .matchedQuantity(new BigDecimal(body.get("matchedQuantity")))
+                    // 매수 주문 정보
+                    .buyUserId(UUID.fromString(body.get("buyUserId")))
+                    .buyOrderId(UUID.fromString(body.get("buyOrderId")))
+                    .buyTimestamp(Long.parseLong(body.get("buyTimestamp")))
+                    // 매도 주문 정보
+                    .sellUserId(UUID.fromString(body.get("sellUserId")))
+                    .sellOrderId(UUID.fromString(body.get("sellOrderId")))
+                    .sellTimestamp(Long.parseLong(body.get("sellTimestamp")))
                     .build();
 
-            // 2. 매도 주문 이벤트 생성
-            KafkaOrderStoreEvent sellEvent = KafkaOrderStoreEvent.builder()
-                    .tradingPair(body.get("tradingPair"))
-                    .orderType(OrderType.valueOf("SELL"))
-                    .price(new BigDecimal(body.get("executionPrice")))
-                    .quantity(new BigDecimal(body.get("matchedQuantity")))
-                    .userId(UUID.fromString(body.get("sellUserId")))
-                    .orderId(UUID.fromString(body.get("sellOrderId")))
-                    .idempotencyId(UUID.randomUUID())
-                    .startTime(Long.parseLong(body.get("sellTimestamp")))
-                    .build();
-
-            // 4. Kafka로 두 메시지 전송
-            // 메시지 전송을 병렬로 처리
-            CompletableFuture<SendResult<String, Object>> buyFuture =
+            // 매칭 이벤트를 Kafka로 전송
+            // matchId를 key로 사용하여 이벤트 전송
+            CompletableFuture<SendResult<String, Object>> future =
                     CompletableFuture.supplyAsync(() -> {
                         try {
-                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, body.get("buyOrderId"), buyEvent).get();
+                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent.getMatchId().toString(), matchedEvent).get();
                         } catch (Exception e) {
                             throw new CompletionException(e);
                         }
                     }, kafkaExecutorService);
 
-            CompletableFuture<SendResult<String, Object>> sellFuture =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, body.get("sellOrderId"), sellEvent).get();
-                        } catch (Exception e) {
-                            throw new CompletionException(e);
-                        }
-                    }, kafkaExecutorService);
-
-            // 5. 두 메시지 모두 전송 완료 시 ACK
-            CompletableFuture.allOf(buyFuture, sellFuture)
-                    .whenComplete((result, ex) -> {
-                        if (ex == null) {
-                            // 성공 시 Redis에서 ACK 처리
-                            redisTemplate.opsForStream().acknowledge(MATCH_STREAM_KEY, consumerGroupName, messageId);
-                            log.info("매칭 메시지 Kafka 전송 완료: {}", messageId);
-                        } else {
-                            // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
-                            log.error("매칭 메시지 Kafka 전송 실패: {}", messageId, ex);
-                        }
-                    });
+            // 전송 완료 후 처리
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    // 성공 시 Redis에서 ACK 처리
+                    redisTemplate.opsForStream().acknowledge(MATCH_STREAM_KEY, consumerGroupName, messageId);
+                    log.info("매칭 이벤트 Kafka 전송 완료: {} (매치 ID: {})", messageId, matchedEvent.getMatchId());
+                } else {
+                    // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
+                    log.error("매칭 이벤트 Kafka 전송 실패: {}", messageId, ex);
+                }
+            });
         } catch (Exception e) {
             log.error("매칭 메시지 처리 오류", e);
         }

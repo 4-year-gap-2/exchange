@@ -5,6 +5,7 @@ import com.exchange.order_completed.application.command.CreateMatchedOrderStoreC
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import io.micrometer.core.instrument.Counter;
@@ -49,21 +50,21 @@ public class KafkaEventConsumer {
             topics = TOPIC_MATCHED,
             groupId = GROUP_ID,
             containerFactory = "matchedOrderKafkaListenerContainerFactory")
-    public void consumeMatchedMessage(ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
-        KafkaMatchedOrderStoreEvent event = record.value();
+    public void consumeMatchedMessage(ConsumerRecord<String, KafkaMatchedOrderEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
+        KafkaMatchedOrderEvent event = record.value();
         long startTime;
 
-        if ("BUY".equals(event.getOrderType())) {
-            startTime = 9999999999999L - event.getStartTime();
+        if ("BUY".equals(event.getBuyTimestamp())) {
+            startTime = 9999999999999L - event.getBuyTimestamp();
         } else {
-            startTime = event.getStartTime();
+            startTime = event.getSellTimestamp();
         }
 
         long endToEndDuration = System.currentTimeMillis() - startTime;
 
-        CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
+//        CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
 
-        orderCompletedService.completeMatchedOrder(command, attempt);
+//        orderCompletedService.completeMatchedOrder(command, attempt);
 
         // 전체 체인 처리 시간 기록
         endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
