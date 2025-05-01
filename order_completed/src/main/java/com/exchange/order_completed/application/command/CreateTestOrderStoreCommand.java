@@ -1,5 +1,6 @@
 package com.exchange.order_completed.application.command;
 
+import com.exchange.order_completed.domain.entity.MatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
 
 import java.math.BigDecimal;
@@ -45,5 +46,33 @@ public record CreateTestOrderStoreCommand(
                 LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant(),
                 LocalDate.now(ZoneId.of("UTC"))
         );
+    }
+
+    public MatchedOrder toSellOrderEntity() {
+        return MatchedOrder.builder()
+                .tradingPair(tradingPair)
+                .price(executionPrice)
+                .quantity(matchedQuantity)
+                .userId(sellUserId)
+                .orderId(sellOrderId)
+                .createdAt(createdAt)
+                .createdDate(createdDate)
+                .idempotencyId(UUID.randomUUID())
+                .orderType("SELL")
+                .build();
+    }
+
+    public MatchedOrder toBuyOrderEntity() {
+        return MatchedOrder.builder()
+                .tradingPair(tradingPair)
+                .price(executionPrice)
+                .quantity(matchedQuantity)
+                .userId(buyUserId)
+                .orderId(buyOrderId)
+                .createdAt(createdAt)
+                .createdDate(createdDate)
+                .idempotencyId(UUID.randomUUID())
+                .orderType("BUY")
+                .build();
     }
 }

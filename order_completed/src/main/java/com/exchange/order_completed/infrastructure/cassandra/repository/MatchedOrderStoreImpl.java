@@ -10,9 +10,12 @@ import com.exchange.order_completed.domain.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraTemplate;
+import org.springframework.data.cassandra.core.InsertOptions;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -23,7 +26,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
     private final CassandraTemplate cassandraTemplate;
 
     @Override
-    public void save(CreateTestOrderStoreCommand command) {
+    public void saveBatch(CreateTestOrderStoreCommand command) {
         // 1. 매수 주문 INSERT
         SimpleStatement insertBuyOrderStatement = SimpleStatement.builder(
                         "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +

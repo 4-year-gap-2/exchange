@@ -64,7 +64,7 @@ public class KafkaEventConsumer {
 //        orderCompletedService.completeMatchedOrder(command, attempt);
 
         CreateTestOrderStoreCommand command = CreateTestOrderStoreCommand.from(event);
-        orderCompletedService.completeOrder(command, attempt);
+        orderCompletedService.completeOrderEach(command, attempt);
 
         // 전체 체인 처리 시간 기록
         endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);

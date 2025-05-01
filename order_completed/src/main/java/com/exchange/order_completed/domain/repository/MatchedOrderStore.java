@@ -12,5 +12,5 @@ public interface MatchedOrderStore {
 
     void deleteAll();
 
-    void save(CreateTestOrderStoreCommand command);
+    void saveBatch(CreateTestOrderStoreCommand command);
 }

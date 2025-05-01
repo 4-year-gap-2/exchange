@@ -30,8 +30,14 @@ public class OrderCompletedService {
     private final UnmatchedOrderStore unmatchedOrderStore;
     private final ChartRepositoryStore chartRepositoryStore;
 
-    public void completeOrder(CreateTestOrderStoreCommand command, Integer attempt) {
-        matchedOrderStore.save(command);
+    public void completeOrderEach(CreateTestOrderStoreCommand command, Integer attempt) {
+        MatchedOrder buyOrderEntity = command.toBuyOrderEntity();
+        MatchedOrder sellOrderEntity = command.toSellOrderEntity();
+        matchedOrderStore.save(buyOrderEntity);
+        matchedOrderStore.save(sellOrderEntity);
+    }
+    public void completeOrderBatch(CreateTestOrderStoreCommand command, Integer attempt) {
+        matchedOrderStore.saveBatch(command);
     }
 
     public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, Integer attempt) {
