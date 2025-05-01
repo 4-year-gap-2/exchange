@@ -2,6 +2,7 @@ package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
@@ -28,6 +29,10 @@ public class OrderCompletedService {
     private final UnmatchedOrderReader unmatchedOrderReader;
     private final UnmatchedOrderStore unmatchedOrderStore;
     private final ChartRepositoryStore chartRepositoryStore;
+
+    public void completeOrder(CreateTestOrderStoreCommand command, Integer attempt) {
+        matchedOrderStore.save(command);
+    }
 
     public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, Integer attempt) {
 //        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), command.idempotencyId(), attempt);

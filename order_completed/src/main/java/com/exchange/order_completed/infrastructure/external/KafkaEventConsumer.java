@@ -2,6 +2,7 @@ package com.exchange.order_completed.infrastructure.external;
 
 import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
@@ -65,6 +66,9 @@ public class KafkaEventConsumer {
 //        CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
 
 //        orderCompletedService.completeMatchedOrder(command, attempt);
+
+        CreateTestOrderStoreCommand command = CreateTestOrderStoreCommand.from(event);
+        orderCompletedService.completeOrder(command, attempt);
 
         // 전체 체인 처리 시간 기록
         endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);

@@ -4,6 +4,7 @@ import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.domain.entity.MatchedOrder;
 import com.exchange.order_completed.domain.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
@@ -19,6 +20,51 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
 
     private final MatchedOrderStoreRepository matchedOrderStoreRepository;
     private final CassandraTemplate cassandraTemplate;
+
+    @Override
+    public void save(CreateTestOrderStoreCommand command) {
+        // 1. 매수 주문 INSERT
+        SimpleStatement insertBuyOrderStatement = SimpleStatement.builder(
+                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                .addPositionalValues(
+                        command.buyUserId(),
+                        command.matchId(),
+                        command.createdAt(),
+                        command.createdDate(),
+                        command.buyOrderId(),
+                        command.executionPrice(),
+                        command.matchedQuantity(),
+                        "BUY",
+                        command.tradingPair()
+                )
+                .build();
+
+        // 2. 매도 주문 INSERT
+        SimpleStatement insertSellOrderStatement = SimpleStatement.builder(
+                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                .addPositionalValues(
+                        command.sellUserId(),
+                        command.matchId(),
+                        command.createdAt(),
+                        command.createdDate(),
+                        command.sellOrderId(),
+                        command.executionPrice(),
+                        command.matchedQuantity(),
+                        "SELL",
+                        command.tradingPair()
+                )
+                .build();
+
+        // 3. LOGGED BATCH로 묶기
+        BatchStatementBuilder batch = BatchStatement.builder(DefaultBatchType.LOGGED);
+        batch.addStatement(insertBuyOrderStatement);
+        batch.addStatement(insertSellOrderStatement);
+
+        // 4. 실행
+        cassandraTemplate.getCqlOperations().execute(batch.build());
+    }
 
     @Override
     public void save(MatchedOrder matchedOrder) {
