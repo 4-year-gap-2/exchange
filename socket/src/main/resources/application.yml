@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: socket
+  kafka:
+    host: ${KAFKA_HOST}
+    username: ${KAFKA_NAME}
+    password: ${KAFKA_PASSWORD}
+
+
+
+server:
+  port: 19096
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
+#  instance:
+#    hostname: ${My_host}
+#    securePortEnabled: true
+#    nonSecurePortEnabled: false
+#    securePort: 443
+#    statusPageUrl: https://${eureka.instance.hostname}/actuator/info
+#    healthCheckUrl: https://${eureka.instance.hostname}/actuator/health
+#    homePageUrl: https://${eureka.instance.hostname}/
+#    preferIpAddress: false
+#    secureVirtualHostName: ${spring.application.name}
