@@ -1,6 +1,6 @@
-package com.exchange.matching.infrastructure.dto;
+package com.exchange.receive.infrastructure.dto;
 
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.receive.infrastructure.enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,4 +17,5 @@ public class KafkaOrderStoreEvent {
     private UUID userId;
     private UUID orderId;
     private UUID idempotencyId;
+    private long startTime;
 }

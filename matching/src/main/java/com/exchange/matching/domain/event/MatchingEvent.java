@@ -1,6 +1,6 @@
 package com.exchange.matching.domain.event;
 
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import com.exchange.matching.domain.service.MatchingServiceV5.MatchingOrder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

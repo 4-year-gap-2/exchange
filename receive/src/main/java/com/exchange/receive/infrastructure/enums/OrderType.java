@@ -1,6 +1,4 @@
-package com.exchange.matching.application.dto.enums;
-
-import com.exchange.matching.domain.entiry.Order;
+package com.exchange.receive.infrastructure.enums;
 
 public enum OrderType {
     BUY,  // 매수

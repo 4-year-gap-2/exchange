@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.kafka;
+package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.domain.service.MatchingServiceV5.MatchingOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;

@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.kafka;
+package com.exchange.matching.infrastructure.external;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

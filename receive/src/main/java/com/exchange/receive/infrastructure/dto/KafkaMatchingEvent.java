@@ -1,6 +1,6 @@
-package com.exchange.order_completed.infrastructure.dto;
+package com.exchange.receive.infrastructure.dto;
 
-import com.exchange.order_completed.application.OrderType;
+import com.exchange.receive.infrastructure.enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

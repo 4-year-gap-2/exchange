@@ -1,4 +1,4 @@
-package com.exchange.matching.application.dto.enums;
+package com.exchange.matching.application.enums;
 
 public enum OrderStatus {
 

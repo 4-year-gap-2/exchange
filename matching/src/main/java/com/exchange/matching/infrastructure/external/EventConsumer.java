@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.kafka;
+package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.service.MatchingFacade;
@@ -11,7 +11,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 @Component
-public class EventConsumerV4 {
+public class EventConsumer {
 
     private final MatchingFacade matchingFacade;
     private final MeterRegistry meterRegistry;
@@ -20,7 +20,7 @@ public class EventConsumerV4 {
     private final Timer processingTimer;
 
     // 생성자를 통해 MeterRegistry 주입 및 메트릭 초기화
-    public EventConsumerV4(MatchingFacade matchingFacade, MeterRegistry meterRegistry) {
+    public EventConsumer(MatchingFacade matchingFacade, MeterRegistry meterRegistry) {
         this.matchingFacade = matchingFacade;
         this.meterRegistry = meterRegistry;
 
@@ -103,7 +103,6 @@ public class EventConsumerV4 {
             sample.stop(processingTimer);
         }
     }
-
 
     @KafkaListener(
             topics = {"user-to-matching.execute-order-delivery.v4"},

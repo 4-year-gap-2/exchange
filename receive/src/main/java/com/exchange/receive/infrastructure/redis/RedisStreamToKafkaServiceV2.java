@@ -1,9 +1,9 @@
-package com.exchange.order_completed.infrastructure.redis;
+package com.exchange.receive.infrastructure.redis;
 
-import com.exchange.order_completed.application.OrderType;
-import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaMatchingEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.receive.infrastructure.dto.KafkaMatchedOrderEvent;
+import com.exchange.receive.infrastructure.dto.KafkaMatchingEvent;
+import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.receive.infrastructure.enums.OrderType;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
