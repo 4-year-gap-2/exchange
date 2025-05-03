@@ -1,7 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -102,8 +102,8 @@ public class MatchingServiceV6 implements MatchingService {
             orderDetails,
             order.getTradingPair(),
 // 새로운 주문으로 들어온다고 가정
-//            UUID.randomUUID().toString(),
-            order.getOrderId().toString(),
+            UUID.randomUUID().toString(),
+//            order.getOrderId().toString(),
             partialOrderId
         );
     }
@@ -161,7 +161,8 @@ public class MatchingServiceV6 implements MatchingService {
                     command.price(),
                     command.quantity(),
                     command.userId(),
-                    command.orderId()
+//                    command.orderId()
+                    UUID.randomUUID()
             );
         }
     }

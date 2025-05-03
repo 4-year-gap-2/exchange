@@ -1,6 +1,6 @@
 package com.exchange.matching.infrastructure.repository;
 
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import com.exchange.matching.domain.entiry.ActivatedOrder;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;

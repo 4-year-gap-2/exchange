@@ -20,4 +20,5 @@ public class KafkaUnmatchedOrderStoreEvent {
     private BigDecimal quantity;
     private UUID userId;
     private UUID orderId;
+    private long startTime;
 }

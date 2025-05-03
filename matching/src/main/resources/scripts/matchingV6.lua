@@ -91,7 +91,7 @@ if #oppositeOrders == 0 then
         ["timestamp"] = orderInfo.timestamp,
         ["status"] = "UNMATCHED"
     }
-    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchFields)))
+    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
 
     -- 멱등성 키추가
     redis.call("SADD", idempotencyKey, orderId)
@@ -123,7 +123,7 @@ if not isPriceMatched then
         ["quantity"] = tostring(orderQuantity),
         ["timestamp"] = orderInfo.timestamp,
     }
-    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(unmatchFields)))
+    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
 
     -- 멱등성 키추가
     redis.call("SADD", idempotencyKey, orderId)
@@ -182,7 +182,7 @@ if remainingOrderQuantity > 0 then
         ["quantity"] = tostring(remainingOrderQuantity),
         ["timestamp"] = currentOrder.timestamp,
     }
-    redis.call("XADD", partialMatchedStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(partialMatchedFields)))
+    redis.call("XADD", partialMatchedStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(partialMatchedFields)))
 end
 
 -- 매칭 결과를 Stream에 발행
@@ -202,7 +202,7 @@ local matchFields = {
 }
 
 -- Redis Stream에 매칭 정보 추가
-redis.call("XADD", matchStreamKey, "MAXLEN", "~", 10000, "*", unpack(flattenMap(matchFields)))
+redis.call("XADD", matchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(matchFields)))
 
 -- 멱등성 키추가
 redis.call("SADD", idempotencyKey, orderId)

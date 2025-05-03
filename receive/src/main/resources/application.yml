@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: receive
+
+  kafka:
+    host: ${KAFKA_HOST}
+    username: ${KAFKA_NAME}
+    password: ${KAFKA_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      username: ${REDIS_NAME}
+      password: ${REDIS_PASSWORD}
+
+server:
+  port: 19096
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always

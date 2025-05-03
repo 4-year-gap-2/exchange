@@ -13,7 +13,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KafkaMatchedOrderStoreEvent {
-
     private String tradingPair;
     private String orderType;
     private BigDecimal price;
@@ -21,4 +20,5 @@ public class KafkaMatchedOrderStoreEvent {
     private UUID userId;
     private UUID orderId;
     private UUID idempotencyId;
+    private long startTimeStamp;
 }

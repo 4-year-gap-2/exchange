@@ -1,7 +1,7 @@
 package com.exchange.matching.domain.entiry;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

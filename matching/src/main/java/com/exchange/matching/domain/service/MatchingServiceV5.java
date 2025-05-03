@@ -1,11 +1,11 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import com.exchange.matching.domain.event.MatchingEvent;
 import com.exchange.matching.domain.event.MatchingEventType;
-import com.exchange.matching.infrastructure.kafka.EventPublisherV5;
-import com.exchange.matching.infrastructure.kafka.MessageSenderV5;
+import com.exchange.matching.infrastructure.external.EventPublisherV5;
+import com.exchange.matching.infrastructure.external.MessageSenderV5;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

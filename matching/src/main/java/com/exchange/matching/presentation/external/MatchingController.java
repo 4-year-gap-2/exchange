@@ -32,6 +32,13 @@ public class MatchingController {
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
+    @PostMapping("/v3")
+    public ResponseEntity<ResponseDto<String>> matchV3(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v3",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
     @PostMapping("/v4")
     public ResponseEntity<ResponseDto<String>> matchV4(@RequestBody CreateMatchingRequest createMatchingRequest) {
         orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v4",
@@ -52,5 +59,4 @@ public class MatchingController {
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
-
 }

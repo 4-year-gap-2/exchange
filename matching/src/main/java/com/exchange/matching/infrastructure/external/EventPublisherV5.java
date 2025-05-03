@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.kafka;
+package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.domain.event.MatchingEvent;
 import com.exchange.matching.domain.event.MatchingEventType;

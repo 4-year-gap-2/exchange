@@ -19,6 +19,7 @@ public class MatchingFacade {
     private final RedissonClient redissonClient;
     private final MatchingServiceV1A matchingServiceV1A;
     private final MatchingServiceV2 matchingServiceV2;
+    private final MatchingServiceV3 matchingServiceV3;
     private final MatchingServiceV4 matchingServiceV4;
     private final MatchingServiceV5 matchingServicev5;
     private final MatchingServiceV6 matchingServicev6;
@@ -47,6 +48,10 @@ public class MatchingFacade {
                 lock.unlock();
             }
         }
+    }
+
+    public void matchV3(CreateMatchingCommand createMatchingCommand) {
+        matchingServiceV3.matchOrders(createMatchingCommand);
     }
 
     public void matchV4(CreateMatchingCommand createMatchingCommand) {

@@ -1,6 +1,6 @@
 package com.exchange.matching.domain.repository;
 
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 import com.exchange.matching.domain.entiry.ActivatedOrder;
 
 import java.util.List;

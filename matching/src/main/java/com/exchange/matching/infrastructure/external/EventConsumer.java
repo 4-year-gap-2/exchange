@@ -1,4 +1,4 @@
-package com.exchange.matching.infrastructure.kafka;
+package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.service.MatchingFacade;
@@ -11,7 +11,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
 @Component
-public class EventConsumerV4 {
+public class EventConsumer {
 
     private final MatchingFacade matchingFacade;
     private final MeterRegistry meterRegistry;
@@ -20,7 +20,7 @@ public class EventConsumerV4 {
     private final Timer processingTimer;
 
     // 생성자를 통해 MeterRegistry 주입 및 메트릭 초기화
-    public EventConsumerV4(MatchingFacade matchingFacade, MeterRegistry meterRegistry) {
+    public EventConsumer(MatchingFacade matchingFacade, MeterRegistry meterRegistry) {
         this.matchingFacade = matchingFacade;
         this.meterRegistry = meterRegistry;
 
@@ -82,9 +82,32 @@ public class EventConsumerV4 {
     }
 
     @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v4"},
+            topics = {"user-to-matching.execute-order-delivery.v3"},
             containerFactory = "orderDeliveryKafkaListenerContainerFactory",
             concurrency = "3"
+    )
+    public void consumeV3(ConsumerRecord<String, KafkaMatchingEvent> record) {
+        // 타이머 시작
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            KafkaMatchingEvent event = record.value();
+
+            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
+            matchingFacade.matchV3(command);
+
+            // 카운터 증가
+            processedCounter.increment();
+        } finally {
+            // 타이머 종료 및 기록
+            sample.stop(processingTimer);
+        }
+    }
+
+    @KafkaListener(
+            topics = {"user-to-matching.execute-order-delivery.v4"},
+            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
+            concurrency = "30"
     )
     public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작
@@ -130,7 +153,7 @@ public class EventConsumerV4 {
     @KafkaListener(
             topics = {"user-to-matching.execute-order-delivery.v6"},
             containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
+            concurrency = "30"
     )
     public void consumeV6(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 타이머 시작

@@ -1,8 +1,9 @@
 package com.exchange.matching.infrastructure.dto;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.dto.enums.OrderType;
+import com.exchange.matching.application.enums.OrderType;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class KafkaMatchingEvent {
 
     private String tradingPair;
@@ -21,15 +23,7 @@ public class KafkaMatchingEvent {
     private BigDecimal quantity;
     private UUID userId;
     private UUID orderId;
-
-    public KafkaMatchingEvent(String tradingPair, OrderType orderType, BigDecimal price, BigDecimal quantity, UUID userId, UUID orderId) {
-        this.tradingPair = tradingPair;
-        this.orderType = orderType;
-        this.price = price;
-        this.quantity = quantity;
-        this.userId = userId;
-        this.orderId = orderId;
-    }
+    private long startTimeStamp;
 
     public static CreateMatchingCommand commandFromEvent(KafkaMatchingEvent event) {
         return new CreateMatchingCommand(
@@ -49,7 +43,8 @@ public class KafkaMatchingEvent {
                 command.price(),
                 command.quantity(),
                 command.userId(),
-                command.orderId()
+                command.orderId(),
+                System.currentTimeMillis()
         );
     }
 }
