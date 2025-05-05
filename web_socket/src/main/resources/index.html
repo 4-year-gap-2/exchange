@@ -30,7 +30,10 @@
         debug: (msg) => console.log("[DEBUG]", msg),
         onConnect: () => {
             console.log("[STOMP] 연결 성공");
-            stompClient.subscribe("/topic/notifications", (message) => {
+            stompClient.subscribe("/topic/notifications/BTC-KRW", (message) => {
+                log("서버 메시지: " + message.body);
+            });
+            stompClient.subscribe(`/user/123/topic/notifications`, (message) => {
                 log("서버 메시지: " + message.body);
             });
         },

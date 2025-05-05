@@ -1,5 +1,6 @@
 package com.exchange.web_socket.config;
 
+import com.exchange.web_socket.dto.CompletedOrderChangeEvent;
 import com.exchange.web_socket.dto.MessageEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
@@ -25,12 +26,18 @@ public class KafkaConfig {
 
 
     @Bean("messageKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, MessageEvent> messageKafkaListenerContainerFactory() {
-        System.out.println("차트 컨테이너 생성");
+    public ConcurrentKafkaListenerContainerFactory<String, CompletedOrderChangeEvent> messageKafkaListenerContainerFactory() {
 
         return kafkaCommonConfig.createAutoCommitListenerFactory(
                 new TypeReference<>() {
                 }, "web_socket-service", DEFAULT_CONCURRENCY);
     }
 
+    @Bean("messageBalanceKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, MessageEvent> messageBalanceKafkaListenerContainerFactory() {
+
+        return kafkaCommonConfig.createAutoCommitListenerFactory(
+                new TypeReference<>() {
+                }, "web_socket-service", DEFAULT_CONCURRENCY);
+    }
 }
