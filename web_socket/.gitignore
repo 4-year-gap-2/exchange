@@ -35,4 +35,3 @@ out/
 
 ### VS Code ###
 .vscode/
-/web_socket/src/main/resources/properties/env.properties
