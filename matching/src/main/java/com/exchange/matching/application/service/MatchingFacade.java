@@ -23,6 +23,7 @@ public class MatchingFacade {
     private final MatchingServiceV4 matchingServiceV4;
     private final MatchingServiceV5 matchingServicev5;
     private final MatchingServiceV6 matchingServicev6;
+    private final MatchingServiceV7 matchingServicev7;
 
     public void matchV1(CreateMatchingCommand createMatchingCommand) {
         matchingServiceV1A.matchOrders(createMatchingCommand);
@@ -36,7 +37,6 @@ public class MatchingFacade {
         try {
             if (createMatchingCommand.price().doubleValue() == 7500.00) throw new IllegalArgumentException();
             if (!lock.tryLock(100, 500, TimeUnit.MILLISECONDS)) {
-                System.out.println("락 획득 실패");
                 throw new IllegalArgumentException();
             }
             log.info("체결 시작");
@@ -64,5 +64,9 @@ public class MatchingFacade {
 
     public void matchV6(CreateMatchingCommand createMatchingCommand) {
         matchingServicev6.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV7(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev7.matchOrders(createMatchingCommand);
     }
 }

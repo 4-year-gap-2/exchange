@@ -100,6 +100,5 @@ public class KafkaEventConsumer {
         ChartCommand command = ChartCommand.fromEvent(record);
 
         orderCompletedService.saveChart(command);
-        System.out.println("chart saved" + command.getPair());
     }
 }
