@@ -27,7 +27,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -131,7 +130,7 @@ public class OrderCompletedService {
         } else if (startDate == null && endDate != null) {
             // endDate 이전 전체
             LocalDate date = endDate;
-            LocalDate minDate = LocalDate.now().minusYears(2); // 시스템 최소 날짜
+            LocalDate minDate = LocalDate.now().minusYears(2); // 시스템 최소 날짜(적절히 수정)
             while (!date.isBefore(minDate)) {
                 allOrders.addAll(queryByPartitionKey(userId, date));
                 date = date.minusDays(1);
