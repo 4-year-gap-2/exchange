@@ -28,9 +28,4 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findById(UUID userId) {
         return userJpaRepository.findById(userId);
     }
-
-//    @Override
-//    public Optional<User> findByWallet(String wallet) {
-//        return userJpaRepository.findByBalanceWallet(wallet);
-//    }
 }

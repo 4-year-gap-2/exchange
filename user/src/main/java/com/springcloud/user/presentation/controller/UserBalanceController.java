@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/balances")
@@ -32,7 +31,6 @@ public class UserBalanceController {
         UserInfoHeader userInfo = new UserInfoHeader(request);
         CreateWalletCommand command = balanceRequest.toCommand();
         FindUserBalanceResult result = userService.createWallet(command,userInfo.getUserId());
-        // FindUserBalanceResponse response = new FindUserBalanceResponse(result.getBalancedId(),result.getUserId(),result.getCoinId(),result.getTotalBalance(),result.getAvailableBalance(),result.getWallet());
         FindUserBalanceResponse response = FindUserBalanceResponse.from(result);
         return ResponseEntity.ok(response).getBody();
     }
@@ -62,6 +60,4 @@ public class UserBalanceController {
         // 서비스 로직
         return userService.findBalance(userInfo.getUserId(),page,size).map(FindUserBalanceResponse::from);
     }
-
-
 }

@@ -1,5 +1,9 @@
-package com.springcloud.user.application.command;
+package com.springcloud.user.application.service;
 
+import com.springcloud.user.application.command.CreateWalletCommand;
+import com.springcloud.user.application.command.DecreaseBalanceCommand;
+import com.springcloud.user.application.command.IncreaseBalanceCommand;
+import com.springcloud.user.application.command.UpdateIncrementBalanceCommand;
 import com.springcloud.user.application.enums.OrderType;
 import com.springcloud.user.application.result.FindUserBalanceResult;
 import com.springcloud.user.domain.entity.Coin;
@@ -65,20 +69,11 @@ public class UserBalanceCommandService {
     // 자산 증가 로직(외부 거래소 -> 우리 거래소
     @Transactional
     public FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command) {
-//        // 1. 애그리거트 루트로 유저밸런스 조회
-//        User user = userRepository.findByWallet(command.getWallet())
-//                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않습니다."));
-//
-//        UserBalance balance = user.getBalanceByWallet(command.getWallet());
-
-        //비관적 락 적용을 위해 애그리거트로 바로 진입
         // 1. 비관적 락으로 조회
         UserBalance balance = userBalanceRepository.findByWalletWithLock(command.getWallet())
                 .orElseThrow(() -> new IllegalArgumentException(command.getWallet()));
         // 2. userbalance 잔액 증가
         balance.increase(command.getAmount());
-        //Result에 함수 생성해서 코드 간결화
-        //return new FindUserBalanceResult(balance.getBalanceId(),balance.getUser().getUserId(),balance.getCoin().getCoinId(),balance.getTotalBalance(),balance.getAvailableBalance(),balance.getWallet());
         return FindUserBalanceResult.from(balance);
     }
 
@@ -119,7 +114,6 @@ public class UserBalanceCommandService {
 
     @Transactional
     public void internalIncrementBalance(IncreaseBalanceCommand command) {
-
         try {
             String[] parts = command.getTradingPair().split("/");
 

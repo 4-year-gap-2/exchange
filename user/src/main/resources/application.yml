@@ -22,13 +22,6 @@ spring:
     username: ${KAFKA_NAME}
     password: ${KAFKA_PASSWORD}
 
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: 6379
-      username: ${REDIS_NAME}
-      password: ${REDIS_PASSWORD}
-
 server:
   port: 19092
 
@@ -36,27 +29,7 @@ eureka:
   client:
     service-url:
       defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
-#  instance:
-#    hostname: ${My_host}
-#    securePortEnabled: true
-#    nonSecurePortEnabled: false
-#    securePort: 443
-#    statusPageUrl: https://${eureka.instance.hostname}/actuator/info
-#    healthCheckUrl: https://${eureka.instance.hostname}/actuator/health
-#    homePageUrl: https://${eureka.instance.hostname}/
-#    preferIpAddress: false
-#    secureVirtualHostName: ${spring.application.name}
 
 jwt:
   secret:
     key: ${JWT_SECRET_KEY}
-
-
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        kafka: trace
-#      apache:
-#        kafka:
-#          clients: trace

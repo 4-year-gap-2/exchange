@@ -18,12 +18,9 @@ public class KafkaConfig {
 
     private final KafkaCommonConfig kafkaCommonConfig;
 
-
     public KafkaConfig(KafkaCommonConfig kafkaCommonConfig) {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
-
-
 
     // 주문 시 자산 감소
     @Bean

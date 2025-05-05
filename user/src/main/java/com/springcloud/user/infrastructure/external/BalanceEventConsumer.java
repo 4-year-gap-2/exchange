@@ -3,18 +3,19 @@ package com.springcloud.user.infrastructure.external;
 
 import com.springcloud.user.application.command.DecreaseBalanceCommand;
 import com.springcloud.user.application.command.IncreaseBalanceCommand;
+import com.springcloud.user.application.command.UserBalanceRollBackCommand;
+import com.springcloud.user.application.service.MatchingCompensationService;
 import com.springcloud.user.application.service.UserService;
 import com.springcloud.user.common.exception.InsufficientBalanceException;
 import com.springcloud.user.infrastructure.dto.KafkaInsufficientBalanceEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.springcloud.user.infrastructure.dto.KafkaUserBalanceIncreaseEvent;
+import com.springcloud.user.infrastructure.dto.MatchCompensatorEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class BalanceEventConsumer {
 
     private final UserService userService;
+    private final MatchingCompensationService balanceCompensationService;
     private final KafkaTemplate<String, KafkaInsufficientBalanceEvent> kafkaTemplate;
 
     @KafkaListener(
@@ -48,8 +50,6 @@ public class BalanceEventConsumer {
                 throw e;
             }
         }
-        log.info("11111");
-
     }
 
     //체결 시 자산 증가
@@ -57,14 +57,20 @@ public class BalanceEventConsumer {
             topics = {"order_completed-to-user_balance.execute-increase-balance"},
             containerFactory = "matchingEventKafkaListenerContainerFactory",
             concurrency = "3"  // 3개의 스레드로 병렬 처리
-
     )
     public void IncreaseBalance(ConsumerRecord<String, KafkaUserBalanceIncreaseEvent> record) {
 
         IncreaseBalanceCommand command = IncreaseBalanceCommand.commandFromEvent(record.value());
         userService.internalIncrementBalance(command);
-
     }
 
-
+    //체결 실패 시 보상(자산 증가)
+    @KafkaListener(
+            topics = {"order_completed-to-user.execute-order-info-save-compensation"},
+            containerFactory = "matchingCompensatorEventKafkaListenerContainerFactory"
+    )
+    public void increaseBalance(ConsumerRecord<String, MatchCompensatorEvent> record) {
+        UserBalanceRollBackCommand command = UserBalanceRollBackCommand.commandFromEvent(record.value());
+        balanceCompensationService.rollBack(command);
+    }
 }

@@ -15,8 +15,6 @@ public interface UserService {
 
     void login(LoginUserCommand command, HttpServletResponse httpServletResponse);
 
-//    void createFee(BigDecimal feeValue);
-
     FindUserBalanceResult createWallet(CreateWalletCommand command, UUID userId);
 
     FindUserBalanceResult incrementBalance(UpdateIncrementBalanceCommand command);
