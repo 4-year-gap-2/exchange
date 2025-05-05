@@ -33,7 +33,7 @@ public record CreateMatchedOrderStoreCommand(
         );
     }
 
-    public MatchedOrder toEntity() {
+    public MatchedOrder toEntity(LocalDate yearMonthDate) {
         return MatchedOrder.builder()
                 .tradingPair(this.tradingPair)
                 .orderType(this.orderType)
@@ -43,7 +43,7 @@ public record CreateMatchedOrderStoreCommand(
                 .orderId(this.orderId)
                 .idempotencyId(this.idempotencyId)
                 .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
-                .createdDate(LocalDate.now(ZoneId.of("UTC")))
+                .yearMonthDate(yearMonthDate)
                 .build();
     }
 

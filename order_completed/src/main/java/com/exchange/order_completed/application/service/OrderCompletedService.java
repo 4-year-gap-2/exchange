@@ -18,12 +18,12 @@ import com.exchange.order_completed.presentation.dto.PagedResult;
 import com.exchange.order_completed.presentation.dto.TradeDataResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Comparator;
@@ -54,14 +54,14 @@ public class OrderCompletedService {
         matchedOrderStore.saveBatch(command);
     }
 
-    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), command.idempotencyId(), attempt);
+    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, LocalDate yearMonthDate, Integer attempt) {
+        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), yearMonthDate, command.idempotencyId(), attempt);
 
         if (persistentMatchedOrder != null) {
             throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
         }
 
-        MatchedOrder newMatchedOrder = command.toEntity();
+        MatchedOrder newMatchedOrder = command.toEntity(yearMonthDate);
         UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
 
         if (persistentUnmatchedOrder == null) {

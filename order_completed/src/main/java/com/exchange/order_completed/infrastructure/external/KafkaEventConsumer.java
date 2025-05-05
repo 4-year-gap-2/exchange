@@ -20,6 +20,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -53,6 +54,9 @@ public class KafkaEventConsumer {
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
 
+        //year_month_date
+        LocalDate yearMonthDate = LocalDate.now();
+
         try {
             KafkaMatchedOrderStoreEvent event = record.value();
 
@@ -61,7 +65,7 @@ public class KafkaEventConsumer {
 
             CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
 
-            orderCompletedService.completeMatchedOrder(command, attempt);
+            orderCompletedService.completeMatchedOrder(command, yearMonthDate, attempt);
         } finally {
             // 타이머 종료 및 기록
             sample.stop(endToEndTimer);
