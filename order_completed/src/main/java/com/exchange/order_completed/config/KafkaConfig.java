@@ -26,8 +26,6 @@ public class KafkaConfig {
 
     @Bean("chartKafkaListenerContainerFactory")
     public ConcurrentKafkaListenerContainerFactory<String, CompletedOrderChangeEvent> chartKafkaListenerContainerFactory() {
-        System.out.println("차트 컨테이너 생성");
-
         return kafkaCommonConfig.createAutoCommitListenerFactory(
                 new TypeReference<>() {
                 }, "matching-service", DEFAULT_CONCURRENCY);
