@@ -26,6 +26,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,6 @@ public class OrderCompletedService {
     private final UnmatchedOrderReader unmatchedOrderReader;
     private final UnmatchedOrderStore unmatchedOrderStore;
     private final ChartRepositoryStore chartRepositoryStore;
-    private final OrderCacheService orderCacheService;
 
     public void completeOrderEach(CreateTestOrderStoreCommand command, Integer attempt) {
         MatchedOrder buyOrderEntity = command.toBuyOrderEntity();
@@ -110,15 +110,47 @@ public class OrderCompletedService {
             UUID userId,
             Instant cursor,
             int size,
-            String orderType
+            String orderType,
+            LocalDate startDate,
+            LocalDate endDate
     ) {
-        List<MatchedOrder> allOrders = orderCacheService.getCachedOrders(userId);
+        List<MatchedOrder> allOrders = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+
+        // 1. 날짜 구간 설정
+        if (startDate == null && endDate == null) {
+            // 오늘 하루만 조회
+            allOrders.addAll(queryByPartitionKey(userId, today));
+        } else if (startDate != null && endDate == null) {
+            // startDate ~ 오늘까지
+            LocalDate date = startDate;
+            while (!date.isAfter(today)) {
+                allOrders.addAll(queryByPartitionKey(userId, date));
+                date = date.plusDays(1);
+            }
+        } else if (startDate == null && endDate != null) {
+            // endDate 이전 전체
+            LocalDate date = endDate;
+            LocalDate minDate = LocalDate.now().minusYears(2); // 시스템 최소 날짜
+            while (!date.isBefore(minDate)) {
+                allOrders.addAll(queryByPartitionKey(userId, date));
+                date = date.minusDays(1);
+            }
+        } else {
+            // startDate ~ endDate 구간
+            LocalDate date = startDate;
+            while (!date.isAfter(endDate)) {
+                allOrders.addAll(queryByPartitionKey(userId, date));
+                date = date.plusDays(1);
+            }
+        }
+
         log.info("사용자 {}의 전체 주문 {}건 조회 완료", userId, allOrders.size());
 
+        // 2. 커서/타입 필터 및 정렬/페이징
         List<MatchedOrder> filtered = allOrders.parallelStream()
                 .filter(order -> cursor == null || order.getCreatedAt().isBefore(cursor))
-                .filter(order -> order.getOrderType().equalsIgnoreCase(orderType))
-                .sorted(Comparator.comparing(MatchedOrder::getCreatedAt).reversed())
+                .filter(order -> orderType == null || order.getOrderType().equalsIgnoreCase(orderType))
                 .limit(size + 1)
                 .collect(Collectors.toList());
 
@@ -142,5 +174,13 @@ public class OrderCompletedService {
                         null,
                 hasNext
         );
+    }
+
+    /**
+     * (userId, yearMonthDate) 파티션키로만 조회하는 메서드
+     * 실제 구현은 Cassandra Repository에서 userId, yearMonthDate로 조회
+     */
+    private List<MatchedOrder> queryByPartitionKey(UUID userId, LocalDate yearMonthDate) {
+        return matchedOrderReader.findByUserIdAndYearMonthDate(userId, yearMonthDate);
     }
 }

@@ -34,7 +34,7 @@ public class MatchedOrderReaderImpl implements MatchedOrderReader {
     }
 
     @Override
-    public List<MatchedOrder> findByUserId(UUID userId) {
-        return matchedOrderReaderRepository.findByUserId(userId);
+    public List<MatchedOrder> findByUserIdAndYearMonthDate(UUID userId, LocalDate yearMonthDate) {
+        return matchedOrderReaderRepository.findByUserIdAndYearMonthDate(userId,yearMonthDate);
     }
 }

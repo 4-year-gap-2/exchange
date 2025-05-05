@@ -13,5 +13,5 @@ public interface MatchedOrderReader {
 
     Optional<MatchedOrder> findByOrderId(UUID orderId);
 
-    List<MatchedOrder> findByUserId(UUID userId);
+    List<MatchedOrder> findByUserIdAndYearMonthDate(UUID userId, LocalDate yearMonthDate);
 }

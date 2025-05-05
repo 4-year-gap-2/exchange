@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -87,7 +88,9 @@ public class TransactionController {
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam String orderType  // 필수 파라미터
+            @RequestParam String orderType,  // 필수 파라미터
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate  // 필수 파라미터
     ) {
         UserInfoHeader userInfo = new UserInfoHeader(request);
 
@@ -96,7 +99,7 @@ public class TransactionController {
             cursorInstant = cursor.atZone(ZoneId.systemDefault()).toInstant();
         }
 
-        return completedService.findTradeOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType);
+        return completedService.findTradeOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType,startDate, endDate);
     }
 }
 
