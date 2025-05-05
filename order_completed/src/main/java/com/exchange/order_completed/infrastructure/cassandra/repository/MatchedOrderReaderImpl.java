@@ -5,6 +5,7 @@ import com.exchange.order_completed.domain.repository.MatchedOrderReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,5 +30,10 @@ public class MatchedOrderReaderImpl implements MatchedOrderReader {
     @Override
     public Optional<MatchedOrder> findByOrderId(UUID orderId) {
         return matchedOrderReaderRepository.findByOrderId(orderId);
+    }
+
+    @Override
+    public List<MatchedOrder> findByUserId(UUID userId) {
+        return matchedOrderReaderRepository.findByUserId(userId);
     }
 }

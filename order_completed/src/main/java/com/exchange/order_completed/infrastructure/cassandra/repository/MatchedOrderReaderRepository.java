@@ -7,6 +7,7 @@ import org.springframework.data.cassandra.repository.Consistency;
 import org.springframework.data.cassandra.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,4 +30,6 @@ public interface MatchedOrderReaderRepository extends CassandraRepository<Matche
     MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId);
 
     Optional<MatchedOrder> findByOrderId(UUID orderId);
+
+    List<MatchedOrder> findByUserId(UUID userId);
 }

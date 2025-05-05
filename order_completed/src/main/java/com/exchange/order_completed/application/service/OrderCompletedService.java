@@ -14,12 +14,24 @@ import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
 import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryStore;
+import com.exchange.order_completed.presentation.dto.PagedResult;
+import com.exchange.order_completed.presentation.dto.TradeDataResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderCompletedService {
@@ -29,6 +41,7 @@ public class OrderCompletedService {
     private final UnmatchedOrderReader unmatchedOrderReader;
     private final UnmatchedOrderStore unmatchedOrderStore;
     private final ChartRepositoryStore chartRepositoryStore;
+    private final OrderCacheService orderCacheService;
 
     public void completeOrderEach(CreateTestOrderStoreCommand command, Integer attempt) {
         MatchedOrder buyOrderEntity = command.toBuyOrderEntity();
@@ -91,5 +104,43 @@ public class OrderCompletedService {
     public void saveChart(ChartCommand command) {
         Chart chart = Chart.from(command);
         chartRepositoryStore.save(chart);
+    }
+
+    public PagedResult<TradeDataResponse> findTradeOrderHistory(
+            UUID userId,
+            Instant cursor,
+            int size,
+            String orderType
+    ) {
+        List<MatchedOrder> allOrders = orderCacheService.getCachedOrders(userId);
+        log.info("사용자 {}의 전체 주문 {}건 조회 완료", userId, allOrders.size());
+
+        List<MatchedOrder> filtered = allOrders.parallelStream()
+                .filter(order -> cursor == null || order.getCreatedAt().isBefore(cursor))
+                .filter(order -> order.getOrderType().equalsIgnoreCase(orderType))
+                .sorted(Comparator.comparing(MatchedOrder::getCreatedAt).reversed())
+                .limit(size + 1)
+                .collect(Collectors.toList());
+
+        boolean hasNext = filtered.size() > size;
+        List<MatchedOrder> pageData = hasNext ?
+                filtered.subList(0, size) :
+                filtered;
+
+        List<TradeDataResponse> responseList = pageData.stream()
+                .map(TradeDataResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        Instant nextCursor = responseList.isEmpty() ?
+                null :
+                responseList.get(responseList.size() - 1).getCreatedAt();
+
+        return new PagedResult<>(
+                responseList,
+                nextCursor != null ?
+                        LocalDateTime.ofInstant(nextCursor, ZoneId.systemDefault()) :
+                        null,
+                hasNext
+        );
     }
 }

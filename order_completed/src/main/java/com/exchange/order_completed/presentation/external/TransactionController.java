@@ -3,20 +3,29 @@ package com.exchange.order_completed.presentation.external;
 import com.exchange.order_completed.application.TimeInterval;
 import com.exchange.order_completed.application.response.TransactionResponse;
 import com.exchange.order_completed.application.response.ListTransactionResponse;
+import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.application.service.TradeService;
 import com.exchange.order_completed.application.service.TransactionFacade;
+import com.exchange.order_completed.common.UserInfoHeader;
 import com.exchange.order_completed.common.response.ResponseDto;
 import com.exchange.order_completed.domain.postgresEntity.TradeDataInfo;
 import com.exchange.order_completed.presentation.dto.CreateTransactionRequest;
 import com.exchange.order_completed.presentation.dto.FindTransactionRequest;
+import com.exchange.order_completed.presentation.dto.PagedResult;
+import com.exchange.order_completed.presentation.dto.TradeDataResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -29,6 +38,7 @@ public class TransactionController {
 
     private final TransactionFacade facade;
     private final TradeService tradeService;
+    private final OrderCompletedService completedService;
 
     @PostMapping
     public ResponseEntity<ResponseDto<TransactionResponse>> createTransaction(@RequestBody CreateTransactionRequest request) {
@@ -70,9 +80,23 @@ public class TransactionController {
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(tradeService.getTradeInfo(pair,interval)));
     }
-    
-    // buy 체결 주문 조회
 
-    //123
+    //체결 주문 조회
+    @GetMapping("/trade")
+    public PagedResult<TradeDataResponse> findTradeOrderHistory(
+            HttpServletRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam String orderType  // 필수 파라미터
+    ) {
+        UserInfoHeader userInfo = new UserInfoHeader(request);
+
+        Instant cursorInstant = null;
+        if (cursor != null) {
+            cursorInstant = cursor.atZone(ZoneId.systemDefault()).toInstant();
+        }
+
+        return completedService.findTradeOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType);
+    }
 }
 
