@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SpringBootApplication
 @EnableFeignClients
 @EnableJpaAuditing
-@EnableCaching
 public class OrderCompletedApplication {
 
 	public static void main(String[] args) {
