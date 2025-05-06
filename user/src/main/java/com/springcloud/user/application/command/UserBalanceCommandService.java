@@ -113,7 +113,7 @@ public class UserBalanceCommandService {
         // 6. 잔액 검증 및 잔액 차감(도메인에서)
         balance.decrease(requiredAmount);
         log.info("잔액 차감 완료");
-        kafkaTemplate.send("user-to-matching.execute-order-delivery",KafkaOrderFormEvent.fromEvent(command));
+        kafkaTemplate.send("user-to-matching.execute-order-delivery.v6",KafkaOrderFormEvent.fromEvent(command));
         log.info("매칭서버로 주문서 전달 완료");
     }
 

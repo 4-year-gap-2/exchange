@@ -1,7 +1,12 @@
 spring:
   application:
     name: order_completed
-
+  cache:
+    type: simple
+    cache-names: userOrders
+  output:
+    ansi:
+      enabled: ALWAYS
   mysql:
     datasource:
       url: ${DB_HOST}

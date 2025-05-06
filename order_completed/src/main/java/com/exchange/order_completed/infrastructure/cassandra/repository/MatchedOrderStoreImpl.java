@@ -10,12 +10,9 @@ import com.exchange.order_completed.domain.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraTemplate;
-import org.springframework.data.cassandra.core.InsertOptions;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -35,7 +32,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                         command.buyUserId(),
                         UUID.randomUUID(),
                         command.createdAt(),
-                        command.createdDate(),
+                        command.yearMonthDate(),
                         command.buyOrderId(),
                         command.executionPrice(),
                         command.matchedQuantity(),
@@ -52,7 +49,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                         command.sellUserId(),
                         UUID.randomUUID(),
                         command.createdAt(),
-                        command.createdDate(),
+                        command.yearMonthDate(),
                         command.sellOrderId(),
                         command.executionPrice(),
                         command.matchedQuantity(),
@@ -79,13 +76,13 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
     public void saveMatchedOrderAndUpdateUnmatchedOrder(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
         // 1. INSERT INTO matched_order
         SimpleStatement insertMatchedOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
+                        "INSERT INTO matched_order (user_id, year_month_date, idempotency_id, created_at, order_id, price, quantity, order_type, trading_pair) " +
                                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         matchedOrder.getUserId(),
+                        matchedOrder.getYearMonthDate(),
                         matchedOrder.getIdempotencyId(),
                         matchedOrder.getCreatedAt(),
-                        matchedOrder.getCreatedDate(),
                         matchedOrder.getOrderId(),
                         matchedOrder.getPrice(),
                         matchedOrder.getQuantity(),
