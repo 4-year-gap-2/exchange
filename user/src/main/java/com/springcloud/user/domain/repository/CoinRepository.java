@@ -7,8 +7,4 @@ import java.util.UUID;
 
 public interface CoinRepository {
     Optional<Coin> findById(UUID coinId);
-
-    Coin save(Coin coin);
-
-    Optional<Coin> findBySymbol(String CoinSymbol);
 }

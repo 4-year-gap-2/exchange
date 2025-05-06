@@ -18,4 +18,4 @@ public enum UserRole {
         public static final String MASTER = "ROLE_MASTER";
         public static final String MANAGER = "ROLE_MANAGER";
     }
-    }
+}

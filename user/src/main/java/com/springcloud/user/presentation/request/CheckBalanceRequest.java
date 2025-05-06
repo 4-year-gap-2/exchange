@@ -16,7 +16,6 @@ public class CheckBalanceRequest {
     private BigDecimal amount; // 수량
     private String symbol; //거래소 명칭
 
-
     public CheckAvailableBalanceQuery toQuery() {
         return CheckAvailableBalanceQuery.builder()
                 .userId(userId)

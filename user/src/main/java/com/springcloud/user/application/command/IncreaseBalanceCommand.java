@@ -21,7 +21,6 @@ public class IncreaseBalanceCommand {
     private OrderType orderType;
 
     public static IncreaseBalanceCommand commandFromEvent(KafkaUserBalanceIncreaseEvent event) {
-
         return new IncreaseBalanceCommand(
                 event.getOrderId(),
                 event.getTradingPair(),

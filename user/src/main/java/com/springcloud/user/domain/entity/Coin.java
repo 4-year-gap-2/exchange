@@ -40,7 +40,6 @@ public class Coin extends BaseEntity{
     @Comment("활성화여부")
     private boolean isActive;
 
-
     @Comment("코인을 가지는 유저밸런스")
     @OneToMany(mappedBy = "coin", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserBalance> balances = new ArrayList<>();

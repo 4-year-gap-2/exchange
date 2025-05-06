@@ -14,7 +14,6 @@ public class CreateUserResponse {
     private final String phone;
     private final String email;
 
-
     public CreateUserResponse(UUID userId, String username, String phone, String email) {
         this.userId = userId;
         this.username = username;

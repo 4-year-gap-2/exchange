@@ -18,8 +18,6 @@ public class DecreaseBalanceCommand {
     private BigDecimal quantity; // 수량
     private String tradingPair; //거래소 명칭
 
-
-
     public static DecreaseBalanceCommand commandFromEvent(KafkaUserBalanceDecreaseEvent event) {
 
         return new DecreaseBalanceCommand(

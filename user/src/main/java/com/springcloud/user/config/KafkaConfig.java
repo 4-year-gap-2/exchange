@@ -14,16 +14,12 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 public class KafkaConfig {
 
     private static final int DEFAULT_CONCURRENCY = 3;
-    private static final int RECOVERY_CONCURRENCY = 2;
 
     private final KafkaCommonConfig kafkaCommonConfig;
-
 
     public KafkaConfig(KafkaCommonConfig kafkaCommonConfig) {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
-
-
 
     // 주문 시 자산 감소
     @Bean
@@ -36,18 +32,6 @@ public class KafkaConfig {
         factory.setCommonErrorHandler(errorHandler); // DLQ 적용
         return factory;
     }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceDecreaseEvent> balanceDecreaseDLTListenerContainerFactory(
-            DefaultErrorHandler errorHandler) {
-        // groupId는 DLT 전용으로 별도 지정
-        return kafkaCommonConfig.createManualCommitListenerFactory(
-                new TypeReference<KafkaUserBalanceDecreaseEvent>() {},
-                "user-service-dlt", // DLT 전용 groupId
-                DEFAULT_CONCURRENCY // concurrency
-        );
-    }
-
 
     // 체결 시 자산 증가
     @Bean

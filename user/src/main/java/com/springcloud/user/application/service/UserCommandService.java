@@ -1,8 +1,9 @@
-package com.springcloud.user.application.command;
+package com.springcloud.user.application.service;
 
+import com.springcloud.user.application.command.CreateUserCommand;
+import com.springcloud.user.application.command.LoginUserCommand;
 import com.springcloud.user.application.result.FindUserResult;
 import com.springcloud.user.domain.entity.User;
-import com.springcloud.user.domain.entity.UserBalance;
 import com.springcloud.user.domain.repository.UserRepository;
 import com.springcloud.user.security.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,14 +12,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @AllArgsConstructor
 @Service
 public class UserCommandService {
-    // 파일 위치를 고민해보자
-    private UserBalanceCommandService userBalanceCommandService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -50,5 +48,4 @@ public class UserCommandService {
         String token = jwtUtil.createToken(user.getUserId(), user.getRole(), user.getUsername());
         jwtUtil.addJwtToCookie(token, httpServletResponse);
     }
-
 }
