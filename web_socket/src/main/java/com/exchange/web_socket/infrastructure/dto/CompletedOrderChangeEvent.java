@@ -1,4 +1,4 @@
-package com.exchange.web_socket.dto;
+package com.exchange.web_socket.infrastructure.dto;
 
 import lombok.Getter;
 import lombok.Setter;

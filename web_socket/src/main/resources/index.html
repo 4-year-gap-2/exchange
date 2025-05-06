@@ -33,7 +33,7 @@
             stompClient.subscribe("/topic/notifications/BTC-KRW", (message) => {
                 log("서버 메시지: " + message.body);
             });
-            stompClient.subscribe(`/user/123/topic/notifications`, (message) => {
+            stompClient.subscribe(`/user/1d752ee3-8046-4b5a-b894-3417217260fb/topic/notifications`, (message) => {
                 log("서버 메시지: " + message.body);
             });
         },

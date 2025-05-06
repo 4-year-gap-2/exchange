@@ -1,6 +1,6 @@
 spring:
   application:
-    name: order_completed
+    name: web_socket
 
   mysql:
     datasource:

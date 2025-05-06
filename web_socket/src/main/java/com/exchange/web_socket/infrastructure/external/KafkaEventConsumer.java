@@ -1,9 +1,10 @@
 package com.exchange.web_socket.infrastructure.external;
 
 
-import com.exchange.web_socket.dto.CompletedOrderChangeEvent;
-import com.exchange.web_socket.dto.MessageEvent;
 import com.exchange.web_socket.application.MessageService;
+import com.exchange.web_socket.application.dto.ChartCommand;
+import com.exchange.web_socket.infrastructure.dto.CompletedOrderChangeEvent;
+import com.exchange.web_socket.infrastructure.dto.MessageEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -16,23 +17,25 @@ public class KafkaEventConsumer {
 
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final MessageService messageService;
 
     @KafkaListener(
             topics = "cassandra.exchange.matched_order",
             containerFactory = "messageKafkaListenerContainerFactory")
     public void notificationChart(CompletedOrderChangeEvent event) {
 
-        messagingTemplate.convertAndSend("/topic/notifications/BTC-KRW", event.getAfter());
+        ChartCommand chartCommand = ChartCommand.from(event);
+        messageService.sendChartData(chartCommand);
+
     }
 
     @KafkaListener(
-            topics = "user-to-socket.execute-socket",
+            topics = "user-to-socket.execute-balance-decrease-fail",
             containerFactory = "messageBalanceKafkaListenerContainerFactory")
     public void notificationBalance(MessageEvent event) {
 
-        String alertMessage = "재산이 부족합니다. 주문을 처리할 수 없습니다.";
+        messageService.sendDecreaseBalanceFail(event.getUserId().toString());
 
-        messagingTemplate.convertAndSendToUser(event.getReceiver(), "/topic/notifications", alertMessage);
     }
 
     @KafkaListener(
@@ -44,12 +47,10 @@ public class KafkaEventConsumer {
         String userId = event.getAfter().getUserId().toString();
         String tradingPair = event.getAfter().getTrading_pair().getValue();
         String quantity = event.getAfter().getQuantity().getValue().toPlainString();
-
-
         String alertMessage = String.format("%s 주문 %s개 체결이 완료되었습니다.", tradingPair, quantity);
 
+        messageService.sendMatchNotification(userId,alertMessage);
 
-        messagingTemplate.convertAndSendToUser(userId, "/topic/notifications", alertMessage);
     }
 
 }

@@ -1,13 +1,11 @@
 package com.exchange.web_socket.config;
 
-import com.exchange.web_socket.dto.CompletedOrderChangeEvent;
-import com.exchange.web_socket.dto.MessageEvent;
+import com.exchange.web_socket.infrastructure.dto.CompletedOrderChangeEvent;
+import com.exchange.web_socket.infrastructure.dto.MessageEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.DefaultErrorHandler;
 
 /**
  * 특정 이벤트 타입에 대한 Kafka 설정 클래스
@@ -16,7 +14,6 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 public class KafkaConfig {
 
     private static final int DEFAULT_CONCURRENCY = 10;
-    private static final int RECOVERY_CONCURRENCY = 2;
 
     private final KafkaCommonConfig kafkaCommonConfig;
 
