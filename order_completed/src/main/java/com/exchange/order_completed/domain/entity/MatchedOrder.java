@@ -25,15 +25,14 @@ public class MatchedOrder {
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
-    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "year_month_date", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private LocalDate yearMonthDate;
+
+    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private UUID idempotencyId;
 
-    @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("created_at")
     private Instant createdAt;
-
-    @Column("created_date")
-    private LocalDate createdDate;
 
     @Column("order_id")
     private UUID orderId;

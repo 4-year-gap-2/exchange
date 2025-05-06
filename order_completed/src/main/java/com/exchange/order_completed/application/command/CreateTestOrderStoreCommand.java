@@ -29,7 +29,7 @@ public record CreateTestOrderStoreCommand(
     UUID matchId,
 
     Instant createdAt,
-    LocalDate createdDate
+    LocalDate yearMonthDate
 ) {
     public static CreateTestOrderStoreCommand from(KafkaMatchedOrderEvent event) {
         return new CreateTestOrderStoreCommand(
@@ -56,7 +56,7 @@ public record CreateTestOrderStoreCommand(
                 .userId(sellUserId)
                 .orderId(sellOrderId)
                 .createdAt(createdAt)
-                .createdDate(createdDate)
+                .yearMonthDate(yearMonthDate)
                 .idempotencyId(UUID.randomUUID())
                 .orderType("SELL")
                 .build();
@@ -70,7 +70,7 @@ public record CreateTestOrderStoreCommand(
                 .userId(buyUserId)
                 .orderId(buyOrderId)
                 .createdAt(createdAt)
-                .createdDate(createdDate)
+                .yearMonthDate(yearMonthDate)
                 .idempotencyId(UUID.randomUUID())
                 .orderType("BUY")
                 .build();

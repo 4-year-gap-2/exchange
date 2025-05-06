@@ -2,17 +2,14 @@ package com.exchange.order_completed.infrastructure.external;
 
 import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
-import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
-import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -20,6 +17,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -53,6 +51,9 @@ public class KafkaEventConsumer {
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
 
+        //year_month_date
+        LocalDate yearMonthDate = LocalDate.now();
+
         try {
             KafkaMatchedOrderStoreEvent event = record.value();
 
@@ -61,7 +62,7 @@ public class KafkaEventConsumer {
 
             CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
 
-            orderCompletedService.completeMatchedOrder(command, attempt);
+            orderCompletedService.completeMatchedOrder(command, yearMonthDate, attempt);
         } finally {
             // 타이머 종료 및 기록
             sample.stop(endToEndTimer);
