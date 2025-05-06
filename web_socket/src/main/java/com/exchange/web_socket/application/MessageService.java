@@ -1,12 +1,9 @@
 package com.exchange.web_socket.application;
 
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.stereotype.Service;
+import com.exchange.web_socket.application.dto.ChartCommand;
 
-@Service
-public class MessageService {
-    @SendTo("/topic/messages")
-    public String sendMessage(String message) {
-        return message;
-    }
+public interface MessageService {
+    void sendChartData(ChartCommand command);
+    void sendDecreaseBalanceFail(String message);
+    void sendMatchNotification(String userId,String message);
 }
