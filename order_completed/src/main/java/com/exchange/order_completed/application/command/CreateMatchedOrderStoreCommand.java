@@ -1,7 +1,7 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.MatchedOrder;
-import com.exchange.order_completed.domain.postgresEntity.Chart;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import lombok.Builder;
 

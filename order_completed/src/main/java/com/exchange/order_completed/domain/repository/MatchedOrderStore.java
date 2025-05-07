@@ -1,8 +1,8 @@
 package com.exchange.order_completed.domain.repository;
 
 import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
-import com.exchange.order_completed.domain.entity.MatchedOrder;
-import com.exchange.order_completed.domain.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 
 public interface MatchedOrderStore {
 

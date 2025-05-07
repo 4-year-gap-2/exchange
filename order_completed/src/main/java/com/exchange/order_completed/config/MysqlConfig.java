@@ -31,7 +31,6 @@ import java.util.Map;
 )
 public class MysqlConfig {
 
-
     @Value("${spring.mysql.datasource.driver-class-name}")
     private String driver;
     @Value("${spring.mysql.datasource.password}")
@@ -52,8 +51,6 @@ public class MysqlConfig {
                 .build();
     }
 
-
-
     @Bean
     @Primary
     public LocalContainerEntityManagerFactoryBean mysqlEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("mysqlDataSource") DataSource dataSource) {
@@ -64,7 +61,7 @@ public class MysqlConfig {
 
         return builder
                 .dataSource(dataSource)
-                .packages("com.exchange.order_completed.domain.entity")
+                .packages("com.exchange.order_completed.domain.mysql.entity")
                 .properties(properties)
                 .build();
     }
@@ -75,6 +72,5 @@ public class MysqlConfig {
         JpaTransactionManager transactionManager = new JpaTransactionManager(entityManagerFactory);
         return transactionManager;
     }
-
 
 }

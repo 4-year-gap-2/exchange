@@ -69,7 +69,7 @@ public class KafkaCommonConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
         // 배치 사이즈 설정
-        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 20);
+        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 5000);
 
         // SASL 인증 관련 설정 추가
         addSaslConfig(configProps);

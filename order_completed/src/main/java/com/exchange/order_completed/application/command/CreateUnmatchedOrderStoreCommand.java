@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import lombok.Builder;
 
@@ -32,6 +32,19 @@ public record CreateUnmatchedOrderStoreCommand(
 
     public UnmatchedOrder toEntity() {
         return UnmatchedOrder.builder()
+                .tradingPair(tradingPair)
+                .orderType(orderType)
+                .price(price)
+                .quantity(quantity)
+                .userId(userId)
+                .orderId(orderId)
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .createdDate(LocalDate.now(ZoneId.of("UTC")))
+                .build();
+    }
+
+    public com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder toMongoEntity() {
+        return com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)
                 .price(price)

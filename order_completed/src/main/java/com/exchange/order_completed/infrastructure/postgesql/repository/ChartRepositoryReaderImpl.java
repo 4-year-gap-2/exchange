@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.postgesql.repository;
 
-import com.exchange.order_completed.domain.postgresEntity.TradeDataInfo;
+import com.exchange.order_completed.domain.postgres.entity.TradeDataInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

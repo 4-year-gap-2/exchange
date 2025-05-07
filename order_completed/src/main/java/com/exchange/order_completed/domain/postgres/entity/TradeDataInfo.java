@@ -1,12 +1,6 @@
-package com.exchange.order_completed.domain.postgresEntity;
+package com.exchange.order_completed.domain.postgres.entity;
 
-import com.querydsl.core.annotations.Immutable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class KafkaEventConsumer {

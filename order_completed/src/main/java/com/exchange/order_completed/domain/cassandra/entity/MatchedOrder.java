@@ -1,4 +1,4 @@
-package com.exchange.order_completed.domain.entity;
+package com.exchange.order_completed.domain.cassandra.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,21 +19,23 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("unmatched_order")
-public class UnmatchedOrder {
+@Table("matched_order")
+public class MatchedOrder {
 
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
-    @PrimaryKeyColumn(name = "order_id", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
-    private UUID orderId;
+    @PrimaryKeyColumn(name = "year_month_date", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private LocalDate yearMonthDate;
 
-    @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    private UUID idempotencyId;
+
     @Column("created_at")
     private Instant createdAt;
 
-    @Column("created_date")
-    private LocalDate createdDate;
+    @Column("order_id")
+    private UUID orderId;
 
     @Column("price")
     private BigDecimal price;
@@ -46,7 +48,7 @@ public class UnmatchedOrder {
     private String orderType;
 
     @Column("trading_pair")
-    @Comment("거래 쌍 (BTC-USD)")
+    @Comment("거래 쌍 (BTC/USD)")
     private String tradingPair;
 
 }

@@ -1,5 +1,4 @@
-package com.exchange.order_completed.domain.postgresEntity;
-
+package com.exchange.order_completed.domain.postgres.entity;
 
 import com.exchange.order_completed.application.command.ChartCommand;
 import jakarta.persistence.*;

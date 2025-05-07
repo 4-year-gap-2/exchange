@@ -1,6 +1,6 @@
 package com.exchange.order_completed.infrastructure.postgesql.repository;
 
-import com.exchange.order_completed.domain.postgresEntity.TradeDataInfo;
+import com.exchange.order_completed.domain.postgres.entity.TradeDataInfo;
 
 import java.util.List;
 

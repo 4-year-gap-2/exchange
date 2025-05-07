@@ -2,7 +2,7 @@ package com.exchange.order_completed.domain.service;
 
 import com.exchange.order_completed.application.TimeInterval;
 import com.exchange.order_completed.application.service.TradeService;
-import com.exchange.order_completed.domain.postgresEntity.TradeDataInfo;
+import com.exchange.order_completed.domain.postgres.entity.TradeDataInfo;
 import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
