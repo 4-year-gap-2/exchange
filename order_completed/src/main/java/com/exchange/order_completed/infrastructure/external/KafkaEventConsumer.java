@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 public class KafkaEventConsumer {
@@ -56,6 +57,10 @@ public class KafkaEventConsumer {
         //year_month_date
         LocalDate yearMonthDate = LocalDate.now();
 
+        //shard
+        // 1, 2, 3 중 하나를 균등 확률로 반환
+        int shard = ThreadLocalRandom.current().nextInt(1, 4); // 1 이상 4 미만: 1, 2, 3
+
         try {
             for (ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record : records) {
                 KafkaMatchedOrderStoreEvent value = record.value();
@@ -66,7 +71,7 @@ public class KafkaEventConsumer {
                         ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
                         : 1;
 
-                orderCompletedService.completeMatchedOrder(command, yearMonthDate, attempt);
+                orderCompletedService.completeMatchedOrder(command, shard, yearMonthDate, attempt);
             }
 
 //            startTime = 9999999999999L - event.getBuyTimestamp();

@@ -76,10 +76,11 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
     public void saveMatchedOrderAndUpdateUnmatchedOrder(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
         // 1. INSERT INTO matched_order
         SimpleStatement insertMatchedOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, year_month_date, idempotency_id, created_at, order_id, price, quantity, order_type, trading_pair) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                        "INSERT INTO matched_order (user_id, shard, year_month_date, idempotency_id, created_at, order_id, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         matchedOrder.getUserId(),
+                        matchedOrder.getShard(),
                         matchedOrder.getYearMonthDate(),
                         matchedOrder.getIdempotencyId(),
                         matchedOrder.getCreatedAt(),

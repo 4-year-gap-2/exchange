@@ -53,14 +53,14 @@ public class OrderCompletedService {
         matchedOrderStore.saveBatch(command);
     }
 
-    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, LocalDate yearMonthDate, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), yearMonthDate, command.idempotencyId(), attempt);
+    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, int shard, LocalDate yearMonthDate, Integer attempt) {
+        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), shard, yearMonthDate, command.idempotencyId(), attempt);
 
         if (persistentMatchedOrder != null) {
             throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
         }
 
-        MatchedOrder newMatchedOrder = command.toEntity(yearMonthDate);
+        MatchedOrder newMatchedOrder = command.toEntity(shard, yearMonthDate);
         UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
 
         if (persistentUnmatchedOrder == null) {
@@ -95,8 +95,8 @@ public class OrderCompletedService {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 
-//        UnmatchedOrder newUnmatchedOrder = command.toEntity();
-        com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder newUnmatchedOrder = command.toMongoEntity();
+        UnmatchedOrder newUnmatchedOrder = command.toEntity();
+//        com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder newUnmatchedOrder = command.toMongoEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
     }
 

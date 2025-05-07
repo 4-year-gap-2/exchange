@@ -14,18 +14,20 @@ import java.util.UUID;
 
 public interface MatchedOrderReaderRepository extends CassandraRepository<MatchedOrder, UUID> {
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard = :shard AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
     @Consistency(DefaultConsistencyLevel.LOCAL_ONE)
     Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalOne(
             @Param("userId") UUID userId,
+            @Param("shard") int shard,
             @Param("yearMonthDate") LocalDate yearMonthDate,
             @Param("idempotencyId") UUID idempotencyId
     );
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard = :shard AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
     @Consistency(DefaultConsistencyLevel.LOCAL_QUORUM)
     Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalQuorum(
             @Param("userId") UUID userId,
+            @Param("shard") int shard,
             @Param("yearMonthDate") LocalDate yearMonthDate,
             @Param("idempotencyId") UUID idempotencyId
     );

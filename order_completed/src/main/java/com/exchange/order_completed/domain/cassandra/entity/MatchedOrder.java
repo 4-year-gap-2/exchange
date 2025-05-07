@@ -25,10 +25,13 @@ public class MatchedOrder {
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
-    @PrimaryKeyColumn(name = "year_month_date", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    @PrimaryKeyColumn(name = "shard", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private int shard;
+
+    @PrimaryKeyColumn(name = "year_month_date", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private LocalDate yearMonthDate;
 
-    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
     private UUID idempotencyId;
 
     @Column("created_at")
