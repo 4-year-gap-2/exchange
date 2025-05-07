@@ -1,4 +1,4 @@
-package com.exchange.order_completed.infrastructure.postgesql.repository;
+package com.exchange.order_completed.infrastructure.postgres.repository;
 
 import com.exchange.order_completed.domain.postgres.entity.TradeDataInfo;
 

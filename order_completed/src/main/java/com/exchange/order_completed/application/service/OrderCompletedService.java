@@ -13,7 +13,7 @@ import com.exchange.order_completed.domain.repository.MatchedOrderReader;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
-import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryStore;
+import com.exchange.order_completed.infrastructure.postgres.repository.ChartRepositoryStore;
 import com.exchange.order_completed.presentation.dto.PagedResult;
 import com.exchange.order_completed.presentation.dto.TradeDataResponse;
 import lombok.RequiredArgsConstructor;
