@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -15,7 +14,6 @@ public class CompletedOrderChangeEvent {
     private String op;
     private Source source;
     private After after;
-
 
     @Getter
     @Setter
@@ -34,9 +32,8 @@ public class CompletedOrderChangeEvent {
         private Integer pos;
         private String keyspace;
         private String table;
-
-
     }
+
     @Getter
     @Setter
     public static class After {
@@ -49,16 +46,14 @@ public class CompletedOrderChangeEvent {
         private StringValueWrapper type;
         private Object _range_start;
         private Object _range_end;
-
-
     }
+
     @Getter
     @Setter
     public static class ValueWrapper {
         private UUID value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 
     @Getter
@@ -67,7 +62,6 @@ public class CompletedOrderChangeEvent {
         private Long value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 
     @Getter
@@ -76,14 +70,13 @@ public class CompletedOrderChangeEvent {
         private BigDecimal value;
         private Object deletion_ts;
         private Boolean set;
-
     }
+
     @Getter
     @Setter
     public static class StringValueWrapper {
         private String value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 }

@@ -14,11 +14,12 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
+import org.apache.kafka.common.header.Header;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class KafkaEventConsumer {
@@ -46,7 +47,8 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = {"matching-to-order_completed.execute-order-matched"},
             containerFactory = "matchedOrderKafkaListenerContainerFactory")
-    public void consumeMatchedMessage(ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
+    public void consumeMatchedMessage(List<ConsumerRecord<String, KafkaMatchedOrderStoreEvent>> records, Acknowledgment ack) {
+        System.out.println("총 메시지 수: " + records.size());
 
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
@@ -55,14 +57,20 @@ public class KafkaEventConsumer {
         LocalDate yearMonthDate = LocalDate.now();
 
         try {
-            KafkaMatchedOrderStoreEvent event = record.value();
+            for (ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record : records) {
+                KafkaMatchedOrderStoreEvent value = record.value();
+                CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(value);
+                Header deliveryAttemptHeader = record.headers().lastHeader(KafkaHeaders.DELIVERY_ATTEMPT);
+
+                int attempt = deliveryAttemptHeader != null
+                        ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
+                        : 1;
+
+                orderCompletedService.completeMatchedOrder(command, yearMonthDate, attempt);
+            }
 
 //            startTime = 9999999999999L - event.getBuyTimestamp();
 //            long endToEndDuration = System.currentTimeMillis() - startTime;
-
-            CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
-
-            orderCompletedService.completeMatchedOrder(command, yearMonthDate, attempt);
         } finally {
             // 타이머 종료 및 기록
             sample.stop(endToEndTimer);
@@ -75,16 +83,27 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = {"matching-to-order_completed.execute-order-unmatched"},
             containerFactory = "unmatchedOrderKafkaListenerContainerFactory")
-    public void consumeUnmatchedMessage(ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record, Acknowledgment ack, @Header(KafkaHeaders.DELIVERY_ATTEMPT) Integer attempt) {
-        KafkaUnmatchedOrderStoreEvent event = record.value();
-        long startTime = event.getStartTime();
-        long endToEndDuration = System.currentTimeMillis() - startTime;
+    public void consumeUnmatchedMessage(List<ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent>> records, Acknowledgment ack) {
+        System.out.println("총 메시지 수: " + records.size());
 
-        CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(event);
-        orderCompletedService.completeUnmatchedOrder(command, attempt);
+//        KafkaUnmatchedOrderStoreEvent event = record.value();
+//        long startTime = event.getStartTime();
+//        long endToEndDuration = System.currentTimeMillis() - startTime;
+
+        for (ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record : records) {
+            KafkaUnmatchedOrderStoreEvent value = record.value();
+            CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(value);
+            Header deliveryAttemptHeader = record.headers().lastHeader(KafkaHeaders.DELIVERY_ATTEMPT);
+
+            int attempt = deliveryAttemptHeader != null
+                    ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
+                    : 1;
+
+            orderCompletedService.completeUnmatchedOrder(command, attempt);
+        }
 
         // 전체 체인 처리 시간 기록
-        endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
+//        endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
 
         ack.acknowledge();
     }

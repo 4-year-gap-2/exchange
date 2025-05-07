@@ -68,6 +68,9 @@ public class KafkaCommonConfig {
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 
+        // 배치 사이즈 설정
+        configProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 5000);
+
         // SASL 인증 관련 설정 추가
         addSaslConfig(configProps);
         return configProps;
@@ -143,12 +146,14 @@ public class KafkaCommonConfig {
     }
 
     /**
-     * 수동 커밋 리스너 컨테이너 팩토리 생성 (커스텀 에러 핸들러 적용, 헤더 활성화) - 재사용 가능한 메서드
+     * 수동 커밋 리스너 컨테이너 팩토리 생성 (배치 모드 활성화, 커스텀 에러 핸들러 적용, Attempt 헤더 활성화) - 재사용 가능한 메서드
      */
     public <T> ConcurrentKafkaListenerContainerFactory<String, T> createManualCommitListenerFactory(
             TypeReference<T> typeReference, String groupId, int concurrency, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(createManualCommitConsumerFactory(typeReference, groupId));
+        factory.setBatchListener(true); // 배치 리스너 모드
+        factory.getContainerProperties().setPollTimeout(500);   // 배치 사이즈만큼 메시지가 모이지 않아도 polling timeout(500ms)이 지나면 리스너 호출
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
         factory.setConcurrency(concurrency);
         factory.setCommonErrorHandler(errorHandler);

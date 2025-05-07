@@ -27,8 +27,6 @@ public class ChartCommand {
 
     private LocalDateTime createdAt;
 
-
-
     public static ChartCommand fromEvent(CompletedOrderChangeEvent value) {
         BigDecimal price = null;
         if (value.getAfter().getPrice() != null && value.getAfter().getPrice().getValue() != null) {

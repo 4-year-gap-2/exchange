@@ -6,14 +6,14 @@ import com.exchange.order_completed.application.command.CreateTestOrderStoreComm
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
-import com.exchange.order_completed.domain.entity.MatchedOrder;
-import com.exchange.order_completed.domain.entity.UnmatchedOrder;
-import com.exchange.order_completed.domain.postgresEntity.Chart;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.domain.repository.MatchedOrderReader;
 import com.exchange.order_completed.domain.repository.MatchedOrderStore;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
-import com.exchange.order_completed.infrastructure.postgesql.repository.ChartRepositoryStore;
+import com.exchange.order_completed.infrastructure.postgres.repository.ChartRepositoryStore;
 import com.exchange.order_completed.presentation.dto.PagedResult;
 import com.exchange.order_completed.presentation.dto.TradeDataResponse;
 import lombok.RequiredArgsConstructor;
@@ -95,7 +95,8 @@ public class OrderCompletedService {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 
-        UnmatchedOrder newUnmatchedOrder = command.toEntity();
+//        UnmatchedOrder newUnmatchedOrder = command.toEntity();
+        com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder newUnmatchedOrder = command.toMongoEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
     }
 

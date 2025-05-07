@@ -6,7 +6,6 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// PagedResult class
 @Getter
 @Setter
 public class PagedResult<T> {

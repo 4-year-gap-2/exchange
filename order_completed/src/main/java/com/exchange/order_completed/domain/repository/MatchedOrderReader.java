@@ -1,6 +1,6 @@
 package com.exchange.order_completed.domain.repository;
 
-import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 
 import java.time.LocalDate;
 import java.util.List;
