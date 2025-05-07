@@ -1,4 +1,4 @@
-package com.exchange.order_completed.application;
+package com.exchange.order_completed.domain.cassandra.entity;
 
 public enum OrderType {
     BUY,  // 매수

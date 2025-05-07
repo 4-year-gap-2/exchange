@@ -25,15 +25,17 @@ public class UnmatchedOrder {
     @PrimaryKeyColumn(name = "user_id", ordinal = 0, type = PrimaryKeyType.PARTITIONED)
     private UUID userId;
 
-    @PrimaryKeyColumn(name = "order_id", ordinal = 1, type = PrimaryKeyType.CLUSTERED)
+    @PrimaryKeyColumn(name = "shard", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
+    private int shard;
+
+    @PrimaryKeyColumn(name = "year_month_date", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
+    private LocalDate yearMonthDate;
+
+    @PrimaryKeyColumn(name = "order_id", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
     private UUID orderId;
 
-    @PrimaryKeyColumn(name = "created_at", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     @Column("created_at")
     private Instant createdAt;
-
-    @Column("created_date")
-    private LocalDate createdDate;
 
     @Column("price")
     private BigDecimal price;
@@ -44,6 +46,10 @@ public class UnmatchedOrder {
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
     private String orderType;
+
+    @Column("order_state")
+    @Comment("거래 유형 (PENDING 또는 CANCEL)")
+    private OrderState orderState;
 
     @Column("trading_pair")
     @Comment("거래 쌍 (BTC-USD)")

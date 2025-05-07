@@ -95,6 +95,13 @@ public class KafkaEventConsumer {
 //        long startTime = event.getStartTime();
 //        long endToEndDuration = System.currentTimeMillis() - startTime;
 
+        //year_month_date
+        LocalDate yearMonthDate = LocalDate.now();
+
+        //shard
+        // 1, 2, 3 중 하나를 균등 확률로 반환
+        int shard = ThreadLocalRandom.current().nextInt(1, 4); // 1 이상 4 미만: 1, 2, 3
+
         for (ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record : records) {
             KafkaUnmatchedOrderStoreEvent value = record.value();
             CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(value);
@@ -104,7 +111,7 @@ public class KafkaEventConsumer {
                     ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
                     : 1;
 
-            orderCompletedService.completeUnmatchedOrder(command, attempt);
+            orderCompletedService.completeUnmatchedOrder(command, yearMonthDate, shard, attempt);
         }
 
         // 전체 체인 처리 시간 기록

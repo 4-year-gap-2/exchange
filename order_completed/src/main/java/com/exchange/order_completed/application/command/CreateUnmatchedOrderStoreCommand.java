@@ -30,16 +30,17 @@ public record CreateUnmatchedOrderStoreCommand(
         );
     }
 
-    public UnmatchedOrder toEntity() {
+    public UnmatchedOrder toEntity(int shard, LocalDate yearMonthDate) {
         return UnmatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)
                 .price(price)
                 .quantity(quantity)
                 .userId(userId)
+                .shard(shard)
                 .orderId(orderId)
                 .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
-                .createdDate(LocalDate.now(ZoneId.of("UTC")))
+                .yearMonthDate(yearMonthDate)
                 .build();
     }
 

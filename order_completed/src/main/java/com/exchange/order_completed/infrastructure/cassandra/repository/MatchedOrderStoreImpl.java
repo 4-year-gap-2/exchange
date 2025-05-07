@@ -98,22 +98,24 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
         if (unmatchedOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
             // quantity == 0 이면 DELETE
             unmatchedOrderStatement = SimpleStatement.builder(
-                            "DELETE FROM unmatched_order WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                            "DELETE FROM unmatched_order WHERE user_id = ? AND shard = ? AND year_month_date = ? AND order_id = ?")
                     .addPositionalValues(
                             unmatchedOrder.getUserId(),
-                            unmatchedOrder.getOrderId(),
-                            unmatchedOrder.getCreatedAt()
+                            unmatchedOrder.getShard(),
+                            unmatchedOrder.getYearMonthDate(),
+                            unmatchedOrder.getOrderId()
                     )
                     .build();
         } else {
             // quantity > 0 이면 UPDATE
             unmatchedOrderStatement = SimpleStatement.builder(
-                            "UPDATE unmatched_order SET quantity = ? WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                            "UPDATE unmatched_order SET quantity = ? WHERE WHERE user_id = ? AND shard = ? AND year_month_date = ? AND order_id = ?")
                     .addPositionalValues(
                             unmatchedOrder.getQuantity(),
                             unmatchedOrder.getUserId(),
-                            unmatchedOrder.getOrderId(),
-                            unmatchedOrder.getCreatedAt()
+                            unmatchedOrder.getShard(),
+                            unmatchedOrder.getYearMonthDate(),
+                            unmatchedOrder.getOrderId()
                     )
                     .build();
         }

@@ -37,7 +37,7 @@ public class TransactionController {
 
     //체결 주문 조회
     @GetMapping("/trade")
-    public PagedResult<TradeDataResponse> findTradeOrderHistory(
+    public ResponseEntity<ResponseDto<PagedResult<TradeDataResponse>>> findTradeOrderHistory(
             HttpServletRequest request,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime cursor,
             @RequestParam(defaultValue = "20") int size,
@@ -51,7 +51,9 @@ public class TransactionController {
         if (cursor != null) {
             cursorInstant = cursor.atZone(ZoneId.systemDefault()).toInstant();
         }
+        PagedResult<TradeDataResponse> pagedResult = completedService.findTradeOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType, startDate, endDate);
 
-        return completedService.findTradeOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType,startDate, endDate);
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(pagedResult));
+
     }
 }

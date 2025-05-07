@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -54,14 +53,14 @@ public class OrderCompletedService {
     }
 
     public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, int shard, LocalDate yearMonthDate, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), shard, yearMonthDate, command.idempotencyId(), attempt);
+        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), shard, yearMonthDate, attempt);
 
         if (persistentMatchedOrder != null) {
             throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
         }
 
         MatchedOrder newMatchedOrder = command.toEntity(shard, yearMonthDate);
-        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
+        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
 
         if (persistentUnmatchedOrder == null) {
             matchedOrderStore.save(newMatchedOrder);
@@ -88,14 +87,14 @@ public class OrderCompletedService {
         }
     }
 
-    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, Integer attempt) {
-        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), command.orderId(), attempt);
+    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, LocalDate yearMonthDate, int shard, Integer attempt) {
+        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
 
         if (persistentMatchedOrder != null) {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 
-        UnmatchedOrder newUnmatchedOrder = command.toEntity();
+        UnmatchedOrder newUnmatchedOrder = command.toEntity(shard, yearMonthDate);
 //        com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder newUnmatchedOrder = command.toMongoEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
     }
@@ -114,43 +113,51 @@ public class OrderCompletedService {
             LocalDate startDate,
             LocalDate endDate
     ) {
-        List<MatchedOrder> allOrders = new ArrayList<>();
+        // 1. 날짜 범위 계산
         LocalDate today = LocalDate.now();
+        LocalDate fromDate; //조회 시작일
+        LocalDate toDate; //조회 마지막일
 
-        // 1. 날짜 구간 설정
         if (startDate == null && endDate == null) {
-            // 오늘 하루만 조회
-            allOrders.addAll(queryByPartitionKey(userId, today));
+            // 1) 시작일과 종료일이 모두 없는 경우: 오늘 하루만 조회
+            fromDate = today;
+            toDate = today;
         } else if (startDate != null && endDate == null) {
-            // startDate ~ 오늘까지
-            LocalDate date = startDate;
-            while (!date.isAfter(today)) {
-                allOrders.addAll(queryByPartitionKey(userId, date));
-                date = date.plusDays(1);
-            }
+            // 2) 시작일만 있는 경우: 시작일부터 최대 3개월 조회
+            fromDate = startDate;
+            // 시작일 + 3개월이 오늘을 넘으면 오늘까지, 아니면 시작일 + 3개월까지
+            toDate = startDate.plusMonths(3).isAfter(today) ? today : startDate.plusMonths(3);
         } else if (startDate == null && endDate != null) {
-            // endDate 이전 전체
-            LocalDate date = endDate;
-            LocalDate minDate = LocalDate.now().minusYears(2); // 시스템 최소 날짜(적절히 수정)
-            while (!date.isBefore(minDate)) {
-                allOrders.addAll(queryByPartitionKey(userId, date));
-                date = date.minusDays(1);
-            }
+            // 3) 종료일만 있는 경우: 종료일 기준 3개월 전부터 종료일까지 조회
+            toDate = endDate;
+            // 종료일 - 3개월이 시스템 최소 날짜(예: 2000-01-01)보다 이전이면 최소 날짜부터, 아니면 종료일 - 3개월부터
+            fromDate = endDate.minusMonths(3).isBefore(LocalDate.of(2000, 1, 1))
+                    ? LocalDate.of(2020, 1, 1)
+                    : endDate.minusMonths(3);
         } else {
-            // startDate ~ endDate 구간
-            LocalDate date = startDate;
-            while (!date.isAfter(endDate)) {
-                allOrders.addAll(queryByPartitionKey(userId, date));
-                date = date.plusDays(1);
-            }
+            // 4) 시작일과 종료일이 모두 있는 경우: 해당 구간 전체 조회
+            fromDate = startDate;
+            toDate = endDate;
         }
 
-        log.info("사용자 {}의 전체 주문 {}건 조회 완료", userId, allOrders.size());
+        // 2. shard 값 준비 (1, 2, 3)
+        int shard1 = 1, shard2 = 2, shard3 = 3;
 
-        // 2. 커서/타입 필터 및 정렬/페이징
-        List<MatchedOrder> filtered = allOrders.parallelStream()
+        // 3. Repository에서 한 번에 범위 조회
+        List<MatchedOrder> allOrders = matchedOrderReader.findByUserIdAndShardInAndYearMonthDateRange(
+                userId, shard1, shard2, shard3, fromDate, toDate
+        );
+
+        // ordertype이 있다면? 앱에서 필터링
+        if (orderType != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> orderType.equalsIgnoreCase(order.getOrderType()))
+                    .toList();
+        }
+
+        // 4. 커서/정렬/페이징 처리
+        List<MatchedOrder> filtered = allOrders.stream()
                 .filter(order -> cursor == null || order.getCreatedAt().isBefore(cursor))
-                .filter(order -> orderType == null || order.getOrderType().equalsIgnoreCase(orderType))
                 .limit(size + 1)
                 .collect(Collectors.toList());
 
@@ -169,18 +176,8 @@ public class OrderCompletedService {
 
         return new PagedResult<>(
                 responseList,
-                nextCursor != null ?
-                        LocalDateTime.ofInstant(nextCursor, ZoneId.systemDefault()) :
-                        null,
+                nextCursor != null ? LocalDateTime.ofInstant(nextCursor, ZoneId.systemDefault()) : null,
                 hasNext
         );
-    }
-
-    /**
-     * (userId, yearMonthDate) 파티션키로만 조회하는 메서드
-     * 실제 구현은 Cassandra Repository에서 userId, yearMonthDate로 조회
-     */
-    private List<MatchedOrder> queryByPartitionKey(UUID userId, LocalDate yearMonthDate) {
-        return matchedOrderReader.findByUserIdAndYearMonthDate(userId, yearMonthDate);
     }
 }
