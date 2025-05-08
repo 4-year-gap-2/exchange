@@ -4,6 +4,7 @@ import com.exchange.order_completed.application.command.CreateMatchedOrderStoreC
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.common.response.ResponseDto;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +70,7 @@ public class OrderCompletedController {
 
         KafkaUnmatchedOrderStoreEvent event = KafkaUnmatchedOrderStoreEvent.builder()
                 .tradingPair("BTC/KRW")
-                .orderType("BUY")
+                .orderType(OrderType.BUY)
                 .price(new BigDecimal("36782.50"))
                 .quantity(new BigDecimal("10000"))
                 .userId(randomUserId)

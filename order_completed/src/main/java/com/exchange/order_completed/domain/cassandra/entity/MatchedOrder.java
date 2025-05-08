@@ -1,5 +1,7 @@
 package com.exchange.order_completed.domain.cassandra.entity;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,7 +44,8 @@ public class MatchedOrder {
 
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    private String orderType;
+    @Enumerated(EnumType.STRING)
+    private OrderType orderType;
 
     @Column("trading_pair")
     @Comment("거래 쌍 (BTC/USD)")

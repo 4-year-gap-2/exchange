@@ -1,5 +1,8 @@
 package com.exchange.order_completed.domain.mongodb.entity;
 
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.*;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -38,7 +41,8 @@ public class MongoMatchedOrder {
 
     @Field(name = "order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    private String orderType;
+    @Enumerated(EnumType.STRING)
+    private OrderType orderType;
 
     @Field(name = "trading_pair")
     @Comment("거래 쌍 (BTC/USD)")

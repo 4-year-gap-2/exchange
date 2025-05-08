@@ -53,7 +53,7 @@ public class TransactionController {
         if (cursor != null) {
             cursorInstant = cursor.atZone(ZoneId.systemDefault()).toInstant();
         }
-        PagedResult<TradeDataResponse> pagedResult = completedService.findMatchedOrderHistory(userInfo.getUserId(), cursorInstant, size, String.valueOf(orderType), startDate, endDate);
+        PagedResult<TradeDataResponse> pagedResult = completedService.findMatchedOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType, startDate, endDate);
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(pagedResult));
 
@@ -76,7 +76,7 @@ public class TransactionController {
         if (cursor != null) {
             cursorInstant = cursor.atZone(ZoneId.systemDefault()).toInstant();
         }
-        PagedResult<TradeDataResponse> pagedResult = completedService.findUnmatchedOrderHistory(userInfo.getUserId(), cursorInstant, size, String.valueOf(orderType), startDate, endDate, String.valueOf(orderState));
+        PagedResult<TradeDataResponse> pagedResult = completedService.findUnmatchedOrderHistory(userInfo.getUserId(), cursorInstant, size, orderType, startDate, endDate, String.valueOf(orderState));
 
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success(pagedResult));
 

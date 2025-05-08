@@ -1,6 +1,7 @@
 package com.exchange.order_completed.presentation.dto;
 
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import java.time.Instant;
 @Setter
 public class TradeDataResponse {
     private String tradingPair;
-    private String orderType;
+    private OrderType orderType;
     private BigDecimal price;
     private BigDecimal quantity;
     private Instant createdAt;  // 타입 변경
