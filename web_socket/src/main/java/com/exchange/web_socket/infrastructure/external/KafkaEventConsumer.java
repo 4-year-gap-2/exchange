@@ -44,8 +44,8 @@ public class KafkaEventConsumer {
     )
     public void notificationMatch(CompletedOrderChangeEvent event) {
 
-        String userId = event.getAfter().getUserId().toString();
-        String tradingPair = event.getAfter().getTrading_pair().getValue();
+        String userId = event.getAfter().getUser_id().getValue().toString();
+        String tradingPair = event.getAfter().getTrading_pair().getValue().replace('/','-');
         String quantity = event.getAfter().getQuantity().getValue().toPlainString();
         String alertMessage = String.format("%s 주문 %s개 체결이 완료되었습니다.", tradingPair, quantity);
 

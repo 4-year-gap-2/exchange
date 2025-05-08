@@ -26,7 +26,10 @@
 
     const socket = new SockJS("http://localhost:19094/ws");
     const stompClient = new StompJs.Client({
-        webSocketFactory: () => socket,
+        webSocketFactory: () => new SockJS("http://localhost:19094/ws"),
+        connectHeaders: {
+            Authorization: "Bearer " + "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxZDc1MmVlMy04MDQ2LTRiNWEtYjg5NC0zNDE3MjE3MjYwZmIiLCJhdXRoIjoiTUFTVEVSIiwidXNlcm5hbWUiOiJqeW9vdW5nIiwiZXhwIjoxNzQ2NzYxNDAxLCJpYXQiOjE3NDY2NzUwMDF9.4eZT4t6b1Zs08XN8-DGhAjIAGSpHE1LCD8LpdniHgC4",
+        },
         debug: (msg) => console.log("[DEBUG]", msg),
         onConnect: () => {
             console.log("[STOMP] 연결 성공");
@@ -37,7 +40,10 @@
                 log("서버 메시지: " + message.body);
             });
         },
-        onStompError: (err) => console.error("[STOMP 에러]", err),
+        onStompError: (err) => {
+            console.error("[STOMP 에러]", err);
+            log("STOMP 에러: " + JSON.stringify(err));
+        },
     });
 
     stompClient.activate();

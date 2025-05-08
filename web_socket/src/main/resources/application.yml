@@ -89,3 +89,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}

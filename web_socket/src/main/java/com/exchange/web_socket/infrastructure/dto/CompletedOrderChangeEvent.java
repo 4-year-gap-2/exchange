@@ -15,7 +15,6 @@ public class CompletedOrderChangeEvent {
     private Source source;
     private After after;
 
-
     @Getter
     @Setter
     public static class Source {
@@ -33,40 +32,47 @@ public class CompletedOrderChangeEvent {
         private Integer pos;
         private String keyspace;
         private String table;
-
-
     }
+
     @Getter
     @Setter
     public static class After {
-        private ValueWrapper userId;
-        private ValueWrapper orderId;
-        private CreatedAtValueWrapper created_at;
+        private UUIDValueWrapper user_id;
+        private IntValueWrapper shard;
+        private IntValueWrapper year_month_date;
+        private UUIDValueWrapper idempotency_id;
+        private LongValueWrapper created_at;
+        private UUIDValueWrapper order_id;
+        private StringValueWrapper order_type;
         private BigDecimalValueWrapper price;
         private BigDecimalValueWrapper quantity;
         private StringValueWrapper trading_pair;
-        private StringValueWrapper type;
         private Object _range_start;
         private Object _range_end;
-
-
     }
+
     @Getter
     @Setter
-    public static class ValueWrapper {
+    public static class UUIDValueWrapper {
         private UUID value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 
     @Getter
     @Setter
-    public static class CreatedAtValueWrapper {
+    public static class IntValueWrapper {
+        private Integer value;
+        private Object deletion_ts;
+        private Boolean set;
+    }
+
+    @Getter
+    @Setter
+    public static class LongValueWrapper {
         private Long value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 
     @Getter
@@ -75,14 +81,13 @@ public class CompletedOrderChangeEvent {
         private BigDecimal value;
         private Object deletion_ts;
         private Boolean set;
-
     }
+
     @Getter
     @Setter
     public static class StringValueWrapper {
         private String value;
         private Object deletion_ts;
         private Boolean set;
-
     }
 }
