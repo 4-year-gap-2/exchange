@@ -1,4 +1,4 @@
-package com.exchange.order_completed.domain.repository;
+package com.exchange.order_completed.domain.cassandra.repository;
 
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 

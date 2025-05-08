@@ -47,6 +47,9 @@ spring:
       username: ${REDIS_NAME}
       password: ${REDIS_PASSWORD}
 
+    mongodb:
+      enabled: false
+
   cassandra:
     contact-points: ${CASSANDRA_HOST}
     port: 9042
@@ -94,3 +97,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+  health:
+    mongo:
+      enabled: false

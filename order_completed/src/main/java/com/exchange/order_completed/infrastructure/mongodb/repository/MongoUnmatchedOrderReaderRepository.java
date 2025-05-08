@@ -5,5 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.UUID;
 
-public interface MongoUnmatchedOrderStoreRepository extends MongoRepository<MongoUnmatchedOrder, UUID> {
+public interface MongoUnmatchedOrderReaderRepository extends MongoRepository<MongoUnmatchedOrder, UUID> {
+
+    MongoUnmatchedOrder findByOrderId(UUID orderId);
 }

@@ -7,7 +7,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
-import com.exchange.order_completed.domain.repository.MatchedOrderStore;
+import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraTemplate;
 import org.springframework.stereotype.Repository;
