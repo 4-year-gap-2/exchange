@@ -8,11 +8,13 @@ import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInform
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderReader;
+import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
+import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderReader;
+import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderStore;
+import com.exchange.order_completed.domain.mongodb.entity.MongoMatchedOrder;
+import com.exchange.order_completed.domain.mongodb.entity.MongoUnmatchedOrder;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
-import com.exchange.order_completed.domain.repository.MatchedOrderReader;
-import com.exchange.order_completed.domain.repository.MatchedOrderStore;
-import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
-import com.exchange.order_completed.domain.repository.UnmatchedOrderStore;
 import com.exchange.order_completed.infrastructure.postgres.repository.ChartRepositoryStore;
 import com.exchange.order_completed.presentation.dto.PagedResult;
 import com.exchange.order_completed.presentation.dto.TradeDataResponse;
@@ -101,15 +103,30 @@ public class OrderCompletedService {
         }
     }
 
-    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, LocalDate yearMonthDate, int shard, Integer attempt) {
-        UnmatchedOrder persistentMatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
+    public void updateUnmatchedOrderQuantity(MongoMatchedOrder matchedOrder, MongoUnmatchedOrder unmatchedOrder) {
+        BigDecimal matchedOrderQuantity = matchedOrder.getQuantity();
+        BigDecimal unmatchedOrderQuantity = unmatchedOrder.getQuantity();
 
-        if (persistentMatchedOrder != null) {
+        // 체결된 주문의 수량이 미체결 주문의 수량보다 적은 경우
+        if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) < 0) {
+            // 체결된 주문의 수량을 미체결 주문의 수량에서 빼줌
+            unmatchedOrder.setQuantity(unmatchedOrderQuantity.subtract(matchedOrderQuantity));
+
+            // 체결된 주문의 수량이 미체결 주문의 수량과 같은 경우
+        } else if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) == 0) {
+            // 미체결 주문의 수량을 0으로 설정
+            unmatchedOrder.setQuantity(BigDecimal.ZERO);
+        }
+    }
+
+    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, LocalDate yearMonthDate, int shard, Integer attempt) {
+        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
+
+        if (persistentUnmatchedOrder != null) {
             throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
         }
 
         UnmatchedOrder newUnmatchedOrder = command.toEntity(shard, yearMonthDate);
-//        com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder newUnmatchedOrder = command.toMongoEntity();
         unmatchedOrderStore.save(newUnmatchedOrder);
     }
 
