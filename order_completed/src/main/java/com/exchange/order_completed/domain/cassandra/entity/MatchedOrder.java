@@ -26,19 +26,13 @@ public class MatchedOrder {
     private UUID userId;
 
     @PrimaryKeyColumn(name = "shard", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-    private int shard;
+    private Byte shard;
 
     @PrimaryKeyColumn(name = "year_month_date", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private LocalDate yearMonthDate;
 
-    @PrimaryKeyColumn(name = "idempotency_id", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
-    private UUID idempotencyId;
-
-    @Column("created_at")
-    private Instant createdAt;
-
-    @Column("order_id")
-    private UUID orderId;
+    @PrimaryKeyColumn(name = "matched_order_id", ordinal = 3, type = PrimaryKeyType.CLUSTERED)
+    private UUID matchedOrderId;
 
     @Column("price")
     private BigDecimal price;
@@ -54,4 +48,6 @@ public class MatchedOrder {
     @Comment("거래 쌍 (BTC/USD)")
     private String tradingPair;
 
+    @Column("created_at")
+    private Instant createdAt;
 }

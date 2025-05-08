@@ -16,7 +16,7 @@ public class KafkaBalanceIncreaseEvent {
     private BigDecimal price;
     private BigDecimal quantity;
     private UUID userId;
-    private UUID orderId;
+    private UUID matchedOrderId;
 
     public static KafkaBalanceIncreaseEvent from(CreateMatchedOrderStoreCommand createMatchedOrderStoreCommand) {
         return KafkaBalanceIncreaseEvent.builder()
@@ -25,7 +25,7 @@ public class KafkaBalanceIncreaseEvent {
                 .price(createMatchedOrderStoreCommand.price())
                 .quantity(createMatchedOrderStoreCommand.quantity())
                 .userId(createMatchedOrderStoreCommand.userId())
-                .orderId(createMatchedOrderStoreCommand.orderId())
+                .matchedOrderId(createMatchedOrderStoreCommand.matchedOrderId())
                 .build();
     }
 }

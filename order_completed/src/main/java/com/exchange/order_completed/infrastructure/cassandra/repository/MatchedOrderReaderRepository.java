@@ -30,10 +30,6 @@ public interface MatchedOrderReaderRepository extends CassandraRepository<Matche
             @Param("yearMonthDate") LocalDate yearMonthDate
     );
 
-    MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId);
-
-    Optional<MatchedOrder> findByOrderId(UUID orderId);
-
     @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard IN (:shard1, :shard2, :shard3) AND year_month_date >= :fromDate AND year_month_date <= :toDate")
     List<MatchedOrder> findByUserIdAndShardInAndYearMonthDateRange(
             UUID userId,

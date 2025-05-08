@@ -4,16 +4,16 @@ import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraTemplate;
+import org.springframework.data.cassandra.core.cql.CqlTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,50 +21,34 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
 
     private final MatchedOrderStoreRepository matchedOrderStoreRepository;
     private final CassandraTemplate cassandraTemplate;
+    private final CqlTemplate cqlTemplate;
 
     @Override
-    public void saveBatch(CreateTestOrderStoreCommand command) {
-        // 1. 매수 주문 INSERT
-        SimpleStatement insertBuyOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                .addPositionalValues(
-                        command.buyUserId(),
-                        UUID.randomUUID(),
-                        command.createdAt(),
-                        command.yearMonthDate(),
-                        command.buyOrderId(),
-                        command.executionPrice(),
-                        command.matchedQuantity(),
-                        "BUY",
-                        command.tradingPair()
-                )
-                .build();
-
-        // 2. 매도 주문 INSERT
-        SimpleStatement insertSellOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, idempotency_id, created_at, created_date, order_id, price, quantity, order_type, trading_pair) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                .addPositionalValues(
-                        command.sellUserId(),
-                        UUID.randomUUID(),
-                        command.createdAt(),
-                        command.yearMonthDate(),
-                        command.sellOrderId(),
-                        command.executionPrice(),
-                        command.matchedQuantity(),
-                        "SELL",
-                        command.tradingPair()
-                )
-                .build();
-
-        // 3. LOGGED BATCH로 묶기
+    public void saveBatch(List<MatchedOrder> matchedOrderList) {
         BatchStatementBuilder batch = BatchStatement.builder(DefaultBatchType.LOGGED);
-        batch.addStatement(insertBuyOrderStatement);
-        batch.addStatement(insertSellOrderStatement);
 
-        // 4. 실행
-        cassandraTemplate.getCqlOperations().execute(batch.build());
+        for (MatchedOrder order : matchedOrderList) {
+            SimpleStatement stmt = SimpleStatement.builder(
+                            "INSERT INTO matched_order (user_id, shard, year_month_date, matched_order_id, price, quantity, order_type, trading_pair, created_at) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                    )
+                    .addPositionalValues(
+                            order.getUserId(),
+                            order.getShard(),
+                            order.getYearMonthDate(),
+                            order.getMatchedOrderId(),
+                            order.getPrice(),
+                            order.getQuantity(),
+                            order.getOrderType(),
+                            order.getTradingPair(),
+                            order.getCreatedAt()
+                    )
+                    .build();
+
+            batch.addStatement(stmt);
+        }
+
+        cqlTemplate.execute(batch.build());
     }
 
     @Override
@@ -82,9 +66,8 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                         matchedOrder.getUserId(),
                         matchedOrder.getShard(),
                         matchedOrder.getYearMonthDate(),
-                        matchedOrder.getIdempotencyId(),
+                        matchedOrder.getMatchedOrderId(),
                         matchedOrder.getCreatedAt(),
-                        matchedOrder.getOrderId(),
                         matchedOrder.getPrice(),
                         matchedOrder.getQuantity(),
                         matchedOrder.getOrderType(),

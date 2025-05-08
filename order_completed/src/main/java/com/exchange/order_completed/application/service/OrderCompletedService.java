@@ -2,9 +2,7 @@ package com.exchange.order_completed.application.service;
 
 import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
-import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
-import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
@@ -12,8 +10,6 @@ import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderRead
 import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
 import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderStore;
-import com.exchange.order_completed.domain.mongodb.entity.MongoMatchedOrder;
-import com.exchange.order_completed.domain.mongodb.entity.MongoUnmatchedOrder;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.postgres.repository.ChartRepositoryStore;
 import com.exchange.order_completed.presentation.dto.PagedResult;
@@ -57,53 +53,14 @@ public class OrderCompletedService {
         }
     }
 
-    public void completeOrderEach(CreateTestOrderStoreCommand command, Integer attempt) {
-        MatchedOrder buyOrderEntity = command.toBuyOrderEntity();
-        MatchedOrder sellOrderEntity = command.toSellOrderEntity();
-        matchedOrderStore.save(buyOrderEntity);
-        matchedOrderStore.save(sellOrderEntity);
-    }
-
-    public void completeOrderBatch(CreateTestOrderStoreCommand command, Integer attempt) {
-        matchedOrderStore.saveBatch(command);
-    }
-
-    public void completeMatchedOrder(CreateMatchedOrderStoreCommand command, int shard, LocalDate yearMonthDate, Integer attempt) {
-        MatchedOrder persistentMatchedOrder = matchedOrderReader.findMatchedOrder(command.userId(), shard, yearMonthDate, attempt);
-
-        if (persistentMatchedOrder != null) {
-            throw new DuplicateMatchedOrderInformationException("이미 저장된 체결 주문입니다. orderId: " + command.idempotencyId());
-        }
-
-        MatchedOrder newMatchedOrder = command.toEntity(shard, yearMonthDate);
-        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
-
-        if (persistentUnmatchedOrder == null) {
-            matchedOrderStore.save(newMatchedOrder);
-        } else {
-            updateUnmatchedOrderQuantity(newMatchedOrder, persistentUnmatchedOrder);
-            // 카산드라 배치 쿼리 수행
-            matchedOrderStore.saveMatchedOrderAndUpdateUnmatchedOrder(newMatchedOrder, persistentUnmatchedOrder);
-        }
+    public void completeMatchedOrder(List<CreateMatchedOrderStoreCommand> commandList) {
+        List<MatchedOrder> matchedOrderList = commandList.stream()
+                .map(CreateMatchedOrderStoreCommand::toEntity)
+                .toList();
+        matchedOrderStore.saveBatch(matchedOrderList);
     }
 
     public void updateUnmatchedOrderQuantity(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
-        BigDecimal matchedOrderQuantity = matchedOrder.getQuantity();
-        BigDecimal unmatchedOrderQuantity = unmatchedOrder.getQuantity();
-
-        // 체결된 주문의 수량이 미체결 주문의 수량보다 적은 경우
-        if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) < 0) {
-            // 체결된 주문의 수량을 미체결 주문의 수량에서 빼줌
-            unmatchedOrder.setQuantity(unmatchedOrderQuantity.subtract(matchedOrderQuantity));
-
-            // 체결된 주문의 수량이 미체결 주문의 수량과 같은 경우
-        } else if (matchedOrderQuantity.compareTo(unmatchedOrderQuantity) == 0) {
-            // 미체결 주문의 수량을 0으로 설정
-            unmatchedOrder.setQuantity(BigDecimal.ZERO);
-        }
-    }
-
-    public void updateUnmatchedOrderQuantity(MongoMatchedOrder matchedOrder, MongoUnmatchedOrder unmatchedOrder) {
         BigDecimal matchedOrderQuantity = matchedOrder.getQuantity();
         BigDecimal unmatchedOrderQuantity = unmatchedOrder.getQuantity();
 

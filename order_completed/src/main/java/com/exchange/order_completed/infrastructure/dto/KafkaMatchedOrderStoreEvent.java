@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
@@ -13,12 +15,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KafkaMatchedOrderStoreEvent {
+    // 거래 정보
     private String tradingPair;
-    private String orderType;
-    private BigDecimal price;
-    private BigDecimal quantity;
-    private UUID userId;
-    private UUID orderId;
-    private UUID idempotencyId;
-    private long startTimeStamp;
+    private BigDecimal executionPrice;
+    private BigDecimal matchedQuantity;
+
+    // 매수 주문 정보
+    private UUID buyUserId;
+    private UUID buyMatchedOrderId;
+
+    // 매도 주문 정보
+    private UUID sellUserId;
+    private UUID sellMatchedOrderId;
+
+    // 기타 정보
+    Instant createdAt;
+    LocalDate yearMonthDate;
+    Byte buyShard;
+    Byte sellShard;
 }
