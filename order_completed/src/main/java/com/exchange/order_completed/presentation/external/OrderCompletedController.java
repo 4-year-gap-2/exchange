@@ -39,13 +39,16 @@ public class OrderCompletedController {
 
         KafkaMatchedOrderStoreEvent event = KafkaMatchedOrderStoreEvent.builder()
                 .tradingPair("BTC/KRW")
-                .orderType("BUY")
-                .price(new BigDecimal("36782.50"))
-                .quantity(new BigDecimal("0.0001"))
-                .userId(randomUserId)
-                .orderId(randomOrderId)
-                .idempotencyId(randomIdempotencyId)
-                .startTimeStamp(currentTimeMillis)
+                .executionPrice(new BigDecimal("36782.50"))
+                .matchedQuantity(new BigDecimal("0.0001"))
+                .buyUserId(randomUserId)
+                .buyMatchedOrderId(randomOrderId)
+                .sellUserId(randomUserId)
+                .sellMatchedOrderId(randomOrderId)
+                .createdAt(Instant.now())
+                .yearMonthDate(LocalDate.now())
+                .buyShard((byte) 1)
+                .sellShard((byte) 1)
                 .build();
 
         kafkaTemplate.send("matching-to-order_completed.execute-order-matched", String.valueOf(randomOrderId), event);

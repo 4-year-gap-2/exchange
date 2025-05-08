@@ -10,6 +10,7 @@ import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreE
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -18,11 +19,13 @@ import org.apache.kafka.common.header.Header;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
+@Slf4j
 public class KafkaEventConsumer {
 
     private final Counter endToEndCounter;
@@ -48,32 +51,24 @@ public class KafkaEventConsumer {
     @KafkaListener(
             topics = {"matching-to-order_completed.execute-order-matched"},
             containerFactory = "matchedOrderKafkaListenerContainerFactory")
-    public void consumeMatchedMessage(List<ConsumerRecord<String, KafkaMatchedOrderStoreEvent>> records, Acknowledgment ack) {
-        System.out.println("총 메시지 수: " + records.size());
+    public void consumeMatchedMessage(List<ConsumerRecord<String, KafkaMatchedOrderStoreEvent>> recordList, Acknowledgment ack) {
+        log.info("총 메시지 수: {}", recordList.size());
 
         // 타이머 시작
         Timer.Sample sample = Timer.start(meterRegistry);
 
-        //year_month_date
-        LocalDate yearMonthDate = LocalDate.now();
-
-        //shard
-        // 1, 2, 3 중 하나를 균등 확률로 반환
-        int shard = ThreadLocalRandom.current().nextInt(1, 4); // 1 이상 4 미만: 1, 2, 3
+        List<CreateMatchedOrderStoreCommand> commandList = new ArrayList<>();
 
         try {
-            for (ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record : records) {
+            for (ConsumerRecord<String, KafkaMatchedOrderStoreEvent> record : recordList) {
                 KafkaMatchedOrderStoreEvent value = record.value();
-                CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(value);
-                Header deliveryAttemptHeader = record.headers().lastHeader(KafkaHeaders.DELIVERY_ATTEMPT);
-
-                int attempt = deliveryAttemptHeader != null
-                        ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
-                        : 1;
-
-                orderCompletedService.completeMatchedOrder(command, shard, yearMonthDate, attempt);
+                CreateMatchedOrderStoreCommand buyCommand = CreateMatchedOrderStoreCommand.fromBuyOrderInfo(value);
+                CreateMatchedOrderStoreCommand sellCommand = CreateMatchedOrderStoreCommand.fromSellOrderInfo(value);
+                commandList.add(buyCommand);
+                commandList.add(sellCommand);
             }
 
+            orderCompletedService.completeMatchedOrder(commandList);
 //            startTime = 9999999999999L - event.getBuyTimestamp();
 //            long endToEndDuration = System.currentTimeMillis() - startTime;
         } finally {
@@ -89,7 +84,7 @@ public class KafkaEventConsumer {
             topics = {"matching-to-order_completed.execute-order-unmatched"},
             containerFactory = "unmatchedOrderKafkaListenerContainerFactory")
     public void consumeUnmatchedMessage(List<ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent>> records, Acknowledgment ack) {
-        System.out.println("총 메시지 수: " + records.size());
+        log.info("총 메시지 수: {}", records.size());
 
 //        KafkaUnmatchedOrderStoreEvent event = record.value();
 //        long startTime = event.getStartTime();

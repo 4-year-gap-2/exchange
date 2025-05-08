@@ -1,65 +1,72 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
-import com.exchange.order_completed.domain.mongodb.entity.MongoMatchedOrder;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.UUID;
 
 @Builder
 public record CreateMatchedOrderStoreCommand(
+        // 거래 정보
         String tradingPair,
-        String orderType,
         BigDecimal price,
         BigDecimal quantity,
-        UUID userId,
-        UUID orderId,
-        UUID idempotencyId
-) {
-    public static CreateMatchedOrderStoreCommand from(KafkaMatchedOrderStoreEvent event) {
-        return new CreateMatchedOrderStoreCommand(
-                event.getTradingPair(),
-                event.getOrderType(),
-                event.getPrice(),
-                event.getQuantity(),
-                event.getUserId(),
-                event.getOrderId(),
-                event.getIdempotencyId()
-        );
-    }
 
-    public MatchedOrder toEntity(int shard, LocalDate yearMonthDate) {
-        return MatchedOrder.builder()
-                .tradingPair(this.tradingPair)
-                .orderType(this.orderType)
-                .price(this.price)
-                .quantity(this.quantity)
-                .userId(this.userId)
-                .shard(shard)
-                .orderId(this.orderId)
-                .idempotencyId(this.idempotencyId)
-                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
-                .yearMonthDate(yearMonthDate)
+        // 주문 정보
+        UUID userId,
+        UUID matchedOrderId,
+        String orderType,
+
+        // 기타 정보
+        Instant createdAt,
+        LocalDate yearMonthDate,
+        Byte shard
+) {
+
+    public static CreateMatchedOrderStoreCommand fromBuyOrderInfo(KafkaMatchedOrderStoreEvent event) {
+        return CreateMatchedOrderStoreCommand.builder()
+                .tradingPair(event.getTradingPair())
+                .price(event.getExecutionPrice())
+                .quantity(event.getMatchedQuantity())
+                .userId(event.getBuyUserId())
+                .matchedOrderId(event.getBuyMatchedOrderId())
+                .orderType("BUY")
+                .createdAt(event.getCreatedAt())
+                .yearMonthDate(event.getYearMonthDate())
+                .shard(event.getBuyShard())
                 .build();
     }
 
-    public MongoMatchedOrder toMongoEntity(LocalDate yearMonthDate) {
-        return MongoMatchedOrder.builder()
+    public static CreateMatchedOrderStoreCommand fromSellOrderInfo(KafkaMatchedOrderStoreEvent event) {
+        return CreateMatchedOrderStoreCommand.builder()
+                .tradingPair(event.getTradingPair())
+                .price(event.getExecutionPrice())
+                .quantity(event.getMatchedQuantity())
+                .userId(event.getSellUserId())
+                .matchedOrderId(event.getSellMatchedOrderId())
+                .orderType("SELL")
+                .createdAt(event.getCreatedAt())
+                .yearMonthDate(event.getYearMonthDate())
+                .shard(event.getSellShard())
+                .build();
+    }
+
+    public MatchedOrder toEntity() {
+        return MatchedOrder.builder()
                 .tradingPair(this.tradingPair)
-                .orderType(this.orderType)
                 .price(this.price)
                 .quantity(this.quantity)
                 .userId(this.userId)
-                .orderId(this.orderId)
-                .idempotencyId(this.idempotencyId)
-                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
-                .yearMonthDate(yearMonthDate)
+                .matchedOrderId(this.matchedOrderId)
+                .createdAt(this.createdAt)
+                .yearMonthDate(this.yearMonthDate)
+                .shard(this.shard)
+                .orderType(this.orderType)
                 .build();
     }
 
