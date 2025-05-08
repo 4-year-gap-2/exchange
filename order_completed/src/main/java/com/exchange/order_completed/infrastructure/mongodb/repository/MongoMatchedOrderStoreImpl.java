@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class MongoMongoMatchedOrderStoreImpl implements MongoMatchedOrderStore {
+public class MongoMatchedOrderStoreImpl implements MongoMatchedOrderStore {
 
     private final MongoMatchedOrderStoreRepository mongoMatchedOrderStoreRepository;
     private final MongoTemplate mongoTemplate;

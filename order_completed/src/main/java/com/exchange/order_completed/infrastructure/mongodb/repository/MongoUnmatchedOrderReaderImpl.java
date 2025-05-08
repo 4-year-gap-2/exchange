@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
-public class MongoMongoUnmatchedOrderReaderImpl implements MongoUnmatchedOrderReader {
+public class MongoUnmatchedOrderReaderImpl implements MongoUnmatchedOrderReader {
 
     private final MongoUnmatchedOrderReaderRepository mongoUnmatchedOrderReaderRepository;
 
