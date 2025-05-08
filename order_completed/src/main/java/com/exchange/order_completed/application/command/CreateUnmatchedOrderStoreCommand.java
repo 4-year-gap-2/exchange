@@ -1,5 +1,6 @@
 package com.exchange.order_completed.application.command;
 
+import com.exchange.order_completed.domain.cassandra.entity.OrderState;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import lombok.Builder;
@@ -39,6 +40,7 @@ public record CreateUnmatchedOrderStoreCommand(
                 .userId(userId)
                 .shard(shard)
                 .orderId(orderId)
+                .orderState(OrderState.valueOf("PENDING"))
                 .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
                 .yearMonthDate(yearMonthDate)
                 .build();

@@ -7,6 +7,8 @@ import com.exchange.order_completed.application.command.CreateUnmatchedOrderStor
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.OrderState;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.domain.repository.MatchedOrderReader;
@@ -105,7 +107,7 @@ public class OrderCompletedService {
         chartRepositoryStore.save(chart);
     }
 
-    public PagedResult<TradeDataResponse> findTradeOrderHistory(
+    public PagedResult<TradeDataResponse> findMatchedOrderHistory(
             UUID userId,
             Instant cursor,
             int size,
@@ -167,7 +169,7 @@ public class OrderCompletedService {
                 filtered;
 
         List<TradeDataResponse> responseList = pageData.stream()
-                .map(TradeDataResponse::fromEntity)
+                .map(TradeDataResponse::fromMatchedEntity)
                 .collect(Collectors.toList());
 
         Instant nextCursor = responseList.isEmpty() ?
@@ -179,5 +181,83 @@ public class OrderCompletedService {
                 nextCursor != null ? LocalDateTime.ofInstant(nextCursor, ZoneId.systemDefault()) : null,
                 hasNext
         );
+    }
+
+    public PagedResult<TradeDataResponse> findUnmatchedOrderHistory(UUID userId, Instant cursor, int size, String orderType, LocalDate startDate, LocalDate endDate, String orderState) {
+        // 1. 날짜 범위 계산
+        LocalDate today = LocalDate.now();
+        LocalDate fromDate; //조회 시작일
+        LocalDate toDate; //조회 마지막일
+
+        if (startDate == null && endDate == null) {
+            // 1) 시작일과 종료일이 모두 없는 경우: 오늘 하루만 조회
+            fromDate = today;
+            toDate = today;
+        } else if (startDate != null && endDate == null) {
+            // 2) 시작일만 있는 경우: 시작일부터 최대 3개월 조회
+            fromDate = startDate;
+            // 시작일 + 3개월이 오늘을 넘으면 오늘까지, 아니면 시작일 + 3개월까지
+            toDate = startDate.plusMonths(3).isAfter(today) ? today : startDate.plusMonths(3);
+        } else if (startDate == null && endDate != null) {
+            // 3) 종료일만 있는 경우: 종료일 기준 3개월 전부터 종료일까지 조회
+            toDate = endDate;
+            // 종료일 - 3개월이 시스템 최소 날짜(예: 2000-01-01)보다 이전이면 최소 날짜부터, 아니면 종료일 - 3개월부터
+            fromDate = endDate.minusMonths(3).isBefore(LocalDate.of(2000, 1, 1))
+                    ? LocalDate.of(2020, 1, 1)
+                    : endDate.minusMonths(3);
+        } else {
+            // 4) 시작일과 종료일이 모두 있는 경우: 해당 구간 전체 조회
+            fromDate = startDate;
+            toDate = endDate;
+        }
+
+        // 2. shard 값 준비 (1, 2, 3)
+        int shard1 = 1, shard2 = 2, shard3 = 3;
+
+        // 3. Repository에서 한 번에 범위 조회
+        List<UnmatchedOrder> allOrders = unmatchedOrderReader.findByUserIdAndShardInAndYearMonthDateRange(
+                userId, shard1, shard2, shard3, fromDate, toDate
+        );
+
+        // ordertype이 있다면? 앱에서 필터링
+        if (orderType != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getOrderType() != null &&
+                            orderType.equalsIgnoreCase(order.getOrderType()))
+                    .toList();
+        }
+
+        if (orderState != null) {
+            allOrders = allOrders.stream()
+                    .filter(order -> order.getOrderState() != null &&
+                            orderState.equalsIgnoreCase(order.getOrderState().name()))
+                    .toList();
+        }
+
+        // 4. 커서/정렬/페이징 처리
+        List<UnmatchedOrder> filtered = allOrders.stream()
+                .filter(order -> cursor == null || order.getCreatedAt().isBefore(cursor))
+                .limit(size + 1)
+                .collect(Collectors.toList());
+
+        boolean hasNext = filtered.size() > size;
+        List<UnmatchedOrder> pageData = hasNext ?
+                filtered.subList(0, size) :
+                filtered;
+
+        List<TradeDataResponse> responseList = pageData.stream()
+                .map(TradeDataResponse::fromUnmatchedEntity)
+                .collect(Collectors.toList());
+
+        Instant nextCursor = responseList.isEmpty() ?
+                null :
+                responseList.get(responseList.size() - 1).getCreatedAt();
+
+        return new PagedResult<>(
+                responseList,
+                nextCursor != null ? LocalDateTime.ofInstant(nextCursor, ZoneId.systemDefault()) : null,
+                hasNext
+        );
+
     }
 }
