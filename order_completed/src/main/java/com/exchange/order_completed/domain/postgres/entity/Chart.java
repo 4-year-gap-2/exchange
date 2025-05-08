@@ -1,6 +1,7 @@
 package com.exchange.order_completed.domain.postgres.entity;
 
 import com.exchange.order_completed.application.command.ChartCommand;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Comment;
@@ -32,7 +33,8 @@ public class Chart {
     private BigDecimal amount;
 
     @Column("transaction_type")
-    private String transactionType; // "BUY" 또는 "SELL"
+    @Enumerated(EnumType.STRING)
+    private OrderType transactionType; // "BUY" 또는 "SELL"
 
     @Column("pair")
     private String pair; // 예: "BTC-USD"
