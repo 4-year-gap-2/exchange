@@ -1,6 +1,7 @@
 package com.exchange.order_completed.infrastructure.dto;
 
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -12,7 +13,7 @@ import java.util.UUID;
 public class KafkaBalanceIncreaseEvent {
 
     private String tradingPair;
-    private String orderType;
+    private OrderType orderType;
     private BigDecimal price;
     private BigDecimal quantity;
     private UUID userId;

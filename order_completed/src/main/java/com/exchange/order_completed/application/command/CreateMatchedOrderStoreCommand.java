@@ -1,6 +1,7 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public record CreateMatchedOrderStoreCommand(
         // 주문 정보
         UUID userId,
         UUID matchedOrderId,
-        String orderType,
+        OrderType orderType,
 
         // 기타 정보
         Instant createdAt,
@@ -35,7 +36,7 @@ public record CreateMatchedOrderStoreCommand(
                 .quantity(event.getMatchedQuantity())
                 .userId(event.getBuyUserId())
                 .matchedOrderId(event.getBuyMatchedOrderId())
-                .orderType("BUY")
+                .orderType(OrderType.BUY)
                 .createdAt(event.getCreatedAt())
                 .yearMonthDate(event.getYearMonthDate())
                 .shard(event.getBuyShard())
@@ -49,7 +50,7 @@ public record CreateMatchedOrderStoreCommand(
                 .quantity(event.getMatchedQuantity())
                 .userId(event.getSellUserId())
                 .matchedOrderId(event.getSellMatchedOrderId())
-                .orderType("SELL")
+                .orderType(OrderType.SELL)
                 .createdAt(event.getCreatedAt())
                 .yearMonthDate(event.getYearMonthDate())
                 .shard(event.getSellShard())

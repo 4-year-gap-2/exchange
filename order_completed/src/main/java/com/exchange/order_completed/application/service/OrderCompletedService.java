@@ -5,6 +5,7 @@ import com.exchange.order_completed.application.command.CreateMatchedOrderStoreC
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderReader;
 import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
@@ -98,7 +99,7 @@ public class OrderCompletedService {
             UUID userId,
             Instant cursor,
             int size,
-            String orderType,
+            OrderType orderType,
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -114,10 +115,15 @@ public class OrderCompletedService {
 
         // 4. orderType이 있다면 앱에서 필터링 (대소문자 무시)
         if (orderType != null) {
-            allOrders = allOrders.stream()
-                    .filter(order -> order.getOrderType() != null &&
-                            orderType.equalsIgnoreCase(order.getOrderType()))
-                    .toList();
+            try {
+
+                allOrders = allOrders.stream()
+                        .filter(order -> orderType.equals(order.getOrderType()))
+                        .toList();
+            } catch (IllegalArgumentException e) {
+                // 예외 처리: 잘못된 enum 문자열이 들어온 경우
+                allOrders = List.of(); // 또는 에러 응답 등
+            }
         }
 
         // 5. 페이징/커서 변환
@@ -129,7 +135,7 @@ public class OrderCompletedService {
             UUID userId,
             Instant cursor,
             int size,
-            String orderType,
+            OrderType orderType,
             LocalDate startDate,
             LocalDate endDate,
             String orderState
@@ -146,10 +152,14 @@ public class OrderCompletedService {
 
         // 4. orderType이 있다면 앱에서 필터링 (대소문자 무시)
         if (orderType != null) {
-            allOrders = allOrders.stream()
-                    .filter(order -> order.getOrderType() != null &&
-                            orderType.equalsIgnoreCase(order.getOrderType()))
-                    .toList();
+            try {
+                allOrders = allOrders.stream()
+                        .filter(order -> orderType.equals(order.getOrderType()))
+                        .toList();
+            } catch (IllegalArgumentException e) {
+                // 예외 처리: 잘못된 enum 문자열이 들어온 경우
+                allOrders = List.of(); // 또는 에러 응답 등
+            }
         }
 
         // 5. orderState가 있다면 앱에서 필터링 (Enum → String 변환 후 대소문자 무시)

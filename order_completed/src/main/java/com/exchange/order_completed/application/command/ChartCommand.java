@@ -1,5 +1,6 @@
 package com.exchange.order_completed.application.command;
 
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class ChartCommand {
 
     private String pair; // 예: "BTC-USD"
 
-    private String transactionType;
+    private OrderType transactionType;
 
     private LocalDateTime createdAt;
 
@@ -71,7 +72,7 @@ public class ChartCommand {
                 price,
                 amount,
                 pair,
-                value.getAfter().getType().getValue().toString(),
+                OrderType.valueOf(value.getAfter().getType().getValue()),
                 createdAt
         );
     }

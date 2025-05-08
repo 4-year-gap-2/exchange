@@ -1,5 +1,7 @@
 package com.exchange.order_completed.domain.cassandra.entity;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,7 +47,7 @@ public class UnmatchedOrder {
 
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    private String orderType;
+    private OrderType orderType;
 
     @Column("order_state")
     @Comment("거래 유형 (PENDING 또는 CANCEL)")

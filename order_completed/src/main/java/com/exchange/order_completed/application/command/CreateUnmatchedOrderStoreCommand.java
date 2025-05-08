@@ -1,6 +1,7 @@
 package com.exchange.order_completed.application.command;
 
 import com.exchange.order_completed.domain.cassandra.entity.OrderState;
+import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.mongodb.entity.MongoUnmatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
@@ -15,7 +16,7 @@ import java.util.UUID;
 @Builder
 public record CreateUnmatchedOrderStoreCommand(
         String tradingPair,
-        String orderType,
+        OrderType orderType,
         BigDecimal price,
         BigDecimal quantity,
         UUID userId,
