@@ -1,6 +1,6 @@
 //package com.exchange.order_completed.application.service;
 //
-//import com.exchange.order_completed.domain.entity.MatchedOrder;
+//import com.exchange.order_completed.domain.entity.cassandra.entity.MatchedOrder;
 //import com.exchange.order_completed.infrastructure.cassandra.repository.MatchedOrderReaderRepository;
 //import com.exchange.order_completed.infrastructure.cassandra.repository.MatchedOrderStoreRepository;
 //import org.junit.jupiter.api.DisplayName;

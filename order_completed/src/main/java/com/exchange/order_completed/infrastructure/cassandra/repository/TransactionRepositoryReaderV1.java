@@ -1,9 +1,0 @@
-package com.exchange.order_completed.infrastructure.cassandra.repository;
-
-import com.exchange.order_completed.domain.entity.TransactionV1;
-import org.springframework.data.cassandra.repository.CassandraRepository;
-
-
-public interface TransactionRepositoryReaderV1 extends CassandraRepository<TransactionV1, String>{
-
-}

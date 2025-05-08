@@ -198,8 +198,7 @@ public class KafkaCommonConfig {
     // DefaultErrorHandler 빈
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer recoverer) {
-        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 9)); // 10회 재시도
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 3)); // 10회 재시도
     }
-
 }
 

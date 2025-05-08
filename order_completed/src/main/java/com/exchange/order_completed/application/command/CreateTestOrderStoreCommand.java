@@ -1,6 +1,6 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderEvent;
 
 import java.math.BigDecimal;

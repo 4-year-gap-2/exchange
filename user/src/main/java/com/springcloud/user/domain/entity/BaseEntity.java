@@ -70,13 +70,9 @@ public abstract class BaseEntity {
 
     private String getCurrentUser() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-
         if (attributes == null) return "system";
-
         String username = attributes.getRequest().getHeader("X-USERNAME");
-
         if (username == null || username.isEmpty()) return "system";
-
         return username;
     }
 }

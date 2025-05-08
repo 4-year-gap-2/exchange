@@ -1,19 +1,14 @@
 package com.exchange.order_completed.config;
 
-
-
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,7 +21,7 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-        basePackages = "com.exchange.order_completed.infrastructure.postgesql.repository",
+        basePackages = "com.exchange.order_completed.infrastructure.postgres.repository",
         entityManagerFactoryRef = "postgresEntityManagerFactory",
         transactionManagerRef = "postgresTransactionManager"
 )
@@ -54,8 +49,6 @@ public class PostgresConfig {
                 .build();
     }
 
-
-
     @Bean
     public LocalContainerEntityManagerFactoryBean postgresEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("postgresDataSource") DataSource dataSource) {
 
@@ -65,7 +58,7 @@ public class PostgresConfig {
 
         return builder
                 .dataSource(dataSource)
-                .packages("com.exchange.order_completed.domain.postgresEntity")
+                .packages("com.exchange.order_completed.domain.postgres.entity")
                 .properties(properties)
                 .build();
     }
@@ -75,6 +68,5 @@ public class PostgresConfig {
         JpaTransactionManager transactionManager = new JpaTransactionManager(entityManagerFactory);
         return transactionManager;
     }
-
 
 }

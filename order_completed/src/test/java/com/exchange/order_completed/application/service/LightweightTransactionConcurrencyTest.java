@@ -1,6 +1,6 @@
 //package com.exchange.order_completed.application.service;
 //
-//import com.exchange.order_completed.domain.entity.MatchedOrder;
+//import com.exchange.order_completed.domain.entity.cassandra.entity.MatchedOrder;
 //import org.junit.jupiter.api.DisplayName;
 //import org.junit.jupiter.api.Test;
 //import org.springframework.beans.factory.annotation.Autowired;

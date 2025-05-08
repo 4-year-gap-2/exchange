@@ -28,7 +28,6 @@ public class UserController {
         CreateUserCommand command = request.toCommand();
         FindUserResult result = userService.signUp(command);
         CreateUserResponse response = new CreateUserResponse(result.getUserId(),result.getUsername(),result.getPhone(),result.getEmail());
-
         return ResponseEntity.ok(response).getBody();
     }
 
@@ -38,9 +37,4 @@ public class UserController {
         userService.login(command, httpServletResponse);
         return ResponseEntity.noContent().build();
     }
-
-
-
-
-
 }

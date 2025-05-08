@@ -1,7 +1,11 @@
 package com.exchange.order_completed.presentation.external;
 
+import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
+import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
+import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.common.response.ResponseDto;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -9,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RequestMapping
@@ -16,7 +21,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OrderCompletedController {
 
-    private final KafkaTemplate<String, KafkaMatchedOrderStoreEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final OrderCompletedService orderCompletedService;
 
     // 고정된 UUID 생성
     UUID fixedUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -43,6 +49,9 @@ public class OrderCompletedController {
                 .build();
 
         kafkaTemplate.send("matching-to-order_completed.execute-order-matched", String.valueOf(randomOrderId), event);
+//        CreateMatchedOrderStoreCommand command = CreateMatchedOrderStoreCommand.from(event);
+//        LocalDate yearMonthDate = LocalDate.now();
+//        orderCompletedService.completeMatchedOrder(command, yearMonthDate, 1);
 
         return ResponseEntity.ok(ResponseDto.success("success"));
     }
@@ -52,22 +61,22 @@ public class OrderCompletedController {
 
         UUID randomUserId = fixedUserId;
         UUID randomOrderId = UUID.randomUUID();
-        UUID randomIdempotencyId = UUID.randomUUID();
 
         long currentTimeMillis = Instant.now().toEpochMilli();
 
-        KafkaMatchedOrderStoreEvent event = KafkaMatchedOrderStoreEvent.builder()
+        KafkaUnmatchedOrderStoreEvent event = KafkaUnmatchedOrderStoreEvent.builder()
                 .tradingPair("BTC/KRW")
                 .orderType("BUY")
                 .price(new BigDecimal("36782.50"))
                 .quantity(new BigDecimal("10000"))
                 .userId(randomUserId)
                 .orderId(randomOrderId)
-                .idempotencyId(randomIdempotencyId)
-                .startTimeStamp(currentTimeMillis)
+                .startTime(currentTimeMillis)
                 .build();
 
         kafkaTemplate.send("matching-to-order_completed.execute-order-unmatched", String.valueOf(randomOrderId), event);
+//        CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(event);
+//        orderCompletedService.completeUnmatchedOrder(command, 1);
 
         return ResponseEntity.ok(ResponseDto.success("success"));
     }

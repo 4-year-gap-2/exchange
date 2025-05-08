@@ -1,7 +1,8 @@
 package com.exchange.order_completed.application.command;
 
-import com.exchange.order_completed.domain.entity.MatchedOrder;
-import com.exchange.order_completed.domain.postgresEntity.Chart;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.mongodb.entity.MongoMatchedOrder;
+import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import lombok.Builder;
 
@@ -33,8 +34,23 @@ public record CreateMatchedOrderStoreCommand(
         );
     }
 
-    public MatchedOrder toEntity(LocalDate yearMonthDate) {
+    public MatchedOrder toEntity(int shard, LocalDate yearMonthDate) {
         return MatchedOrder.builder()
+                .tradingPair(this.tradingPair)
+                .orderType(this.orderType)
+                .price(this.price)
+                .quantity(this.quantity)
+                .userId(this.userId)
+                .shard(shard)
+                .orderId(this.orderId)
+                .idempotencyId(this.idempotencyId)
+                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .yearMonthDate(yearMonthDate)
+                .build();
+    }
+
+    public MongoMatchedOrder toMongoEntity(LocalDate yearMonthDate) {
+        return MongoMatchedOrder.builder()
                 .tradingPair(this.tradingPair)
                 .orderType(this.orderType)
                 .price(this.price)

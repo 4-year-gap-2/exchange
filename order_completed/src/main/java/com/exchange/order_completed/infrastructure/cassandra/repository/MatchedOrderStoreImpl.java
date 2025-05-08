@@ -5,9 +5,9 @@ import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.exchange.order_completed.application.command.CreateTestOrderStoreCommand;
-import com.exchange.order_completed.domain.entity.MatchedOrder;
-import com.exchange.order_completed.domain.entity.UnmatchedOrder;
-import com.exchange.order_completed.domain.repository.MatchedOrderStore;
+import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
+import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
+import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.cassandra.core.CassandraTemplate;
 import org.springframework.stereotype.Repository;
@@ -76,10 +76,11 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
     public void saveMatchedOrderAndUpdateUnmatchedOrder(MatchedOrder matchedOrder, UnmatchedOrder unmatchedOrder) {
         // 1. INSERT INTO matched_order
         SimpleStatement insertMatchedOrderStatement = SimpleStatement.builder(
-                        "INSERT INTO matched_order (user_id, year_month_date, idempotency_id, created_at, order_id, price, quantity, order_type, trading_pair) " +
-                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                        "INSERT INTO matched_order (user_id, shard, year_month_date, idempotency_id, created_at, order_id, price, quantity, order_type, trading_pair) " +
+                                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                 .addPositionalValues(
                         matchedOrder.getUserId(),
+                        matchedOrder.getShard(),
                         matchedOrder.getYearMonthDate(),
                         matchedOrder.getIdempotencyId(),
                         matchedOrder.getCreatedAt(),
@@ -97,22 +98,24 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
         if (unmatchedOrder.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
             // quantity == 0 이면 DELETE
             unmatchedOrderStatement = SimpleStatement.builder(
-                            "DELETE FROM unmatched_order WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                            "DELETE FROM unmatched_order WHERE user_id = ? AND shard = ? AND year_month_date = ? AND order_id = ?")
                     .addPositionalValues(
                             unmatchedOrder.getUserId(),
-                            unmatchedOrder.getOrderId(),
-                            unmatchedOrder.getCreatedAt()
+                            unmatchedOrder.getShard(),
+                            unmatchedOrder.getYearMonthDate(),
+                            unmatchedOrder.getOrderId()
                     )
                     .build();
         } else {
             // quantity > 0 이면 UPDATE
             unmatchedOrderStatement = SimpleStatement.builder(
-                            "UPDATE unmatched_order SET quantity = ? WHERE user_id = ? AND order_id = ? AND created_at = ?")
+                            "UPDATE unmatched_order SET quantity = ? WHERE WHERE user_id = ? AND shard = ? AND year_month_date = ? AND order_id = ?")
                     .addPositionalValues(
                             unmatchedOrder.getQuantity(),
                             unmatchedOrder.getUserId(),
-                            unmatchedOrder.getOrderId(),
-                            unmatchedOrder.getCreatedAt()
+                            unmatchedOrder.getShard(),
+                            unmatchedOrder.getYearMonthDate(),
+                            unmatchedOrder.getOrderId()
                     )
                     .build();
         }
