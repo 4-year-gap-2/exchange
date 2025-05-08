@@ -1,7 +1,6 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
-import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import org.springframework.data.cassandra.repository.CassandraRepository;
 import org.springframework.data.cassandra.repository.Consistency;

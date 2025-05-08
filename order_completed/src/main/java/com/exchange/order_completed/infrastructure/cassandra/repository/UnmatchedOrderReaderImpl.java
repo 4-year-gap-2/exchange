@@ -1,10 +1,8 @@
 package com.exchange.order_completed.infrastructure.cassandra.repository;
 
-import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.repository.UnmatchedOrderReader;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.cassandra.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;

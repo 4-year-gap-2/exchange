@@ -7,8 +7,6 @@ import com.exchange.order_completed.application.command.CreateUnmatchedOrderStor
 import com.exchange.order_completed.common.exception.DuplicateMatchedOrderInformationException;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
-import com.exchange.order_completed.domain.cassandra.entity.OrderState;
-import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.domain.repository.MatchedOrderReader;
