@@ -41,7 +41,6 @@ public class MongoMatchedOrder {
 
     @Field(name = "order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    @Enumerated(EnumType.STRING)
     private OrderType orderType;
 
     @Field(name = "trading_pair")

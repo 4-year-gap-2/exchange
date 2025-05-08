@@ -44,7 +44,6 @@ public class MatchedOrder {
 
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    @Enumerated(EnumType.STRING)
     private OrderType orderType;
 
     @Column("trading_pair")

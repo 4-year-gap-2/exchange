@@ -47,7 +47,6 @@ public class UnmatchedOrder {
 
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
-    @Enumerated(EnumType.STRING)
     private OrderType orderType;
 
     @Column("order_state")
