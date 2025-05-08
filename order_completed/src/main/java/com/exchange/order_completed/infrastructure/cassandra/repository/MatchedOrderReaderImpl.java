@@ -21,10 +21,10 @@ public class MatchedOrderReaderImpl implements MatchedOrderReader {
      * attempt > 1  : LOCAL_QUORUM
      */
     @Override
-    public MatchedOrder findMatchedOrder(UUID userId, LocalDate yearMonthDate, UUID idempotencyId, Integer attempt) {
+    public MatchedOrder findMatchedOrder(UUID userId, int shard, LocalDate yearMonthDate, Integer attempt) {
         return (attempt == 1
-                ? matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalOne(userId, yearMonthDate, idempotencyId)
-                : matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalQuorum(userId, yearMonthDate, idempotencyId)
+                ? matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalOne(userId, shard, yearMonthDate)
+                : matchedOrderReaderRepository.findByUserIdAndIdempotencyIdWithLocalQuorum(userId, shard, yearMonthDate)
         ).orElse(null);
     }
 
@@ -34,7 +34,8 @@ public class MatchedOrderReaderImpl implements MatchedOrderReader {
     }
 
     @Override
-    public List<MatchedOrder> findByUserIdAndYearMonthDate(UUID userId, LocalDate yearMonthDate) {
-        return matchedOrderReaderRepository.findByUserIdAndYearMonthDate(userId,yearMonthDate);
+    public List<MatchedOrder> findByUserIdAndShardInAndYearMonthDateRange(UUID userId, int shard1, int shard2, int shard3, LocalDate fromDate, LocalDate toDate) {
+        return matchedOrderReaderRepository.findByUserIdAndShardInAndYearMonthDateRange(userId, shard1, shard2, shard3, fromDate, toDate);
     }
+
 }

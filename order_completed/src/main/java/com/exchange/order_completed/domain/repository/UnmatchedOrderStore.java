@@ -6,5 +6,5 @@ public interface UnmatchedOrderStore {
 
     void save(UnmatchedOrder unmatchedOrder);
 
-    void save(com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder unmatchedOrder);
+//    void save(com.exchange.order_completed.domain.mongodb.entity.UnmatchedOrder unmatchedOrder);
 }

@@ -14,25 +14,31 @@ import java.util.UUID;
 
 public interface MatchedOrderReaderRepository extends CassandraRepository<MatchedOrder, UUID> {
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard = :shard AND year_month_date = :yearMonthDate")
     @Consistency(DefaultConsistencyLevel.LOCAL_ONE)
     Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalOne(
             @Param("userId") UUID userId,
-            @Param("yearMonthDate") LocalDate yearMonthDate,
-            @Param("idempotencyId") UUID idempotencyId
+            @Param("shard") int shard,
+            @Param("yearMonthDate") LocalDate yearMonthDate
     );
 
-    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND year_month_date = :yearMonthDate AND idempotency_id = :idempotencyId")
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard = :shard AND year_month_date = :yearMonthDate")
     @Consistency(DefaultConsistencyLevel.LOCAL_QUORUM)
     Optional<MatchedOrder> findByUserIdAndIdempotencyIdWithLocalQuorum(
             @Param("userId") UUID userId,
-            @Param("yearMonthDate") LocalDate yearMonthDate,
-            @Param("idempotencyId") UUID idempotencyId
+            @Param("shard") int shard,
+            @Param("yearMonthDate") LocalDate yearMonthDate
     );
 
     MatchedOrder findByUserIdAndOrderId(UUID userId, UUID orderId);
 
     Optional<MatchedOrder> findByOrderId(UUID orderId);
 
-    List<MatchedOrder> findByUserIdAndYearMonthDate(UUID userId, LocalDate yearMonthDate);
+    @Query("SELECT * FROM matched_order WHERE user_id = :userId AND shard IN (:shard1, :shard2, :shard3) AND year_month_date >= :fromDate AND year_month_date <= :toDate")
+    List<MatchedOrder> findByUserIdAndShardInAndYearMonthDateRange(
+            UUID userId,
+            int shard1, int shard2, int shard3,
+            LocalDate fromDate,
+            LocalDate toDate
+    );
 }

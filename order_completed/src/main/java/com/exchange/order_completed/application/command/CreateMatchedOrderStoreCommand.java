@@ -33,13 +33,14 @@ public record CreateMatchedOrderStoreCommand(
         );
     }
 
-    public MatchedOrder toEntity(LocalDate yearMonthDate) {
+    public MatchedOrder toEntity(int shard, LocalDate yearMonthDate) {
         return MatchedOrder.builder()
                 .tradingPair(this.tradingPair)
                 .orderType(this.orderType)
                 .price(this.price)
                 .quantity(this.quantity)
                 .userId(this.userId)
+                .shard(shard)
                 .orderId(this.orderId)
                 .idempotencyId(this.idempotencyId)
                 .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())

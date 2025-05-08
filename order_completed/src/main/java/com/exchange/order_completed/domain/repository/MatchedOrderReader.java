@@ -9,9 +9,9 @@ import java.util.UUID;
 
 public interface MatchedOrderReader {
 
-    MatchedOrder findMatchedOrder(UUID userId, LocalDate yearMonthDate, UUID idempotencyId, Integer attempt);
+    MatchedOrder findMatchedOrder(UUID userId, int shard, LocalDate yearMonthDate, Integer attempt);
 
     Optional<MatchedOrder> findByOrderId(UUID orderId);
 
-    List<MatchedOrder> findByUserIdAndYearMonthDate(UUID userId, LocalDate yearMonthDate);
+    List<MatchedOrder> findByUserIdAndShardInAndYearMonthDateRange(UUID userId, int shard1, int shard2, int shard3, LocalDate fromDate, LocalDate toDate);
 }
