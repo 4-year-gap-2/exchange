@@ -21,26 +21,26 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-public class MatchingServiceV7 implements MatchingService {
+public class MatchingServiceV6A implements MatchingService {
 
-    private static final String SELL_ORDER_KEY = "v7:orders:sell:";
-    private static final String BUY_ORDER_KEY = "v7:orders:buy:";
-    private static final String MATCH_STREAM_KEY = "v7:stream:matches";
-    private static final String UNMATCH_STREAM_KEY = "v7:stream:unmatched";
-    private static final String PARTIAL_MATCHED_STREAM_KEY = "v7:stream:partialMatched";
-    private static final String IDEMPOTENCY_KEY = "v7:idempotency:orders";
+    private static final String SELL_ORDER_KEY = "v6a:orders:sell:";
+    private static final String BUY_ORDER_KEY = "v6a:orders:buy:";
+    private static final String MATCH_STREAM_KEY = "v6a:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6a:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6a:stream:partialMatched";
+    private static final String IDEMPOTENCY_KEY = "v6a:idempotency:orders";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
 
-    public MatchingServiceV7(RedisTemplate<String, String> redisTemplate) {
+    public MatchingServiceV6A(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
 
         // Lua 스크립트 로드
         DefaultRedisScript<List<Object>> script = new DefaultRedisScript<>();
         script.setResultType((Class) List.class);
         try {
-            ClassPathResource resource = new ClassPathResource("scripts/matchingV7.lua");
+            ClassPathResource resource = new ClassPathResource("scripts/matchingV6A.lua");
             String scriptText = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             script.setScriptText(scriptText);
         } catch (IOException e) {
@@ -55,7 +55,7 @@ public class MatchingServiceV7 implements MatchingService {
 
         log.info("{} 주문접수 : {}원 {}개 (주문ID: {})",
                 matchingOrder.getOrderType(), matchingOrder.getPrice(),
-                matchingOrder.getQuantity(), matchingOrder.getOrderId());
+                matchingOrder.getQuantity(), matchingOrder.getUserId());
 
         matchingProcess(matchingOrder);
     }
@@ -64,16 +64,8 @@ public class MatchingServiceV7 implements MatchingService {
      * 주문 매칭 프로세스 시작
      */
     private void matchingProcess(MatchingOrder order) {
-        // 1. 기본 유효성 검증
-        if (order.getPrice() == null
-            || order.getOrderId() == null
-            || order.getQuantity() == null
-            || order.getTradingPair() == null) {
-            throw new IllegalArgumentException("필수 주문 정보가 누락되었습니다.");
-        }
-
-        // 2. 주문 키 및 타임스탬프 준비
         String oppositeOrderKey, currentOrderKey;
+
         if (OrderType.BUY.equals(order.getOrderType())) {
             oppositeOrderKey = SELL_ORDER_KEY + order.getTradingPair();
             currentOrderKey = BUY_ORDER_KEY + order.getTradingPair();
@@ -82,66 +74,58 @@ public class MatchingServiceV7 implements MatchingService {
             currentOrderKey = SELL_ORDER_KEY + order.getTradingPair();
         }
 
-        // 3. 타임스탬프 처리
+        // 타임스탬프가 없으면 현재 시간 설정
         if (order.getTimestamp() == null) {
             order.setTimestamp(System.currentTimeMillis());
         }
 
-        String orderId = order.getOrderId().toString();
+        // 주문 정보 직렬화 (타임스탬프 포함)
+        String orderDetails = serializeOrder(order);
 
-        // 4. 타임스탬프 포맷팅
-        String formattedTimestamp = formatTimestamp(order.getTimestamp(), order.getOrderType());
-
-        // 5. Sorted Set Key (사전식 정렬을 위해)
-        String orderSortKey = createOrderSortKey(formattedTimestamp, orderId);
-
-        // 6. 주문 실행 및 부분 체결 ID 생성
+        // 부분 체결을 위한 새 ID 생성
         String partialOrderId = UUID.randomUUID().toString();
 
         // Lua 스크립트 실행
         redisTemplate.execute(
-                matchingScript,
-                Arrays.asList(
-                        oppositeOrderKey,
-                        currentOrderKey,
-                        MATCH_STREAM_KEY,
-                        UNMATCH_STREAM_KEY,
-                        PARTIAL_MATCHED_STREAM_KEY,
-                        IDEMPOTENCY_KEY
-                ),
-                order.getOrderType().toString(),
-                order.getPrice().toString(),
-                order.getQuantity().toString(),
-                formattedTimestamp,               // 포맷팅된 타임스탬프
-                order.getUserId().toString(),     // 사용자 ID
-                orderId,                          // 주문 ID
-                partialOrderId,                   // 부분 체결 ID
-                order.getTradingPair(),           // 거래 쌍
-                orderSortKey                      // 정렬용 키 추가
+            matchingScript,
+            Arrays.asList(
+                    oppositeOrderKey,
+                    currentOrderKey,
+                    MATCH_STREAM_KEY,
+                    UNMATCH_STREAM_KEY,
+                    PARTIAL_MATCHED_STREAM_KEY,
+                    IDEMPOTENCY_KEY
+            ),
+            order.getOrderType().toString(),
+            order.getPrice().toString(),
+            order.getQuantity().toString(),
+            orderDetails,
+            order.getTradingPair(),
+// 새로운 주문으로 들어온다고 가정
+            UUID.randomUUID().toString(),
+//            order.getOrderId().toString(),
+            partialOrderId
         );
     }
 
     /**
-     * 주문 정렬용 키 생성
-     * 형식: timestamp:orderId (사전식 정렬을 위해)
+     * 주문 직렬화
+     * 형식: timestamp|quantity|userId|orderId
      */
-    private String createOrderSortKey(String timestamp, String orderId) {
-        // 타임스탬프를 13자리 고정 길이로 포맷팅 (0-패딩)
-        return String.format("%s:%s", timestamp, orderId);
-    }
-
-    /**
-     * 타임스탬프 포맷팅
-     * 매수 주문의 경우 반전된 타임스탬프 사용
-     */
-    private String formatTimestamp(Long timestamp, OrderType orderType) {
-        if (orderType == OrderType.BUY) {
+    private String serializeOrder(MatchingOrder order) {
+        String timeStr;
+        if (order.getOrderType() == OrderType.BUY) {
             // 반전된 타임스탬프 사용
-            return String.format("%013d", 9999999999999L - timestamp);
+            timeStr = String.format("%013d", 9999999999999L - order.getTimestamp());
         } else {
             // 일반 타임스탬프 사용
-            return String.format("%013d", timestamp);
+            timeStr = String.format("%013d", order.getTimestamp());
         }
+
+        return timeStr + "|" +
+                order.getQuantity() + "|" +
+                order.getUserId() + "|" +
+                order.getOrderId();
     }
 
     /**

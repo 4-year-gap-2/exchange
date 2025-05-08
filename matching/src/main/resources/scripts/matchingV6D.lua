@@ -89,7 +89,7 @@ if #oppositeOrders == 0 then
         ["price"] = tostring(orderPrice),
         ["quantity"] = tostring(orderQuantity),
         ["timestamp"] = orderInfo.timestamp,
-        ["status"] = "UNMATCHED"
+        ["operation"] = "INSERT"
     }
     redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
 
@@ -122,6 +122,7 @@ if not isPriceMatched then
         ["price"] = tostring(orderPrice),
         ["quantity"] = tostring(orderQuantity),
         ["timestamp"] = orderInfo.timestamp,
+        ["operation"] = "INSERT"
     }
     redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
 
@@ -161,6 +162,19 @@ if remainingOppositeQuantity > 0 then
             oppositeOrder.orderId
     )
     redis.call("ZADD", oppositeOrderKey, oppositeOrderPrice, updatedOppositeDetails)
+
+    -- 업데이트 큐에 추가 (Hash 구조 사용)
+    local updateFields = {
+        ["orderId"] = oppositeOrder.orderId,
+        ["userId"] = oppositeOrder.userId,
+        ["tradingPair"] = tradingPair,
+        ["orderType"] = isBuy and "SELL" or "BUY",
+        ["price"] = tostring(oppositeOrderPrice),
+        ["quantity"] = tostring(remainingOppositeQuantity),
+        ["timestamp"] = oppositeOrder.timestamp,
+        ["operation"] = "UPDATE"
+    }
+
 end
 
 -- 현재 주문에 남은 수량이 있는 경우

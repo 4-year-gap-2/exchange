@@ -53,16 +53,23 @@ public class MatchingController {
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
-    @PostMapping("/v6")
-    public ResponseEntity<ResponseDto<String>> matchV6(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6",
+    @PostMapping("/v6a")
+    public ResponseEntity<ResponseDto<String>> matchV6A(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6a",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
 
-    @PostMapping("/v7")
-    public ResponseEntity<ResponseDto<String>> matchV7(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v7",
+    @PostMapping("/v6b")
+    public ResponseEntity<ResponseDto<String>> match6B(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6b",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
+    @PostMapping("/v6c")
+    public ResponseEntity<ResponseDto<String>> match6C(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6c",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
