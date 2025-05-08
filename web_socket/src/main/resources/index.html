@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>단방향 알림 클라이언트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .log { background: white; padding: 10px; border: 1px solid #ccc; max-width: 600px; }
+    </style>
+</head>
+<body>
+<h1>서버 푸시 메시지</h1>
+<div class="log" id="log"></div>
+
+<script>
+    const logDiv = document.getElementById("log");
+
+    function log(msg) {
+        const p = document.createElement("p");
+        p.innerText = msg;
+        logDiv.appendChild(p);
+    }
+
+    const socket = new SockJS("http://localhost:19094/ws");
+    const stompClient = new StompJs.Client({
+        webSocketFactory: () => new SockJS("http://localhost:19094/ws"),
+        connectHeaders: {
+            Authorization: "Bearer " + "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxZDc1MmVlMy04MDQ2LTRiNWEtYjg5NC0zNDE3MjE3MjYwZmIiLCJhdXRoIjoiTUFTVEVSIiwidXNlcm5hbWUiOiJqeW9vdW5nIiwiZXhwIjoxNzQ2NzYxNDAxLCJpYXQiOjE3NDY2NzUwMDF9.4eZT4t6b1Zs08XN8-DGhAjIAGSpHE1LCD8LpdniHgC4",
+        },
+        debug: (msg) => console.log("[DEBUG]", msg),
+        onConnect: () => {
+            console.log("[STOMP] 연결 성공");
+            stompClient.subscribe("/topic/notifications/BTC-KRW", (message) => {
+                log("서버 메시지: " + message.body);
+            });
+            stompClient.subscribe(`/user/1d752ee3-8046-4b5a-b894-3417217260fb/topic/notifications`, (message) => {
+                log("서버 메시지: " + message.body);
+            });
+        },
+        onStompError: (err) => {
+            console.error("[STOMP 에러]", err);
+            log("STOMP 에러: " + JSON.stringify(err));
+        },
+    });
+
+    stompClient.activate();
+</script>
+</body>
+</html>

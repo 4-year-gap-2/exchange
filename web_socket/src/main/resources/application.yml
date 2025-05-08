@@ -1,0 +1,96 @@
+spring:
+  application:
+    name: web_socket
+
+  mysql:
+    datasource:
+      url: ${DB_HOST}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: ${DB_NAME}
+      password: ${DB_PASSWORD}
+
+  postgres:
+    datasource:
+      url: ${POSTGRES_HOST}
+      driver-class-name: org.postgresql.Driver
+      username: ${DB_NAME}
+      password: ${DB_PASSWORD}
+
+  sql:
+    init:
+      mode: never
+      data-locations: classpath:data.sql
+
+  jpa:
+    properties:
+      hibernate:
+        show-sql: true
+        format-sql: true
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+
+  kafka:
+    host: ${KAFKA_HOST}
+    username: ${KAFKA_NAME}
+    password: ${KAFKA_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+      username: ${REDIS_NAME}
+      password: ${REDIS_PASSWORD}
+
+  cassandra:
+    contact-points: ${CASSANDRA_HOST}
+    port: 9042
+    keyspace-name: exchange
+    username: ${CASSANDRA_NAME}
+    password: ${CASSANDRA_PASSWORD}
+    schema-action: CREATE_IF_NOT_EXISTS
+    local-datacenter: DC1
+    request:
+      timeout: 10s
+    connection:
+      connect-timeout: 10s
+      init-query-timeout: 10s
+
+datastax-java-driver:
+#  basic.request:
+#    timeout: 5 seconds
+  advanced.request:
+    timeout: 5 seconds
+
+server:
+  port: 19094
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_NAME}:${EUREKA_PASSWORD}@${EUREKA_HOST}:19090/eureka/
+#  instance:
+#    hostname: ${My_host}
+#    securePortEnabled: true
+#    nonSecurePortEnabled: false
+#    securePort: 443
+#    statusPageUrl: https://${eureka.instance.hostname}/actuator/info
+#    healthCheckUrl: https://${eureka.instance.hostname}/actuator/health
+#    homePageUrl: https://${eureka.instance.hostname}/
+#    preferIpAddress: false
+#    secureVirtualHostName: ${spring.application.name}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}

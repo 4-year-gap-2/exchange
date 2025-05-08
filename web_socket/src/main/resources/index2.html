@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>비로그인 사용자 - 공개 알림 구독</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f9f9f9; padding: 20px; }
+        .log { background: white; padding: 10px; border: 1px solid #ccc; max-width: 600px; }
+    </style>
+</head>
+<body>
+<h2>공개 알림 수신</h2>
+<div class="log" id="log"></div>
+
+<script>
+    const logDiv = document.getElementById("log");
+
+    function log(message) {
+        const p = document.createElement("p");
+        p.innerText = message;
+        logDiv.appendChild(p);
+    }
+
+    const socket = new SockJS("http://localhost:19094/ws");
+
+    const client = new StompJs.Client({
+        webSocketFactory: () => socket,
+        onConnect: () => {
+            log("✅ 연결 성공 (비로그인)");
+
+            // 공개 경로 구독
+            client.subscribe("/topic/notifications/BTC-KRW", (message) => {
+                log("📢 공개 알림: " + message.body);
+            });
+
+            client.subscribe(`/user/1d752ee3-8046-4b5a-b894-3417217260fb/topic/notifications`, (message) => {
+                log("서버 메시지: " + message.body);
+            });
+        },
+        onStompError: (err) => {
+            log("❌ STOMP 에러: " + err.message);
+        }
+    });
+
+    client.activate();
+</script>
+</body>
+</html>
