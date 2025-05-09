@@ -35,9 +35,9 @@ end
 -- 주문 매칭 Lua 스크립트
 -- KEYS[1]: 반대 주문 키 (매수면 SELL_ORDER_KEY, 매도면 BUY_ORDER_KEY)
 -- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
--- KEYS[3]: 매칭 Stream 키 (v6:stream:matches)
--- KEYS[4]: 미체결 Stream 키 (v6:stream:unmatched)
--- KEYS[5]: 멱등성 체크를 위한 키 (v6:idempotency:orders)
+-- KEYS[3]: 매칭 Stream 키 (v6d:stream:matches)
+-- KEYS[4]: 미체결 Stream 키 (v6d:stream:unmatched)
+-- KEYS[5]: 멱등성 체크를 위한 키 (v6d:idempotency:orders)
 -- ARGV[1]: 주문 타입 (BUY 또는 SELL)
 -- ARGV[2]: 주문 가격
 -- ARGV[3]: 주문 수량
@@ -153,8 +153,14 @@ redis.call("ZREM", oppositeOrderKey, oppositeOrderDetails)
 local updatedOppositeDetails = ""
 local updatedCurrentDetails = ""
 
--- 반대 주문에 남은 수량이 있는 경우
+-- 반대 주문 데이터 공통 필드
+local orderOperation = remainingOppositeQuantity > 0 and "UPDATE" or "DELETE"
+local orderQuantity = remainingOppositeQuantity > 0 and tostring(remainingOppositeQuantity) or "0"
+local updateKey = "v6d:order:pending-updates:" .. oppositeOrder.orderId
+
+-- 반대 주문 업데이트
 if remainingOppositeQuantity > 0 then
+    -- Sorted Set에 업데이트된 주문 추가
     updatedOppositeDetails = buildOrderDetails(
             oppositeOrder.timestamp,
             remainingOppositeQuantity,
@@ -162,20 +168,27 @@ if remainingOppositeQuantity > 0 then
             oppositeOrder.orderId
     )
     redis.call("ZADD", oppositeOrderKey, oppositeOrderPrice, updatedOppositeDetails)
-
-    -- 업데이트 큐에 추가 (Hash 구조 사용)
-    local updateFields = {
-        ["orderId"] = oppositeOrder.orderId,
-        ["userId"] = oppositeOrder.userId,
-        ["tradingPair"] = tradingPair,
-        ["orderType"] = isBuy and "SELL" or "BUY",
-        ["price"] = tostring(oppositeOrderPrice),
-        ["quantity"] = tostring(remainingOppositeQuantity),
-        ["timestamp"] = oppositeOrder.timestamp,
-        ["operation"] = "UPDATE"
-    }
-
 end
+
+-- 현재 버전 정보 확인 (없으면 기본값 1 사용)
+local currentVersion = tonumber(redis.call("HGET", updateKey, "version") or "1")
+local nextVersion = currentVersion + 1
+
+-- 변경 수량을 DB에 업데이트하기 위한 해시맵 생성
+redis.call("HMSET", updateKey,
+    "orderId", oppositeOrder.orderId,
+    "userId", oppositeOrder.userId,
+    "tradingPair", tradingPair,
+    "orderType", isBuy and "SELL" or "BUY",
+    "price", tostring(oppositeOrderPrice),
+    "quantity", orderQuantity,
+    "timestamp", oppositeOrder.timestamp,
+    "operation", orderOperation,
+    "version", tostring(nextVersion)
+)
+
+-- 해시셋 전용 인덱스에 추가
+redis.call("SADD", "v6d:order:pending-updates:index", oppositeOrder.orderId)
 
 -- 현재 주문에 남은 수량이 있는 경우
 if remainingOrderQuantity > 0 then

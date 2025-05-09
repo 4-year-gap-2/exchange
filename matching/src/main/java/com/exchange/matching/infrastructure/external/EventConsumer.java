@@ -218,4 +218,27 @@ public class EventConsumer {
             sample.stop(processingTimer);
         }
     }
+
+    @KafkaListener(
+            topics = {"user-to-matching.execute-order-delivery.v6d"},
+            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
+            concurrency = "3"
+    )
+    public void consumeV6D(ConsumerRecord<String, KafkaMatchingEvent> record) {
+        // 타이머 시작
+        Timer.Sample sample = Timer.start(meterRegistry);
+
+        try {
+            KafkaMatchingEvent event = record.value();
+
+            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
+            matchingFacade.matchV6D(command);
+
+            // 카운터 증가
+            processedCounter.increment();
+        } finally {
+            // 타이머 종료 및 기록
+            sample.stop(processingTimer);
+        }
+    }
 }

@@ -73,4 +73,11 @@ public class MatchingController {
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
+
+    @PostMapping("/v6d")
+    public ResponseEntity<ResponseDto<String>> match6D(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v6d",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
 }

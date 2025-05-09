@@ -162,17 +162,6 @@ if remainingOppositeQuantity > 0 then
     )
     redis.call("ZADD", oppositeOrderKey, oppositeOrderPrice, updatedOppositeDetails)
 
-    local updateKey = "v6a:order:pending-updates:" .. oppositeOrder.orderId
-    redis.call("HMSET", updateKey,
-        "orderId", oppositeOrder.orderId,
-        "userId", oppositeOrder.userId,
-        "tradingPair", tradingPair,
-        "orderType", isBuy and "SELL" or "BUY",
-        "price", tostring(oppositeOrderPrice),
-        "quantity", tostring(remainingOppositeQuantity),
-        "timestamp", oppositeOrder.timestamp,
-        "operation", "UPDATE"
-    )
 end
 
 -- 현재 주문에 남은 수량이 있는 경우

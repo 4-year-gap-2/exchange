@@ -34,10 +34,6 @@ public class KafkaMatchedOrderEvent {
     @Builder.Default
     private UUID sellMatchedOrderId = UUID.randomUUID();
 
-    // 매칭 ID (생성 시 자동 할당)
-    @Builder.Default
-    private UUID matchId = UUID.randomUUID();
-
     // 기타 정보
     Instant createdAt;
     LocalDate yearMonthDate;

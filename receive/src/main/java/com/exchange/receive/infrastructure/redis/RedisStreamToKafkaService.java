@@ -3,6 +3,7 @@ package com.exchange.receive.infrastructure.redis;
 import com.exchange.receive.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.receive.infrastructure.dto.KafkaMatchingEvent;
 import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.receive.infrastructure.enums.OperationType;
 import com.exchange.receive.infrastructure.enums.OrderType;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -253,7 +254,7 @@ public class RedisStreamToKafkaService {
             CompletableFuture<SendResult<String, Object>> future =
                     CompletableFuture.supplyAsync(() -> {
                         try {
-                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent.getMatchId().toString(), matchedEvent).get();
+                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent).get();
                         } catch (Exception e) {
                             throw new CompletionException(e);
                         }
@@ -264,7 +265,7 @@ public class RedisStreamToKafkaService {
                 if (ex == null) {
                     // 성공 시 Redis에서 ACK 처리
                     redisTemplate.opsForStream().acknowledge(MATCH_STREAM_KEY, consumerGroupName, messageId);
-                    log.info("매칭 이벤트 Kafka 전송 완료: {} (매치 ID: {})", messageId, matchedEvent.getMatchId());
+                    log.info("매칭 이벤트 Kafka 전송 완료: {}", messageId);
                 } else {
                     // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
                     log.error("매칭 이벤트 Kafka 전송 실패: {}", messageId, ex);
@@ -291,6 +292,7 @@ public class RedisStreamToKafkaService {
                     .userId(UUID.fromString(body.get("userId")))
                     .orderId(UUID.fromString(body.get("orderId")))
                     .startTime(Long.parseLong(body.get("timestamp")))
+                    .operationType(OperationType.valueOf(body.get("operation")))
                     .build();
 
             // Kafka로 메시지 전송

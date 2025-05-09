@@ -24,6 +24,7 @@ public class MatchingFacade {
     private final MatchingServiceV6A matchingServicev6A;
     private final MatchingServiceV6B matchingServicev6B;
     private final MatchingServiceV6C matchingServicev6C;
+    private final MatchingServiceV6D matchingServicev6D;
 
     public void matchV1(CreateMatchingCommand createMatchingCommand) {
         matchingServiceV1A.matchOrders(createMatchingCommand);
@@ -70,5 +71,9 @@ public class MatchingFacade {
 
     public void matchV6C(CreateMatchingCommand createMatchingCommand) {
         matchingServicev6C.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV6D(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev6D.matchOrders(createMatchingCommand);
     }
 }
