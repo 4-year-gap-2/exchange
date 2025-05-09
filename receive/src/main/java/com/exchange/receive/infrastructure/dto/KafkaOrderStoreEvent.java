@@ -1,5 +1,6 @@
 package com.exchange.receive.infrastructure.dto;
 
+import com.exchange.receive.infrastructure.enums.OperationType;
 import com.exchange.receive.infrastructure.enums.OrderType;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,6 +17,7 @@ public class KafkaOrderStoreEvent {
     private BigDecimal quantity;
     private UUID userId;
     private UUID orderId;
-    private UUID idempotencyId;
+    private OperationType operationType;
     private long startTime;
+    private int version;
 }

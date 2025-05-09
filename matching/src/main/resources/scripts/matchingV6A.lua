@@ -35,9 +35,9 @@ end
 -- 주문 매칭 Lua 스크립트
 -- KEYS[1]: 반대 주문 키 (매수면 SELL_ORDER_KEY, 매도면 BUY_ORDER_KEY)
 -- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
--- KEYS[3]: 매칭 Stream 키 (v6:stream:matches)
--- KEYS[4]: 미체결 Stream 키 (v6:stream:unmatched)
--- KEYS[5]: 멱등성 체크를 위한 키 (v6:idempotency:orders)
+-- KEYS[3]: 매칭 Stream 키 (v6a:stream:matches)
+-- KEYS[4]: 미체결 Stream 키 (v6a:stream:unmatched)
+-- KEYS[5]: 멱등성 체크를 위한 키 (v6a:idempotency:orders)
 -- ARGV[1]: 주문 타입 (BUY 또는 SELL)
 -- ARGV[2]: 주문 가격
 -- ARGV[3]: 주문 수량
@@ -161,6 +161,7 @@ if remainingOppositeQuantity > 0 then
             oppositeOrder.orderId
     )
     redis.call("ZADD", oppositeOrderKey, oppositeOrderPrice, updatedOppositeDetails)
+
 end
 
 -- 현재 주문에 남은 수량이 있는 경우
@@ -190,15 +191,12 @@ local buyOrder = isBuy and currentOrder or oppositeOrder
 local sellOrder = isBuy and oppositeOrder or currentOrder
 
 local matchFields = {
-    ["buyOrderId"] = buyOrder.orderId,
-    ["sellOrderId"] = sellOrder.orderId,
     ["buyUserId"] = buyOrder.userId,
     ["sellUserId"] = sellOrder.userId,
     ["tradingPair"] = tradingPair,
     ["executionPrice"] = tostring(matchPrice),
     ["matchedQuantity"] = tostring(matchedQuantity),
-    ["buyTimestamp"] = isBuy and currentOrder.timestamp or oppositeOrder.timestamp,
-    ["sellTimestamp"] = isBuy and oppositeOrder.timestamp or currentOrder.timestamp,
+    ["timestamp"] = tostring(redis.call("TIME")[1])
 }
 
 -- Redis Stream에 매칭 정보 추가

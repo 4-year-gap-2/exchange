@@ -24,9 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class RedisStreamRecoveryService {
 
-    private static final String MATCH_STREAM_KEY = "v6:stream:matches";
-    private static final String UNMATCH_STREAM_KEY = "v6:stream:unmatched";
-    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6:stream:partialMatched";
+    private static final String MATCH_STREAM_KEY = "v6a:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6a:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6a:stream:partialMatched";
     private static final String MATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
     private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6";

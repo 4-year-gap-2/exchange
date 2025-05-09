@@ -1,7 +1,6 @@
 package com.exchange.matching.application.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.common.aop.TimeTrace;
 import com.exchange.matching.domain.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,21 +21,21 @@ public class MatchingFacade {
     private final MatchingServiceV3 matchingServiceV3;
     private final MatchingServiceV4 matchingServiceV4;
     private final MatchingServiceV5 matchingServicev5;
-    private final MatchingServiceV6 matchingServicev6;
+    private final MatchingServiceV6A matchingServicev6A;
+    private final MatchingServiceV6B matchingServicev6B;
+    private final MatchingServiceV6C matchingServicev6C;
+    private final MatchingServiceV6D matchingServicev6D;
 
     public void matchV1(CreateMatchingCommand createMatchingCommand) {
         matchingServiceV1A.matchOrders(createMatchingCommand);
     }
 
-    @TimeTrace
     public void matchV2(CreateMatchingCommand createMatchingCommand) {
         final String lockName = createMatchingCommand.tradingPair() + createMatchingCommand.orderType() + ":lock";
         final RLock lock = redissonClient.getLock(lockName);
 
         try {
-            if (createMatchingCommand.price().doubleValue() == 7500.00) throw new IllegalArgumentException();
             if (!lock.tryLock(100, 500, TimeUnit.MILLISECONDS)) {
-                System.out.println("락 획득 실패");
                 throw new IllegalArgumentException();
             }
             log.info("체결 시작");
@@ -62,7 +61,19 @@ public class MatchingFacade {
         matchingServicev5.matchOrders(createMatchingCommand);
     }
 
-    public void matchV6(CreateMatchingCommand createMatchingCommand) {
-        matchingServicev6.matchOrders(createMatchingCommand);
+    public void matchV6A(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev6A.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV6B(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev6B.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV6C(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev6C.matchOrders(createMatchingCommand);
+    }
+
+    public void matchV6D(CreateMatchingCommand createMatchingCommand) {
+        matchingServicev6D.matchOrders(createMatchingCommand);
     }
 }

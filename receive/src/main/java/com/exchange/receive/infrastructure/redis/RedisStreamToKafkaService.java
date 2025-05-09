@@ -3,6 +3,7 @@ package com.exchange.receive.infrastructure.redis;
 import com.exchange.receive.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.receive.infrastructure.dto.KafkaMatchingEvent;
 import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.receive.infrastructure.enums.OperationType;
 import com.exchange.receive.infrastructure.enums.OrderType;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -24,10 +25,10 @@ import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -37,13 +38,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class RedisStreamToKafkaServiceV2 {
+public class RedisStreamToKafkaService {
 
     private final ExecutorService kafkaExecutorService = Executors.newFixedThreadPool(20);
 
-    private static final String MATCH_STREAM_KEY = "v6:stream:matches";
-    private static final String UNMATCH_STREAM_KEY = "v6:stream:unmatched";
-    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6:stream:partialMatched";
+    private static final String MATCH_STREAM_KEY = "v6a:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6a:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6a:stream:partialMatched";
     private static final String MATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
     private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6";
@@ -229,6 +230,9 @@ public class RedisStreamToKafkaServiceV2 {
             String messageId = message.getId().getValue();
             Map<String, String> body = message.getValue();
 
+            Instant instant = Instant.ofEpochSecond(Long.parseLong(body.get("timestamp")));
+            LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
+
             // 매칭된 주문 정보를 하나의 DTO로 생성
             KafkaMatchedOrderEvent matchedEvent = KafkaMatchedOrderEvent.builder()
                     .tradingPair(body.get("tradingPair"))
@@ -236,12 +240,13 @@ public class RedisStreamToKafkaServiceV2 {
                     .matchedQuantity(new BigDecimal(body.get("matchedQuantity")))
                     // 매수 주문 정보
                     .buyUserId(UUID.fromString(body.get("buyUserId")))
-                    .buyOrderId(UUID.fromString(body.get("buyOrderId")))
-                    .buyTimestamp(Long.parseLong(body.get("buyTimestamp")))
                     // 매도 주문 정보
                     .sellUserId(UUID.fromString(body.get("sellUserId")))
-                    .sellOrderId(UUID.fromString(body.get("sellOrderId")))
-                    .sellTimestamp(Long.parseLong(body.get("sellTimestamp")))
+                    // 추가 정보 설정
+                    .createdAt(instant)
+                    .yearMonthDate(localDate)
+                    .buyShard((byte) (1 + new Random().nextInt(3))) // 1, 2, 3 중 하나의 값 랜덤 할당
+                    .sellShard((byte) (1 + new Random().nextInt(3))) // 1, 2, 3 중 하나의 값 랜덤 할당
                     .build();
 
             // 매칭 이벤트를 Kafka로 전송
@@ -249,7 +254,7 @@ public class RedisStreamToKafkaServiceV2 {
             CompletableFuture<SendResult<String, Object>> future =
                     CompletableFuture.supplyAsync(() -> {
                         try {
-                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent.getMatchId().toString(), matchedEvent).get();
+                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent).get();
                         } catch (Exception e) {
                             throw new CompletionException(e);
                         }
@@ -260,7 +265,7 @@ public class RedisStreamToKafkaServiceV2 {
                 if (ex == null) {
                     // 성공 시 Redis에서 ACK 처리
                     redisTemplate.opsForStream().acknowledge(MATCH_STREAM_KEY, consumerGroupName, messageId);
-                    log.info("매칭 이벤트 Kafka 전송 완료: {} (매치 ID: {})", messageId, matchedEvent.getMatchId());
+                    log.info("매칭 이벤트 Kafka 전송 완료: {}", messageId);
                 } else {
                     // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
                     log.error("매칭 이벤트 Kafka 전송 실패: {}", messageId, ex);
@@ -287,13 +292,14 @@ public class RedisStreamToKafkaServiceV2 {
                     .userId(UUID.fromString(body.get("userId")))
                     .orderId(UUID.fromString(body.get("orderId")))
                     .startTime(Long.parseLong(body.get("timestamp")))
+                    .operationType(OperationType.valueOf(body.get("operation")))
                     .build();
 
             // Kafka로 메시지 전송
             CompletableFuture<SendResult<String, Object>> future =
                     CompletableFuture.supplyAsync(() -> {
                         try {
-                            return kafkaTemplate.send(UNMATCH_KAFKA_TOPIC, body.get("buyOrderId"), event).get();
+                            return kafkaTemplate.send(UNMATCH_KAFKA_TOPIC, body.get("orderId"), event).get();
                         } catch (Exception e) {
                             throw new CompletionException(e);
                         }

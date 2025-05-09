@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 /**
@@ -24,15 +26,17 @@ public class KafkaMatchedOrderEvent {
 
     // 매수 주문 정보
     private UUID buyUserId;
-    private UUID buyOrderId;
-    private Long buyTimestamp;
+    @Builder.Default
+    private UUID buyMatchedOrderId = UUID.randomUUID();
 
     // 매도 주문 정보
     private UUID sellUserId;
-    private UUID sellOrderId;
-    private Long sellTimestamp;
-
-    // 매칭 ID (생성 시 자동 할당)
     @Builder.Default
-    private UUID matchId = UUID.randomUUID();
+    private UUID sellMatchedOrderId = UUID.randomUUID();
+
+    // 기타 정보
+    Instant createdAt;
+    LocalDate yearMonthDate;
+    byte buyShard;
+    byte sellShard;
 }
