@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisHashCommands;
 import org.springframework.data.redis.core.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -16,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,18 +27,14 @@ import java.util.concurrent.CompletableFuture;
 public class OrderUpdateScheduler {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private final StringRedisTemplate stringRedisTemplate;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final RedisConnectionFactory connectionFactory;
+
+    private StringRedisTemplate stringRedisTemplate;
 
     private static final String ORDER_UPDATES_KEY_PREFIX = "v6d:order:pending-updates:";
     private static final String ORDER_UPDATES_INDEX_KEY = "v6d:order:pending-updates:index";
-    private static final String ORDER_VERSIONS_KEY = "v6d:order:versions";
     private static final String KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
 
-    /**
-     * 3초마다 실행되는 주문 업데이트 스케줄러
-     */
     @Scheduled(fixedDelay = 3000)
     public void processOrderUpdates() {
         try {
@@ -52,31 +50,42 @@ public class OrderUpdateScheduler {
             // 각 주문 ID별 데이터를 담을 맵
             Map<String, Map<String, String>> orderDataMap = new HashMap<>();
 
-            // 최신 방식으로 파이프라인 실행
-            RedisConnection connection = connectionFactory.getConnection();
-            try {
-                connection.openPipeline();
+            // RedisTemplate의 executePipelined 메서드를 사용하여 리팩토링
+            List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                RedisHashCommands hashCommands = connection.hashCommands();
 
-                // 모든 주문 ID에 대한 해시 데이터 조회 명령 큐에 넣기
+                // 각 주문 ID에 대해 RedisHashCommands의 hGetAll 명령 실행
                 for (String orderId : orderIds) {
-                    String updateKey = ORDER_UPDATES_KEY_PREFIX + orderId;
-                    stringRedisTemplate.opsForHash().entries(updateKey);
+                    byte[] keyBytes = (ORDER_UPDATES_KEY_PREFIX + orderId).getBytes(StandardCharsets.UTF_8);
+                    hashCommands.hGetAll(keyBytes);
                 }
 
-                // 파이프라인 실행 결과 받기
-                List<Object> results = connection.closePipeline();
+                // executePipelined 메서드에서는 null을 반환해야 합니다
+                return null;
+            });
 
-                // 결과 매핑
-                int index = 0;
-                for (String orderId : orderIds) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, String> orderData = (Map<String, String>) results.get(index++);
-                    if (orderData != null && !orderData.isEmpty()) {
-                        orderDataMap.put(orderId, orderData);
+            // 결과 매핑
+            int index = 0;
+            for (String orderId : orderIds) {
+                if (index >= results.size()) {
+                    log.warn("파이프라인 결과 인덱스 초과: {}/{}", index, results.size());
+                    break;
+                }
+
+                @SuppressWarnings("unchecked")
+                Map<byte[], byte[]> orderDataBytes = (Map<byte[], byte[]>) results.get(index++);
+
+                if (orderDataBytes != null && !orderDataBytes.isEmpty()) {
+                    // 바이트 배열을 문자열로 변환
+                    Map<String, String> stringMap = new HashMap<>();
+                    for (Map.Entry<byte[], byte[]> entry : orderDataBytes.entrySet()) {
+                        String key = new String(entry.getKey(), StandardCharsets.UTF_8);
+                        String value = entry.getValue() != null ?
+                                new String(entry.getValue(), StandardCharsets.UTF_8) : null;
+                        stringMap.put(key, value);
                     }
+                    orderDataMap.put(orderId, stringMap);
                 }
-            } finally {
-                connection.close();
             }
 
             // 수집된 데이터 처리
@@ -136,66 +145,62 @@ public class OrderUpdateScheduler {
     }
 
     /**
-     * 낙관적 락을 구현한 버전 확인 후 삭제 메서드
-     * Spring Data Redis 트랜잭션을 사용
+     * 낙관적 락을 사용한 버전 확인 및 삭제 - RedisHashCommands 사용
      */
     private void removeIfVersionMatches(String updateKey, String orderId, int expectedVersion) {
-        try {
-            // 현재 버전 조회
-            Object versionObj = redisTemplate.opsForHash().get(ORDER_VERSIONS_KEY, orderId);
-            String currentVersionStr = versionObj != null ? versionObj.toString() : null;
+        redisTemplate.execute(new RedisCallback<Boolean>() {
+            @Override
+            public Boolean doInRedis(RedisConnection connection) throws DataAccessException {
+                try {
+                    // RedisHashCommands 인터페이스 얻기
+                    RedisHashCommands hashCommands = connection.hashCommands();
 
-            int currentVersion = (currentVersionStr != null) ?
-                    Integer.parseInt(currentVersionStr) : 1;
+                    // updateKey를 감시
+                    byte[] keyBytes = updateKey.getBytes(StandardCharsets.UTF_8);
+                    connection.watch(keyBytes);
 
-            // 버전 일치 확인
-            if (currentVersion == expectedVersion) {
-                // 트랜잭션을 사용하여 원자적으로 삭제 처리
-                redisTemplate.execute(new SessionCallback<Object>() {
-                    @Override
-                    public Object execute(RedisOperations operations) throws DataAccessException {
-                        try {
-                            operations.multi(); // 트랜잭션 시작
+                    // 버전 정보 조회 (RedisHashCommands 사용)
+                    byte[] versionFieldBytes = "version".getBytes(StandardCharsets.UTF_8);
+                    byte[] versionValueBytes = hashCommands.hGet(keyBytes, versionFieldBytes);
 
-                            // 버전 재확인 (트랜잭션 내에서)
-                            operations.opsForHash().get(ORDER_VERSIONS_KEY, orderId);
+                    String currentVersionStr = versionValueBytes != null ?
+                            new String(versionValueBytes, StandardCharsets.UTF_8) : null;
+                    int currentVersion = (currentVersionStr != null) ?
+                            Integer.parseInt(currentVersionStr) : 1;
 
-                            // 트랜잭션 실행
-                            List<Object> txResults = operations.exec();
-
-                            // 트랜잭션이 성공하고, 결과가 있으면 버전 재확인
-                            if (!txResults.isEmpty()) {
-                                String txVersionStr = (String) txResults.get(0);
-                                int txVersion = txVersionStr != null ?
-                                        Integer.parseInt(txVersionStr) : 1;
-
-                                // 버전이 여전히 일치하면 데이터 삭제
-                                if (txVersion == expectedVersion) {
-                                    stringRedisTemplate.delete(updateKey);
-                                    stringRedisTemplate.opsForSet().remove(ORDER_UPDATES_INDEX_KEY, orderId);
-                                    log.info("주문 업데이트 삭제 성공: {}, version: {}", orderId, expectedVersion);
-                                    return true;
-                                } else {
-                                    // 버전이 변경되었으면 삭제하지 않음
-                                    log.info("트랜잭션 내 버전 변경 감지로 삭제 취소: {}, expected: {}, current: {}",
-                                            orderId, expectedVersion, txVersion);
-                                    return false;
-                                }
-                            }
-                            return false;
-                        } catch (Exception e) {
-                            log.error("트랜잭션 처리 중 오류: {}", orderId, e);
-                            return false;
-                        }
+                    // 버전 불일치 시 트랜잭션 중단
+                    if (currentVersion != expectedVersion) {
+                        connection.unwatch();
+                        log.info("버전 불일치로 삭제 취소: {}, expected: {}, current: {}",
+                                orderId, expectedVersion, currentVersion);
+                        return false;
                     }
-                });
-            } else {
-                // 버전이 일치하지 않으면 삭제하지 않음
-                log.info("버전 불일치로 삭제 취소: {}, expected: {}, current: {}",
-                        orderId, expectedVersion, currentVersion);
+
+                    // 버전 일치 시 트랜잭션 실행
+                    connection.multi();
+
+                    // 키 삭제
+                    connection.del(keyBytes);
+                    connection.sRem(ORDER_UPDATES_INDEX_KEY.getBytes(StandardCharsets.UTF_8),
+                            orderId.getBytes(StandardCharsets.UTF_8));
+
+                    // 트랜잭션 커밋
+                    List<Object> results = connection.exec();
+
+                    // 트랜잭션 성공 여부 확인
+                    boolean success = (results != null && !results.isEmpty());
+                    if (success) {
+                        log.info("주문 업데이트 삭제 성공: {}, version: {}", orderId, expectedVersion);
+                    } else {
+                        log.info("동시성 충돌로 삭제 실패: {}", orderId);
+                    }
+
+                    return success;
+                } catch (Exception e) {
+                    log.error("버전 확인 중 오류 발생: {}", orderId, e);
+                    return false;
+                }
             }
-        } catch (Exception e) {
-            log.error("버전 확인 중 오류 발생: {}", orderId, e);
-        }
+        });
     }
 }
