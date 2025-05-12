@@ -1,10 +1,10 @@
 package com.exchange.matching.domain.repository;
 
-import com.exchange.matching.domain.entiry.CompletedOrder;
+import com.exchange.matching.domain.entity.MatchedOrder;
 
 public interface CompletedOrderStore {
 
-    void save(CompletedOrder completedOrder);
+    void save(MatchedOrder matchedOrder);
 
     void deleteAll();
 }

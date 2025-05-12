@@ -1,7 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.enums.OrderType;
-import com.exchange.matching.domain.entiry.ActivatedOrderB;
+import com.exchange.matching.domain.entity.UnmatchedOrderB;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,8 +11,8 @@ public class ActivatedOrderBFactory {
 
     private static final String TRADING_PAIR = "BTC/KRW";
 
-    public static ActivatedOrderB createBuyOrder1() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createBuyOrder1() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
@@ -23,8 +23,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createBuyOrder2() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createBuyOrder2() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
@@ -35,8 +35,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createBuyOrder3() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createBuyOrder3() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
@@ -47,8 +47,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createBuyOrder4() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createBuyOrder4() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.BUY)
@@ -59,8 +59,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createSellOrder1() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createSellOrder1() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
@@ -71,8 +71,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createSellOrder2() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createSellOrder2() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
@@ -83,8 +83,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createSellOrder3() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createSellOrder3() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
@@ -95,8 +95,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createSellOrder4() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createSellOrder4() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)
@@ -107,8 +107,8 @@ public class ActivatedOrderBFactory {
                 .build();
     }
 
-    public static ActivatedOrderB createSellOrder5() {
-        return ActivatedOrderB.builder()
+    public static UnmatchedOrderB createSellOrder5() {
+        return UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .type(OrderType.SELL)

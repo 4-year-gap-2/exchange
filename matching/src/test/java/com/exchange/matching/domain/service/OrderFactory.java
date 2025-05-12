@@ -1,10 +1,11 @@
 package com.exchange.matching.domain.service;
 
-import com.exchange.matching.domain.entiry.Order;
 import com.exchange.matching.application.enums.OrderType;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import com.exchange.matching.domain.service.MatchingServiceV1A.Order;
 
 public class OrderFactory {
 

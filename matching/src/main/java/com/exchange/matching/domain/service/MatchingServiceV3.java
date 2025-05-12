@@ -1,6 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.enums.MatchingVersion;
 import com.exchange.matching.application.enums.OrderType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,11 @@ public class MatchingServiceV3 implements MatchingService {
     private static final String BUY_ORDER_KEY = "v3:orders:buy:";
 
     private final RedisTemplate<String, String> redisTemplate;
+
+    @Override
+    public MatchingVersion getVersion() {
+        return MatchingVersion.V3;
+    }
 
     public MatchingServiceV3(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;

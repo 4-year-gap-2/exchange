@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.entiry;
+package com.exchange.matching.domain.entity;
 
 import com.exchange.matching.application.enums.OrderType;
 import jakarta.persistence.*;
@@ -10,17 +10,17 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "completed_orders")
+@Table(name = "matched_order")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
-public class CompletedOrder {
+public class MatchedOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "completed_order_id", nullable = false, unique = true)
+    @Column(name = "matched_order_id", nullable = false, unique = true)
     @Comment("체결 주문 고유키")
     private UUID CompletedOrderId;
 
