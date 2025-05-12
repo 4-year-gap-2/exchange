@@ -16,4 +16,8 @@ public class UnmatchedOrderStoreImpl implements UnmatchedOrderStore {
         unmatchedOrderStoreRepository.save(unmatchedOrder);
     }
 
+    @Override
+    public void delete(UnmatchedOrder unmatchedOrder) {
+        unmatchedOrderStoreRepository.delete(unmatchedOrder);
+    }
 }

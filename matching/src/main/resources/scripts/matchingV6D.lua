@@ -224,8 +224,7 @@ local matchFields = {
     ["tradingPair"] = tradingPair,
     ["executionPrice"] = tostring(matchPrice),
     ["matchedQuantity"] = tostring(matchedQuantity),
-    ["buyTimestamp"] = isBuy and currentOrder.timestamp or oppositeOrder.timestamp,
-    ["sellTimestamp"] = isBuy and oppositeOrder.timestamp or currentOrder.timestamp,
+    ["timestamp"] = tostring(redis.call("TIME")[1])
 }
 
 -- Redis Stream에 매칭 정보 추가

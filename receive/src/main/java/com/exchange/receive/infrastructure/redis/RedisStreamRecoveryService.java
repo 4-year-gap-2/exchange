@@ -1,6 +1,11 @@
 package com.exchange.receive.infrastructure.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.exchange.receive.infrastructure.cassandra.ShardCalculator;
+import com.exchange.receive.infrastructure.dto.KafkaMatchedOrderEvent;
+import com.exchange.receive.infrastructure.dto.KafkaMatchingEvent;
+import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
+import com.exchange.receive.infrastructure.enums.OperationType;
+import com.exchange.receive.infrastructure.enums.OrderType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Range;
@@ -12,11 +17,19 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -24,16 +37,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class RedisStreamRecoveryService {
 
-    private static final String MATCH_STREAM_KEY = "v6a:stream:matches";
-    private static final String UNMATCH_STREAM_KEY = "v6a:stream:unmatched";
-    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6a:stream:partialMatched";
+    private final ExecutorService kafkaExecutorService = Executors.newFixedThreadPool(20);
+
+    private static final String MATCH_STREAM_KEY = "v6d:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6d:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6d:stream:partialMatched";
     private static final String MATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
-    private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6";
+    private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6d";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+    private final ShardCalculator shardCalculator;
 
     private String consumerGroupName;
     private AtomicInteger pendingCount = new AtomicInteger(0);
@@ -71,6 +86,9 @@ public class RedisStreamRecoveryService {
                 break;
             }
         }
+
+        // Executor service 종료
+        kafkaExecutorService.shutdown();
         log.info("Redis Stream Recovery Service 종료 완료");
     }
 
@@ -92,7 +110,7 @@ public class RedisStreamRecoveryService {
                 // 30초 대기
                 Thread.sleep(30000);
             } catch (Exception e) {
-                log.info("Pending 메시지 처리 중 오류", e);
+                log.error("Pending 메시지 처리 중 오류", e);
             }
         }
     }
@@ -142,7 +160,7 @@ public class RedisStreamRecoveryService {
                 }
             }
         } catch (Exception e) {
-            log.info("{} 스트림의 Pending 메시지 처리 중 오류", streamKey, e);
+            log.error("{} 스트림의 Pending 메시지 처리 중 오류", streamKey, e);
         }
     }
 
@@ -154,11 +172,35 @@ public class RedisStreamRecoveryService {
             String messageId = record.getId().getValue();
             Map<String, String> body = convertMapEntriesToMap(record.getValue());
 
-            // Kafka로 메시지 전송
-            String jsonMessage = objectMapper.writeValueAsString(body);
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(MATCH_KAFKA_TOPIC, body.get("tradingPair"), jsonMessage);
+            Instant instant = Instant.ofEpochSecond(Long.parseLong(body.get("timestamp")));
+            LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
+            // 매칭된 주문 정보를 하나의 DTO로 생성
+            KafkaMatchedOrderEvent matchedEvent = KafkaMatchedOrderEvent.builder()
+                    .tradingPair(body.get("tradingPair"))
+                    .executionPrice(new BigDecimal(body.get("executionPrice")))
+                    .matchedQuantity(new BigDecimal(body.get("matchedQuantity")))
+                    .buyUserId(UUID.fromString(body.get("buyUserId")))
+                    .sellUserId(UUID.fromString(body.get("sellUserId")))
+                    .buyMatchedOrderId(UUID.randomUUID())
+                    .sellMatchedOrderId(UUID.randomUUID())
+                    .createdAt(instant)
+                    .yearMonthDate(localDate)
+                    .buyShard(shardCalculator.calculateShard(UUID.fromString(body.get("buyOrderId"))))
+                    .sellShard(shardCalculator.calculateShard(UUID.fromString(body.get("sellOrderId"))))
+                    .build();
+
+            // 매칭 이벤트를 Kafka로 전송
+            CompletableFuture<SendResult<String, Object>> future =
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return kafkaTemplate.send(MATCH_KAFKA_TOPIC, matchedEvent).get();
+                        } catch (Exception e) {
+                            throw new CompletionException(e);
+                        }
+                    }, kafkaExecutorService);
+
+            // 전송 완료 후 처리
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
                     // 성공 시 Redis에서 ACK 처리
@@ -166,11 +208,11 @@ public class RedisStreamRecoveryService {
                     log.info("원시 매칭 메시지 Kafka 전송 완료: {}", messageId);
                 } else {
                     // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
-                    log.info("원시 매칭 메시지 Kafka 전송 실패: {}", messageId, ex);
+                    log.error("원시 매칭 메시지 Kafka 전송 실패: {}", messageId, ex);
                 }
             });
         } catch (Exception e) {
-            log.info("원시 매칭 메시지 처리 오류", e);
+            log.error("원시 매칭 메시지 처리 오류", e);
         }
     }
 
@@ -182,10 +224,31 @@ public class RedisStreamRecoveryService {
             String messageId = record.getId().getValue();
             Map<String, String> body = convertMapEntriesToMap(record.getValue());
 
+            Instant instant = Instant.ofEpochSecond(Long.parseLong(body.get("timestamp")));
+            LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
+
+            KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
+                    .tradingPair(body.get("tradingPair"))
+                    .orderType(OrderType.valueOf(body.get("orderType")))
+                    .price(new BigDecimal(body.get("price")))
+                    .quantity(new BigDecimal(body.get("quantity")))
+                    .userId(UUID.fromString(body.get("userId")))
+                    .orderId(UUID.fromString(body.get("orderId")))
+                    .startTime(Long.parseLong(body.get("timestamp")))
+                    .operationType(OperationType.valueOf(body.get("operation")))
+                    .shard(shardCalculator.calculateShard(UUID.fromString(body.get("orderId"))))
+                    .yearMonthDate(localDate)
+                    .build();
+
             // Kafka로 메시지 전송
-            String jsonMessage = objectMapper.writeValueAsString(body);
             CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(UNMATCH_KAFKA_TOPIC, body.get("tradingPair"), jsonMessage);
+                    CompletableFuture.supplyAsync(() -> {
+                        try {
+                            return kafkaTemplate.send(UNMATCH_KAFKA_TOPIC, body.get("orderId"), event).get();
+                        } catch (Exception e) {
+                            throw new CompletionException(e);
+                        }
+                    }, kafkaExecutorService);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
@@ -194,11 +257,11 @@ public class RedisStreamRecoveryService {
                     log.info("원시 미체결 메시지 Kafka 전송 완료: {}", messageId);
                 } else {
                     // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
-                    log.info("원시 미체결 메시지 Kafka 전송 실패: {}", messageId, ex);
+                    log.error("원시 미체결 메시지 Kafka 전송 실패: {}", messageId, ex);
                 }
             });
         } catch (Exception e) {
-            log.info("원시 미체결 메시지 처리 오류", e);
+            log.error("원시 미체결 메시지 처리 오류", e);
         }
     }
 
@@ -210,10 +273,18 @@ public class RedisStreamRecoveryService {
             String messageId = record.getId().getValue();
             Map<String, String> body = convertMapEntriesToMap(record.getValue());
 
+            KafkaMatchingEvent event = KafkaMatchingEvent.builder()
+                    .tradingPair(body.get("tradingPair"))
+                    .orderType(OrderType.valueOf(body.get("orderType")))
+                    .price(new BigDecimal(body.get("price")))
+                    .quantity(new BigDecimal(body.get("quantity")))
+                    .userId(UUID.fromString(body.get("userId")))
+                    .orderId(UUID.fromString(body.get("orderId")))
+                    .build();
+
             // Kafka로 메시지 전송
-            String jsonMessage = objectMapper.writeValueAsString(body);
             CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(PARTIAL_MATCHED_KAFKA_TOPIC, body.get("tradingPair"), jsonMessage);
+                    kafkaTemplate.send(PARTIAL_MATCHED_KAFKA_TOPIC, body.get("orderId"), event);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
@@ -222,11 +293,11 @@ public class RedisStreamRecoveryService {
                     log.info("원시 부분체결 메시지 Kafka 전송 완료: {}", messageId);
                 } else {
                     // 실패 시 로그만 남김 (Redis에서 ACK 하지 않음)
-                    log.info("원시 부분체결 메시지 Kafka 전송 실패: {}", messageId, ex);
+                    log.error("원시 부분체결 메시지 Kafka 전송 실패: {}", messageId, ex);
                 }
             });
         } catch (Exception e) {
-            log.info("원시 부분체결 메시지 처리 오류", e);
+            log.error("원시 부분체결 메시지 처리 오류", e);
         }
     }
 

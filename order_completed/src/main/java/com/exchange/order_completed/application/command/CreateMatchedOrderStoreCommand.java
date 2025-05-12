@@ -13,20 +13,16 @@ import java.util.UUID;
 
 @Builder
 public record CreateMatchedOrderStoreCommand(
-        // 거래 정보
         String tradingPair,
         BigDecimal price,
         BigDecimal quantity,
-
-        // 주문 정보
         UUID userId,
         UUID matchedOrderId,
         OrderType orderType,
-
-        // 기타 정보
         Instant createdAt,
         LocalDate yearMonthDate,
-        Byte shard
+        int buyShard,
+        int sellShard
 ) {
 
     public static CreateMatchedOrderStoreCommand fromBuyOrderInfo(KafkaMatchedOrderStoreEvent event) {
@@ -39,7 +35,7 @@ public record CreateMatchedOrderStoreCommand(
                 .orderType(OrderType.BUY)
                 .createdAt(event.getCreatedAt())
                 .yearMonthDate(event.getYearMonthDate())
-                .shard(event.getBuyShard())
+                .buyShard(event.getBuyShard())
                 .build();
     }
 
@@ -53,7 +49,7 @@ public record CreateMatchedOrderStoreCommand(
                 .orderType(OrderType.SELL)
                 .createdAt(event.getCreatedAt())
                 .yearMonthDate(event.getYearMonthDate())
-                .shard(event.getSellShard())
+                .sellShard(event.getSellShard())
                 .build();
     }
 
@@ -66,19 +62,8 @@ public record CreateMatchedOrderStoreCommand(
                 .matchedOrderId(this.matchedOrderId)
                 .createdAt(this.createdAt)
                 .yearMonthDate(this.yearMonthDate)
-                .shard(this.shard)
+                .shard(this.orderType == OrderType.BUY ? this.buyShard : this.sellShard)
                 .orderType(this.orderType)
                 .build();
-    }
-
-    public Chart toChartData(){
-        return new Chart(
-                UUID.randomUUID(),
-                this.price,
-                this.quantity,
-                this.orderType,
-                this.tradingPair,
-                null // createdAt 값은 엔티티 내부에서 자동 생성됨
-        );
     }
 }

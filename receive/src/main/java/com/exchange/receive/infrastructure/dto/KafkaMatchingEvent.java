@@ -1,6 +1,7 @@
 package com.exchange.receive.infrastructure.dto;
 
 import com.exchange.receive.infrastructure.enums.OrderType;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @Getter
 @Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class KafkaMatchingEvent {
 
     private String tradingPair;
@@ -19,13 +21,4 @@ public class KafkaMatchingEvent {
     private BigDecimal quantity;
     private UUID userId;
     private UUID orderId;
-
-    public KafkaMatchingEvent(String tradingPair, OrderType orderType, BigDecimal price, BigDecimal quantity, UUID userId, UUID orderId) {
-        this.tradingPair = tradingPair;
-        this.orderType = orderType;
-        this.price = price;
-        this.quantity = quantity;
-        this.userId = userId;
-        this.orderId = orderId;
-    }
 }

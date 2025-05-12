@@ -15,22 +15,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class KafkaMatchedOrderStoreEvent {
-    // 거래 정보
     private String tradingPair;
     private BigDecimal executionPrice;
     private BigDecimal matchedQuantity;
-
-    // 매수 주문 정보
     private UUID buyUserId;
-    private UUID buyMatchedOrderId;
-
-    // 매도 주문 정보
     private UUID sellUserId;
+    private UUID buyMatchedOrderId;
     private UUID sellMatchedOrderId;
-
-    // 기타 정보
-    Instant createdAt;
-    LocalDate yearMonthDate;
-    Byte buyShard;
-    Byte sellShard;
+    private Instant createdAt;
+    private LocalDate yearMonthDate;
+    private int buyShard;
+    private int sellShard;
 }

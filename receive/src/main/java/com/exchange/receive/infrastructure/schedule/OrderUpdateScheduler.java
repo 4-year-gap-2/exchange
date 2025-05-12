@@ -1,5 +1,6 @@
 package com.exchange.receive.infrastructure.schedule;
 
+import com.exchange.receive.infrastructure.cassandra.ShardCalculator;
 import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
 import com.exchange.receive.infrastructure.enums.OperationType;
 import com.exchange.receive.infrastructure.enums.OrderType;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +34,7 @@ public class OrderUpdateScheduler {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ShardCalculator shardCalculator;
 
     private static final String ORDER_UPDATES_KEY_PREFIX = "v6d:order:pending-updates:";
     private static final String ORDER_UPDATES_INDEX_KEY = "v6d:order:pending-updates:index";
@@ -76,6 +81,9 @@ public class OrderUpdateScheduler {
                     // 버전 정보 추출
                     int version = Integer.parseInt(orderData.getOrDefault("version", "1"));
 
+                    Instant instant = Instant.ofEpochSecond(Long.parseLong(orderData.get("timestamp")));
+                    LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
+
                     // 이벤트 객체 생성
                     KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
                             .tradingPair(orderData.get("tradingPair"))
@@ -86,7 +94,8 @@ public class OrderUpdateScheduler {
                             .orderId(UUID.fromString(orderData.get("orderId")))
                             .startTime(Long.parseLong(orderData.get("timestamp")))
                             .operationType(OperationType.valueOf(orderData.get("operation")))
-                            .version(version)
+                            .shard(shardCalculator.calculateShard(UUID.fromString(orderData.get("orderId"))))
+                            .yearMonthDate(localDate)
                             .build();
 
                     // Kafka로 전송 및 결과 처리를 위한 CompletableFuture 체인 생성
@@ -213,11 +222,11 @@ public class OrderUpdateScheduler {
                 scriptingCommands.eval(
                         script,
                         ReturnType.INTEGER,
-                        2,
-                        updateKey.getBytes(StandardCharsets.UTF_8),
-                        ORDER_UPDATES_INDEX_KEY.getBytes(StandardCharsets.UTF_8),
-                        String.valueOf(expectedVersion).getBytes(StandardCharsets.UTF_8),
-                        orderId.getBytes(StandardCharsets.UTF_8)
+                        2,  // numKeys: KEYS 배열의 개수
+                        updateKey.getBytes(StandardCharsets.UTF_8),           // KEYS[1]
+                        ORDER_UPDATES_INDEX_KEY.getBytes(StandardCharsets.UTF_8), // KEYS[2]
+                        String.valueOf(expectedVersion).getBytes(StandardCharsets.UTF_8), // ARGV[1]
+                        orderId.getBytes(StandardCharsets.UTF_8)            // ARGV[2]
                 );
             }
             return null;

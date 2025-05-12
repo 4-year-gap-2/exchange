@@ -10,6 +10,7 @@ import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreE
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -24,39 +25,17 @@ import java.util.List;
 import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
 
-@Component
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class KafkaEventConsumer {
 
-    private final Counter endToEndCounter;
-    private final Timer endToEndTimer;
-    private final MeterRegistry meterRegistry;
     private final OrderCompletedService orderCompletedService;
-
-    public KafkaEventConsumer(OrderCompletedService orderCompletedService, MeterRegistry meterRegistry) {
-        this.orderCompletedService = orderCompletedService;
-        this.meterRegistry = meterRegistry;
-
-        // 전체 체인 처리 카운터 (A→B→C 전체 TPS)
-        this.endToEndCounter = Counter.builder("matching_chain_completed_total")
-                .description("Total number of completed event processing chains (A→B→C)")
-                .register(meterRegistry);
-
-        // 전체 체인 처리 시간 (A→B→C 전체 처리 시간)
-        this.endToEndTimer = Timer.builder("matching_chain_processing_time")
-                .description("Total time from message creation to final processing (A→B→C)")
-                .register(meterRegistry);
-    }
 
     @KafkaListener(
             topics = {"matching-to-order_completed.execute-order-matched"},
             containerFactory = "matchedOrderKafkaListenerContainerFactory")
     public void consumeMatchedMessage(List<ConsumerRecord<String, KafkaMatchedOrderStoreEvent>> recordList, Acknowledgment ack) {
-        log.info("총 메시지 수: {}", recordList.size());
-
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
         List<CreateMatchedOrderStoreCommand> commandList = new ArrayList<>();
 
         try {
@@ -69,14 +48,8 @@ public class KafkaEventConsumer {
             }
 
             orderCompletedService.completeMatchedOrder(commandList);
-//            startTime = 9999999999999L - event.getBuyTimestamp();
-//            long endToEndDuration = System.currentTimeMillis() - startTime;
         } finally {
-            // 타이머 종료 및 기록
-            sample.stop(endToEndTimer);
             ack.acknowledge();
-            // 전체 체인 처리 시간 기록
-//            endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -84,33 +57,12 @@ public class KafkaEventConsumer {
             topics = {"matching-to-order_completed.execute-order-unmatched"},
             containerFactory = "unmatchedOrderKafkaListenerContainerFactory")
     public void consumeUnmatchedMessage(List<ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent>> records, Acknowledgment ack) {
-        log.info("총 메시지 수: {}", records.size());
-
-//        KafkaUnmatchedOrderStoreEvent event = record.value();
-//        long startTime = event.getStartTime();
-//        long endToEndDuration = System.currentTimeMillis() - startTime;
-
-        //year_month_date
-        LocalDate yearMonthDate = LocalDate.now();
-
-        //shard
-        // 1, 2, 3 중 하나를 균등 확률로 반환
-        int shard = ThreadLocalRandom.current().nextInt(1, 4); // 1 이상 4 미만: 1, 2, 3
-
         for (ConsumerRecord<String, KafkaUnmatchedOrderStoreEvent> record : records) {
             KafkaUnmatchedOrderStoreEvent value = record.value();
             CreateUnmatchedOrderStoreCommand command = CreateUnmatchedOrderStoreCommand.from(value);
-            Header deliveryAttemptHeader = record.headers().lastHeader(KafkaHeaders.DELIVERY_ATTEMPT);
 
-            int attempt = deliveryAttemptHeader != null
-                    ? Integer.parseInt(new String(deliveryAttemptHeader.value(), StandardCharsets.UTF_8))
-                    : 1;
-
-            orderCompletedService.completeUnmatchedOrder(command, yearMonthDate, shard, attempt);
+            orderCompletedService.completeUnmatchedOrder(command);
         }
-
-        // 전체 체인 처리 시간 기록
-//        endToEndTimer.record(endToEndDuration, TimeUnit.MILLISECONDS);
 
         ack.acknowledge();
     }

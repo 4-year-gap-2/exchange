@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
@@ -18,6 +19,7 @@ public class KafkaOrderStoreEvent {
     private UUID userId;
     private UUID orderId;
     private OperationType operationType;
+    private int shard;
+    private LocalDate yearMonthDate;
     private long startTime;
-    private int version;
 }

@@ -12,6 +12,7 @@ import com.exchange.order_completed.domain.cassandra.repository.MatchedOrderStor
 import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderReader;
 import com.exchange.order_completed.domain.cassandra.repository.UnmatchedOrderStore;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
+import com.exchange.order_completed.infrastructure.enums.OperationType;
 import com.exchange.order_completed.infrastructure.postgres.repository.ChartRepositoryStore;
 import com.exchange.order_completed.presentation.dto.PagedResult;
 import com.exchange.order_completed.presentation.dto.TradeDataResponse;
@@ -48,6 +49,7 @@ public class OrderCompletedService {
     private static class DateRange {
         final LocalDate from;
         final LocalDate to;
+
         DateRange(LocalDate from, LocalDate to) {
             this.from = from;
             this.to = to;
@@ -77,15 +79,14 @@ public class OrderCompletedService {
         }
     }
 
-    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command, LocalDate yearMonthDate, int shard, Integer attempt) {
-        UnmatchedOrder persistentUnmatchedOrder = unmatchedOrderReader.findUnmatchedOrder(command.userId(), shard, yearMonthDate, command.orderId(), attempt);
+    public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command) {
+        UnmatchedOrder unmatchedOrder = command.toEntity();
 
-        if (persistentUnmatchedOrder != null) {
-            throw new DuplicateUnmatchedOrderInformationException("이미 저장된 미체결 주문입니다. orderId: " + command.orderId());
+        if (command.operationType().equals(OperationType.DELETE)) {
+            unmatchedOrderStore.delete(unmatchedOrder);
+        } else {
+            unmatchedOrderStore.save(unmatchedOrder);
         }
-
-        UnmatchedOrder newUnmatchedOrder = command.toEntity(shard, yearMonthDate);
-        unmatchedOrderStore.save(newUnmatchedOrder);
     }
 
     @Transactional
@@ -176,13 +177,14 @@ public class OrderCompletedService {
 
     //조회 공통 메서드 분리
     //날짜 범위 계산
+
     /**
      * 날짜 범위 계산 공통 메서드
      * - startDate, endDate 입력값에 따라 실제 조회 시작일/종료일을 계산
-     *   1) 둘 다 null: 오늘 하루만
-     *   2) startDate만: startDate~최대 3개월 후(또는 오늘)
-     *   3) endDate만: endDate 기준 3개월 전~endDate (최소 SYSTEM_MIN_DATE 보장)
-     *   4) 둘 다 있으면: 해당 구간 전체
+     * 1) 둘 다 null: 오늘 하루만
+     * 2) startDate만: startDate~최대 3개월 후(또는 오늘)
+     * 3) endDate만: endDate 기준 3개월 전~endDate (최소 SYSTEM_MIN_DATE 보장)
+     * 4) 둘 다 있으면: 해당 구간 전체
      */
     private DateRange calculateDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDate today = LocalDate.now();
@@ -223,9 +225,10 @@ public class OrderCompletedService {
 
     /**
      * 페이징/커서 처리 공통 메서드
-     * @param allOrders 전체 조회 결과
-     * @param cursor 커서(마지막 createdAt)
-     * @param size 페이지 크기
+     *
+     * @param allOrders    전체 조회 결과
+     * @param cursor       커서(마지막 createdAt)
+     * @param size         페이지 크기
      * @param entityMapper 엔티티 -> 응답 DTO 변환 함수
      * @return PagedResult (응답 리스트, 다음 커서, hasNext)
      */

@@ -28,7 +28,7 @@ public class MatchedOrder {
     private UUID userId;
 
     @PrimaryKeyColumn(name = "shard", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-    private Byte shard;
+    private int shard;
 
     @PrimaryKeyColumn(name = "year_month_date", ordinal = 2, type = PrimaryKeyType.CLUSTERED)
     private LocalDate yearMonthDate;

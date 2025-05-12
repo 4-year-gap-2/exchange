@@ -1,5 +1,6 @@
 package com.exchange.receive.infrastructure.redis;
 
+import com.exchange.receive.infrastructure.cassandra.ShardCalculator;
 import com.exchange.receive.infrastructure.dto.KafkaMatchedOrderEvent;
 import com.exchange.receive.infrastructure.dto.KafkaMatchingEvent;
 import com.exchange.receive.infrastructure.dto.KafkaOrderStoreEvent;
@@ -42,16 +43,17 @@ public class RedisStreamToKafkaService {
 
     private final ExecutorService kafkaExecutorService = Executors.newFixedThreadPool(20);
 
-    private static final String MATCH_STREAM_KEY = "v6a:stream:matches";
-    private static final String UNMATCH_STREAM_KEY = "v6a:stream:unmatched";
-    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6a:stream:partialMatched";
+    private static final String MATCH_STREAM_KEY = "v6d:stream:matches";
+    private static final String UNMATCH_STREAM_KEY = "v6d:stream:unmatched";
+    private static final String PARTIAL_MATCHED_STREAM_KEY = "v6d:stream:partialMatched";
     private static final String MATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
-    private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6";
+    private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6d";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final RedisStreamRecoveryService recoveryService;
+    private final ShardCalculator shardCalculator;
 
     private StreamMessageListenerContainer<String, MapRecord<String, String, String>> listenerContainer;
     private Subscription matchSubscription;
@@ -234,19 +236,19 @@ public class RedisStreamToKafkaService {
             LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
             // 매칭된 주문 정보를 하나의 DTO로 생성
+            // TODO kafka 정확히 한번만 전송 되도록 처리 필요
             KafkaMatchedOrderEvent matchedEvent = KafkaMatchedOrderEvent.builder()
                     .tradingPair(body.get("tradingPair"))
                     .executionPrice(new BigDecimal(body.get("executionPrice")))
                     .matchedQuantity(new BigDecimal(body.get("matchedQuantity")))
-                    // 매수 주문 정보
                     .buyUserId(UUID.fromString(body.get("buyUserId")))
-                    // 매도 주문 정보
                     .sellUserId(UUID.fromString(body.get("sellUserId")))
-                    // 추가 정보 설정
+                    .buyMatchedOrderId(UUID.randomUUID())
+                    .sellMatchedOrderId(UUID.randomUUID())
                     .createdAt(instant)
                     .yearMonthDate(localDate)
-                    .buyShard((byte) (1 + new Random().nextInt(3))) // 1, 2, 3 중 하나의 값 랜덤 할당
-                    .sellShard((byte) (1 + new Random().nextInt(3))) // 1, 2, 3 중 하나의 값 랜덤 할당
+                    .buyShard(shardCalculator.calculateShard(UUID.fromString(body.get("buyOrderId"))))
+                    .sellShard(shardCalculator.calculateShard(UUID.fromString(body.get("sellOrderId"))))
                     .build();
 
             // 매칭 이벤트를 Kafka로 전송
@@ -284,6 +286,9 @@ public class RedisStreamToKafkaService {
             String messageId = message.getId().getValue();
             Map<String, String> body = message.getValue();
 
+            Instant instant = Instant.ofEpochSecond(Long.parseLong(body.get("timestamp")));
+            LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
+
             KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
                     .tradingPair(body.get("tradingPair"))
                     .orderType(OrderType.valueOf(body.get("orderType")))
@@ -293,6 +298,8 @@ public class RedisStreamToKafkaService {
                     .orderId(UUID.fromString(body.get("orderId")))
                     .startTime(Long.parseLong(body.get("timestamp")))
                     .operationType(OperationType.valueOf(body.get("operation")))
+                    .shard(shardCalculator.calculateShard(UUID.fromString(body.get("orderId"))))
+                    .yearMonthDate(localDate)
                     .build();
 
             // Kafka로 메시지 전송

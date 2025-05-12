@@ -107,9 +107,7 @@ public class MatchingServiceV6D implements MatchingService {
             order.getQuantity().toString(),
             orderDetails,
             order.getTradingPair(),
-// 새로운 주문으로 들어온다고 가정
-            UUID.randomUUID().toString(),
-//            order.getOrderId().toString(),
+            order.getOrderId().toString(),
             partialOrderId
         );
     }
@@ -167,8 +165,7 @@ public class MatchingServiceV6D implements MatchingService {
                     command.price(),
                     command.quantity(),
                     command.userId(),
-//                    command.orderId()
-                    UUID.randomUUID()
+                    command.orderId()
             );
         }
     }
