@@ -81,7 +81,12 @@ public class OrderUpdateScheduler {
                     // 버전 정보 추출
                     int version = Integer.parseInt(orderData.getOrDefault("version", "1"));
 
-                    Instant instant = Instant.ofEpochMilli(Long.parseLong(orderData.get("timestamp")));
+                    long timestamp = Long.parseLong(orderData.get("timestamp"));
+                    long processedTimestamp = "BUY".equals(orderData.get("orderType"))
+                            ? 9999999999999L - timestamp
+                            : timestamp;
+
+                    Instant instant = Instant.ofEpochMilli(processedTimestamp);
                     LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
                     // 이벤트 객체 생성
@@ -96,6 +101,7 @@ public class OrderUpdateScheduler {
                             .operationType(OperationType.valueOf(orderData.get("operation")))
                             .shard(shardCalculator.calculateShard(UUID.fromString(orderData.get("orderId"))))
                             .yearMonthDate(localDate)
+                            .createdAt(instant)
                             .build();
 
                     // Kafka로 전송 및 결과 처리를 위한 CompletableFuture 체인 생성
@@ -140,7 +146,7 @@ public class OrderUpdateScheduler {
 
             // 6. 성공적으로 전송된 주문들에 대해 일괄 삭제 처리
             if (!successfulOrders.isEmpty()) {
-//                deleteOrdersInBatch(successfulOrders);
+                deleteOrdersInBatch(successfulOrders);
             }
 
             log.info("주문 업데이트 처리 완료: 총 {} 건 중 {} 건 성공",

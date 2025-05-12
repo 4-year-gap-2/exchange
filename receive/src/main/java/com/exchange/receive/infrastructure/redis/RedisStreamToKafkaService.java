@@ -286,7 +286,12 @@ public class RedisStreamToKafkaService {
             String messageId = message.getId().getValue();
             Map<String, String> body = message.getValue();
 
-            Instant instant = Instant.ofEpochSecond(Long.parseLong(body.get("timestamp")));
+            long timestamp = Long.parseLong(body.get("timestamp"));
+            long processedTimestamp = "BUY".equals(body.get("orderType"))
+                    ? 9999999999999L - timestamp
+                    : timestamp;
+
+            Instant instant = Instant.ofEpochSecond(processedTimestamp);
             LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
             KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
@@ -300,6 +305,7 @@ public class RedisStreamToKafkaService {
                     .operationType(OperationType.valueOf(body.get("operation")))
                     .shard(shardCalculator.calculateShard(UUID.fromString(body.get("orderId"))))
                     .yearMonthDate(localDate)
+                    .createdAt(instant)
                     .build();
 
             // Kafka로 메시지 전송

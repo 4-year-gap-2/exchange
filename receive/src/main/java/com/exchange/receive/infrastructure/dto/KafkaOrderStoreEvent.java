@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -22,4 +23,5 @@ public class KafkaOrderStoreEvent {
     private int shard;
     private LocalDate yearMonthDate;
     private long startTime;
+    private Instant createdAt;
 }

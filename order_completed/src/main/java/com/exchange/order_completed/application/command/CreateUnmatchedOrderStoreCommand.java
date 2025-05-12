@@ -8,9 +8,8 @@ import com.exchange.order_completed.infrastructure.enums.OperationType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.UUID;
 
 @Builder
@@ -23,7 +22,8 @@ public record CreateUnmatchedOrderStoreCommand(
         UUID orderId,
         LocalDate yearMonthDate,
         int shard,
-        OperationType operationType
+        OperationType operationType,
+        Instant createdAt
 ) {
     public static CreateUnmatchedOrderStoreCommand from(KafkaUnmatchedOrderStoreEvent event) {
         return new CreateUnmatchedOrderStoreCommand(
@@ -35,7 +35,8 @@ public record CreateUnmatchedOrderStoreCommand(
                 event.getOrderId(),
                 event.getYearMonthDate(),
                 event.getShard(),
-                event.getOperationType()
+                event.getOperationType(),
+                event.getCreatedAt()
         );
     }
 
@@ -48,8 +49,8 @@ public record CreateUnmatchedOrderStoreCommand(
                 .userId(userId)
                 .shard(shard)
                 .orderId(orderId)
-                .orderState(OrderState.valueOf("PENDING"))
-                .createdAt(LocalDateTime.now().atZone(ZoneId.of("UTC")).toInstant())
+                .orderState(OrderState.PENDING)
+                .createdAt(createdAt)
                 .yearMonthDate(yearMonthDate)
                 .build();
     }
