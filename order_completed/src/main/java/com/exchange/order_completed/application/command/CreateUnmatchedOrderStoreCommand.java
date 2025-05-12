@@ -4,6 +4,7 @@ import com.exchange.order_completed.domain.cassandra.entity.OrderState;
 import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import com.exchange.order_completed.infrastructure.dto.KafkaUnmatchedOrderStoreEvent;
+import com.exchange.order_completed.infrastructure.enums.OperationType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -19,7 +20,10 @@ public record CreateUnmatchedOrderStoreCommand(
         BigDecimal price,
         BigDecimal quantity,
         UUID userId,
-        UUID orderId
+        UUID orderId,
+        LocalDate yearMonthDate,
+        int shard,
+        OperationType operationType
 ) {
     public static CreateUnmatchedOrderStoreCommand from(KafkaUnmatchedOrderStoreEvent event) {
         return new CreateUnmatchedOrderStoreCommand(
@@ -28,11 +32,14 @@ public record CreateUnmatchedOrderStoreCommand(
                 event.getPrice(),
                 event.getQuantity(),
                 event.getUserId(),
-                event.getOrderId()
+                event.getOrderId(),
+                event.getYearMonthDate(),
+                event.getShard(),
+                event.getOperationType()
         );
     }
 
-    public UnmatchedOrder toEntity(int shard, LocalDate yearMonthDate) {
+    public UnmatchedOrder toEntity() {
         return UnmatchedOrder.builder()
                 .tradingPair(tradingPair)
                 .orderType(orderType)

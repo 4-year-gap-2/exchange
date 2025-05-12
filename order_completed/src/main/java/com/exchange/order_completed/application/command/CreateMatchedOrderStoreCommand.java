@@ -55,15 +55,15 @@ public record CreateMatchedOrderStoreCommand(
 
     public MatchedOrder toEntity() {
         return MatchedOrder.builder()
-                .tradingPair(this.tradingPair)
-                .price(this.price)
-                .quantity(this.quantity)
-                .userId(this.userId)
-                .matchedOrderId(this.matchedOrderId)
-                .createdAt(this.createdAt)
-                .yearMonthDate(this.yearMonthDate)
-                .shard(this.orderType == OrderType.BUY ? this.buyShard : this.sellShard)
-                .orderType(this.orderType)
+                .tradingPair(tradingPair)
+                .price(price)
+                .quantity(quantity)
+                .userId(userId)
+                .matchedOrderId(matchedOrderId)
+                .createdAt(createdAt)
+                .yearMonthDate(yearMonthDate)
+                .shard(orderType == OrderType.BUY ? buyShard : sellShard)
+                .orderType(orderType)
                 .build();
     }
 }
