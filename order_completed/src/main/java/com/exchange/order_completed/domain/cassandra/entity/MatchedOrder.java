@@ -1,13 +1,12 @@
 package com.exchange.order_completed.domain.cassandra.entity;
 
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
+import org.springframework.data.cassandra.core.mapping.CassandraType;
 import org.springframework.data.cassandra.core.mapping.Column;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
@@ -44,6 +43,7 @@ public class MatchedOrder {
 
     @Column("order_type")
     @Comment("거래 유형 (BUY 또는 SELL)")
+    @CassandraType(type = CassandraType.Name.TEXT)
     private OrderType orderType;
 
     @Column("trading_pair")
