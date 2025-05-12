@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.entiry;
+package com.exchange.matching.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

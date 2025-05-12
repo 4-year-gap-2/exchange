@@ -1,6 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.enums.MatchingVersion;
 import com.exchange.matching.application.enums.OrderType;
 import jakarta.transaction.Transactional;
 import lombok.*;
@@ -21,6 +22,11 @@ public class MatchingServiceV2 implements MatchingService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final Long TIME_STAMP_NUMERIC = 9999999999999L;
+
+    @Override
+    public MatchingVersion getVersion() {
+        return MatchingVersion.V2;
+    }
 
     @Override
     @Transactional

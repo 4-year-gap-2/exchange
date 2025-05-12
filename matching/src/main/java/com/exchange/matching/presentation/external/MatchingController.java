@@ -18,9 +18,16 @@ public class MatchingController {
 
     private final KafkaTemplate<String, KafkaMatchingEvent> orderDeliveryKafkaTemplate;
 
-    @PostMapping("/v1")
-    public ResponseEntity<ResponseDto<String>> matchV1(@RequestBody CreateMatchingRequest createMatchingRequest) {
-        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v1",
+    @PostMapping("/v1a")
+    public ResponseEntity<ResponseDto<String>> matchV1A(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v1a",
+                KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
+        return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
+    }
+
+    @PostMapping("/v1b")
+    public ResponseEntity<ResponseDto<String>> matchV1B(@RequestBody CreateMatchingRequest createMatchingRequest) {
+        orderDeliveryKafkaTemplate.send("user-to-matching.execute-order-delivery.v1b",
                 KafkaMatchingEvent.fromCommand(CreateMatchingCommand.fromRequest(createMatchingRequest)));
         return ResponseEntity.status(HttpStatus.OK).body(ResponseDto.success("success"));
     }
