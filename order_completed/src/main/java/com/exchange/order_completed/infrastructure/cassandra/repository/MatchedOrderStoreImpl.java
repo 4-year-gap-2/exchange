@@ -39,7 +39,7 @@ public class MatchedOrderStoreImpl implements MatchedOrderStore {
                             order.getMatchedOrderId(),
                             order.getPrice(),
                             order.getQuantity(),
-                            order.getOrderType(),
+                            order.getOrderType().name(),
                             order.getTradingPair(),
                             order.getCreatedAt()
                     )
