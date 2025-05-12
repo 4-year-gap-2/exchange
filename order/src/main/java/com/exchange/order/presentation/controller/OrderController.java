@@ -1,9 +1,11 @@
 package com.exchange.order.presentation.controller;
 
 import com.exchange.order.application.command.CreateOrderCommand;
+import com.exchange.order.application.result.FindCancelResult;
 import com.exchange.order.application.result.FindOrderResult;
 import com.exchange.order.application.service.OrderService;
 import com.exchange.order.common.UserInfoHeader;
+import com.exchange.order.presentation.request.CancelOrderRequest;
 import com.exchange.order.presentation.request.CreateOrderRequest;
 import com.exchange.order.presentation.response.CancelOrderResponse;
 import com.exchange.order.presentation.response.CreateOrderResponse;
@@ -32,12 +34,12 @@ public class OrderController {
         return ResponseEntity.ok(response).getBody();
     }
     @Description("주문 취소")
-    @PostMapping("/cancel/{orderId}")
-    public ResponseEntity<CancelOrderResponse> cancelOrder(HttpServletRequest request, @PathVariable("orderId") UUID orderId) {
+    @PostMapping("/cancel")
+    public ResponseEntity<CancelOrderResponse> cancelOrder(HttpServletRequest request, @RequestBody CancelOrderRequest cancelOrderRequest) {
         UserInfoHeader userInfo = new UserInfoHeader(request);
-        FindOrderResult result = orderService.cancelOrder(userInfo.getUserId(),orderId);
-        CancelOrderResponse response = CancelOrderResponse.fromResponse(result);
-        return null;
+        FindCancelResult result = orderService.cancelOrder(userInfo.getUserId(), cancelOrderRequest);
+        CancelOrderResponse response = CancelOrderResponse.fromResult(result);
+        return ResponseEntity.ok(response);
 
     }
 }

@@ -2,6 +2,7 @@ package com.exchange.order.application.result;
 
 import com.exchange.order.application.enums.OrderType;
 import com.exchange.order.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
+import com.exchange.order.presentation.request.CancelOrderRequest;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

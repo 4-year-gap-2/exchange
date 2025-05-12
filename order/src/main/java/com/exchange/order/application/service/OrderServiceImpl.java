@@ -1,8 +1,9 @@
 package com.exchange.order.application.service;
 
 import com.exchange.order.application.command.CreateOrderCommand;
-import com.exchange.order.application.command.OrderCommandService;
+import com.exchange.order.application.result.FindCancelResult;
 import com.exchange.order.application.result.FindOrderResult;
+import com.exchange.order.presentation.request.CancelOrderRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public FindOrderResult cancelOrder(UUID userId, UUID orderId) {
-        return orderCommandService.cancelOrder(userId,orderId);
+    public FindCancelResult cancelOrder(UUID userId, CancelOrderRequest cancelOrderRequest) {
+        return orderCommandService.cancelOrder(userId, cancelOrderRequest);
     }
 }

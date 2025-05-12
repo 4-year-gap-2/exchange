@@ -88,6 +88,10 @@ public class MatchingServiceV6A implements MatchingService {
         // 주문 정보 직렬화 (타임스탬프 포함)
         String orderDetails = serializeOrder(order);
 
+        // 여기서 바이트 배열 출력!
+        System.out.println("[매칭 저장] orderDetails 바이트 배열: " +
+                Arrays.toString(orderDetails.getBytes(StandardCharsets.UTF_8)));
+
         // 부분 체결을 위한 새 ID 생성
         String partialOrderId = UUID.randomUUID().toString();
 
