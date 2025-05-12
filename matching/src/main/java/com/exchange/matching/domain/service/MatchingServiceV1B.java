@@ -1,8 +1,10 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.enums.MatchingVersion;
 import com.exchange.matching.application.enums.OrderType;
-import com.exchange.matching.domain.entiry.*;
+import com.exchange.matching.domain.entity.MatchedOrder;
+import com.exchange.matching.domain.entity.UnmatchedOrderB;
 import com.exchange.matching.domain.repository.ActivatedOrderBReader;
 import com.exchange.matching.domain.repository.ActivatedOrderBStore;
 import com.exchange.matching.domain.repository.CompletedOrderStore;
@@ -17,6 +19,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.exchange.matching.domain.service.MatchingServiceV1A.Order;
+
 @Service
 @RequiredArgsConstructor
 public class MatchingServiceV1B implements MatchingService {
@@ -25,6 +29,11 @@ public class MatchingServiceV1B implements MatchingService {
     private final ActivatedOrderBStore activatedOrderBStore;
     private final CompletedOrderStore completedOrderStore;
     private static final int MAX_RETRIES = 3;
+
+    @Override
+    public MatchingVersion getVersion() {
+        return MatchingVersion.V1B;
+    }
 
     @Override
     @Transactional
@@ -41,7 +50,7 @@ public class MatchingServiceV1B implements MatchingService {
         while (attempts < MAX_RETRIES && order.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
             try {
                 // 반대 주문 조회
-                Optional<ActivatedOrderB> topOppositeOrderOpt = findTopOppositeOrder(order, oppositeType);
+                Optional<UnmatchedOrderB> topOppositeOrderOpt = findTopOppositeOrder(order, oppositeType);
 
                 if (!topOppositeOrderOpt.isPresent() || !isPriceMatch(order, topOppositeOrderOpt.get())) {
                     // 매칭 실패
@@ -70,7 +79,7 @@ public class MatchingServiceV1B implements MatchingService {
 
     // 1. 반대(매칭 대상) 주문 조회
     // BUY 주문이면 SELL 주문을, SELL 주문이면 BUY 주문을 조회
-    private Optional<ActivatedOrderB> findTopOppositeOrder(Order order, OrderType oppositeType) {
+    private Optional<UnmatchedOrderB> findTopOppositeOrder(Order order, OrderType oppositeType) {
         // 요청 주문이 BUY 주문이므로 SELL 주문을 조회
         if (order.getOrderType() == OrderType.BUY) return activatedOrderBReader.findTopByTypeAndTradingPairOrderByPriceAscCreatedAtAsc(
                 oppositeType, order.getTradingPair());
@@ -82,7 +91,7 @@ public class MatchingServiceV1B implements MatchingService {
     // 2. 주문 가격 매칭 조건 확인
     // BUY 주문이면 판매 주문의 가격이 BUY 주문의 가격 이하여야 하고,
     // SELL 주문이면 구매 주문의 가격이 SELL 주문의 가격 이상이어야 함
-    private boolean isPriceMatch(Order order, ActivatedOrderB oppositeOrder) {
+    private boolean isPriceMatch(Order order, UnmatchedOrderB oppositeOrder) {
         // 판매 주문의 가격이 BUY 주문 가격보다 낮거나 같으면 매칭 가능
         if (order.getOrderType() == OrderType.BUY) return oppositeOrder.getPrice().compareTo(order.getPrice()) <= 0;
         // SELL 주문인 경우, 구매 주문의 가격이 SELL 주문 가격보다 높거나 같으면 매칭 가능
@@ -90,7 +99,7 @@ public class MatchingServiceV1B implements MatchingService {
     }
 
     // 3. 양쪽 주문에 대해 체결된 수량 계산 및 상태 업데이트
-    private boolean executeMatching(Order order, ActivatedOrderB oppositeOrder) {
+    private boolean executeMatching(Order order, UnmatchedOrderB oppositeOrder) {
         // 주문 간 수량의 최솟값 선택하여 체결 수량 결정
         BigDecimal matchedQuantity = order.getQuantity().min(oppositeOrder.getQuantity());
 
@@ -116,7 +125,7 @@ public class MatchingServiceV1B implements MatchingService {
 
     // 4-1. 미체결 주문 거래 내역을 DB에 저장
     private void saveActivatedOrder(Order order) {
-        ActivatedOrderB activatedOrder = ActivatedOrderB.builder()
+        UnmatchedOrderB activatedOrder = UnmatchedOrderB.builder()
                 .userId(order.getUserId())
                 .orderId(order.getOrderId())
                 .tradingPair(order.getTradingPair())
@@ -130,7 +139,7 @@ public class MatchingServiceV1B implements MatchingService {
 
     // 4-2. 체결된 주문 거래 내역을 DB에 저장
     private void saveCompletedOrder(Order order, BigDecimal matchedQuantity, BigDecimal matchedPrice, UUID oppositeOrderUserId) {
-        CompletedOrder completedOrder = CompletedOrder.builder()
+        MatchedOrder matchedOrder = MatchedOrder.builder()
                 .sellerId(order.getOrderType() == OrderType.SELL ? order.getUserId() : oppositeOrderUserId)
                 .buyerId(order.getOrderType() == OrderType.BUY ? order.getUserId() : oppositeOrderUserId)
                 .orderId(order.getOrderId())
@@ -140,11 +149,11 @@ public class MatchingServiceV1B implements MatchingService {
                 .type(order.getOrderType())
                 .createdAt(LocalDateTime.now())
                 .build();
-        completedOrderStore.save(completedOrder);
+        completedOrderStore.save(matchedOrder);
     }
 
-    private void saveCompletedOrder(ActivatedOrderB order, BigDecimal matchedQuantity, BigDecimal matchedPrice, UUID oppositeOrderUserId) {
-        CompletedOrder completedOrder = CompletedOrder.builder()
+    private void saveCompletedOrder(UnmatchedOrderB order, BigDecimal matchedQuantity, BigDecimal matchedPrice, UUID oppositeOrderUserId) {
+        MatchedOrder matchedOrder = MatchedOrder.builder()
                 .sellerId(order.getType() == OrderType.SELL ? order.getUserId() : oppositeOrderUserId)
                 .buyerId(order.getType() == OrderType.BUY ? order.getUserId() : oppositeOrderUserId)
                 .orderId(order.getOrderId())
@@ -154,6 +163,7 @@ public class MatchingServiceV1B implements MatchingService {
                 .type(order.getType())
                 .createdAt(LocalDateTime.now())
                 .build();
-        completedOrderStore.save(completedOrder);
+        completedOrderStore.save(matchedOrder);
     }
+
 }

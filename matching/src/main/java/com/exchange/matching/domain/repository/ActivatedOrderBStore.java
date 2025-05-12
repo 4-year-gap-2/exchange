@@ -1,16 +1,16 @@
 package com.exchange.matching.domain.repository;
 
-import com.exchange.matching.domain.entiry.ActivatedOrderB;
+import com.exchange.matching.domain.entity.UnmatchedOrderB;
 
 import java.util.List;
 
 public interface ActivatedOrderBStore {
 
-    void delete(ActivatedOrderB oppositeOrder);
+    void delete(UnmatchedOrderB oppositeOrder);
 
-    void save(ActivatedOrderB activatedOrder);
+    void save(UnmatchedOrderB activatedOrder);
 
     void deleteAll();
 
-    void saveAll(List<ActivatedOrderB> activatedOrderBList);
+    void saveAll(List<UnmatchedOrderB> unmatchedOrderBList);
 }

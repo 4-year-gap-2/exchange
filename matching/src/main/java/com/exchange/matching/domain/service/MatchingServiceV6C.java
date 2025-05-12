@@ -1,6 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.enums.MatchingVersion;
 import com.exchange.matching.application.enums.OrderType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,6 +33,11 @@ public class MatchingServiceV6C implements MatchingService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final RedisScript<List<Object>> matchingScript;
+
+    @Override
+    public MatchingVersion getVersion() {
+        return MatchingVersion.V6C;
+    }
 
     public MatchingServiceV6C(RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;

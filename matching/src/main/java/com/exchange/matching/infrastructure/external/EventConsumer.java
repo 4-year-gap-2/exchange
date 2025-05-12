@@ -1,244 +1,53 @@
 package com.exchange.matching.infrastructure.external;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
-import com.exchange.matching.application.service.MatchingFacade;
+import com.exchange.matching.application.enums.MatchingVersion;
+import com.exchange.matching.application.service.MatchingApplicationService;
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import com.exchange.matching.util.MetricsCollector;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class EventConsumer {
-
-    private final MatchingFacade matchingFacade;
-    private final MeterRegistry meterRegistry;
-
-    private final Counter processedCounter;
-    private final Timer processingTimer;
-
-    // 생성자를 통해 MeterRegistry 주입 및 메트릭 초기화
-    public EventConsumer(MatchingFacade matchingFacade, MeterRegistry meterRegistry) {
-        this.matchingFacade = matchingFacade;
-        this.meterRegistry = meterRegistry;
-
-        // Counter 초기화
-        this.processedCounter = Counter.builder("matching_events_processed_total")
-                .description("Total number of matching events processed")
-                .register(meterRegistry);
-
-        // Timer 초기화 (Summary 대신 Timer 사용 권장)
-        this.processingTimer = Timer.builder("matching_processing_time")
-                .description("Time taken to process matching events")
-                .register(meterRegistry);
-    }
+    private final MatchingApplicationService matchingService;
+    private final MetricsCollector metricsCollector;
 
     @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v1"},
+            topics = {
+                    "user-to-matching.execute-order-delivery.v1a",
+                    "user-to-matching.execute-order-delivery.v1b",
+                    "user-to-matching.execute-order-delivery.v2",
+                    "user-to-matching.execute-order-delivery.v3",
+                    "user-to-matching.execute-order-delivery.v4",
+                    "user-to-matching.execute-order-delivery.v5",
+                    "user-to-matching.execute-order-delivery.v6a",
+                    "user-to-matching.execute-order-delivery.v6b",
+                    "user-to-matching.execute-order-delivery.v6c",
+                    "user-to-matching.execute-order-delivery.v6d"
+            },
             containerFactory = "orderDeliveryKafkaListenerContainerFactory",
             concurrency = "3"
     )
-    public void consumeV1(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
+    public void consume(ConsumerRecord<String, KafkaMatchingEvent> record) {
+        String topic = record.topic();
+        MatchingVersion version = extractVersionFromTopic(topic);
 
-        try {
+        metricsCollector.recordProcessing(() -> {
             KafkaMatchingEvent event = record.value();
-
             CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV1(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
+            matchingService.processMatching(command, version);
+            log.info("Processed event from topic: {}, version: {}", topic, version);
+        }, version);
     }
 
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v2"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV2(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV2(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v3"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV3(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV3(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v4"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "30"
-    )
-    public void consumeV4(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV4(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v5"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV5(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV5(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v6a"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV6A(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV6A(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v6b"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV6B(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV6B(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v6c"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV6C(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV6C(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
-    }
-
-    @KafkaListener(
-            topics = {"user-to-matching.execute-order-delivery.v6d"},
-            containerFactory = "orderDeliveryKafkaListenerContainerFactory",
-            concurrency = "3"
-    )
-    public void consumeV6D(ConsumerRecord<String, KafkaMatchingEvent> record) {
-        // 타이머 시작
-        Timer.Sample sample = Timer.start(meterRegistry);
-
-        try {
-            KafkaMatchingEvent event = record.value();
-
-            CreateMatchingCommand command = KafkaMatchingEvent.commandFromEvent(event);
-            matchingFacade.matchV6D(command);
-
-            // 카운터 증가
-            processedCounter.increment();
-        } finally {
-            // 타이머 종료 및 기록
-            sample.stop(processingTimer);
-        }
+    private MatchingVersion extractVersionFromTopic(String topic) {
+        String versionCode = topic.substring(topic.lastIndexOf('.') + 1);
+        return MatchingVersion.fromCode(versionCode);
     }
 }

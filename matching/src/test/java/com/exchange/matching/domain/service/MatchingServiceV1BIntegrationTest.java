@@ -2,8 +2,8 @@ package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
 import com.exchange.matching.application.enums.OrderType;
-import com.exchange.matching.domain.entiry.ActivatedOrderB;
-import com.exchange.matching.domain.entiry.CompletedOrder;
+import com.exchange.matching.domain.entity.UnmatchedOrderB;
+import com.exchange.matching.domain.entity.MatchedOrder;
 import com.exchange.matching.domain.repository.ActivatedOrderBReader;
 import com.exchange.matching.domain.repository.ActivatedOrderBStore;
 import com.exchange.matching.domain.repository.CompletedOrderReader;
@@ -60,21 +60,21 @@ public class MatchingServiceV1BIntegrationTest {
 
         // 테스트 데이터 초기화
         // 매수 주문 (BUY)
-        ActivatedOrderB buyOrder1 = ActivatedOrderBFactory.createBuyOrder1();
-        ActivatedOrderB buyOrder2 = ActivatedOrderBFactory.createBuyOrder2();
-        ActivatedOrderB buyOrder3 = ActivatedOrderBFactory.createBuyOrder3();
-        ActivatedOrderB buyOrder4 = ActivatedOrderBFactory.createBuyOrder4();
+        UnmatchedOrderB buyOrder1 = ActivatedOrderBFactory.createBuyOrder1();
+        UnmatchedOrderB buyOrder2 = ActivatedOrderBFactory.createBuyOrder2();
+        UnmatchedOrderB buyOrder3 = ActivatedOrderBFactory.createBuyOrder3();
+        UnmatchedOrderB buyOrder4 = ActivatedOrderBFactory.createBuyOrder4();
         // 매도 주문 (SELL)
-        ActivatedOrderB sellOrder1 = ActivatedOrderBFactory.createSellOrder1();
-        ActivatedOrderB sellOrder2 = ActivatedOrderBFactory.createSellOrder2();
-        ActivatedOrderB sellOrder3 = ActivatedOrderBFactory.createSellOrder3();
-        ActivatedOrderB sellOrder4 = ActivatedOrderBFactory.createSellOrder4();
-        ActivatedOrderB sellOrder5 = ActivatedOrderBFactory.createSellOrder5();
+        UnmatchedOrderB sellOrder1 = ActivatedOrderBFactory.createSellOrder1();
+        UnmatchedOrderB sellOrder2 = ActivatedOrderBFactory.createSellOrder2();
+        UnmatchedOrderB sellOrder3 = ActivatedOrderBFactory.createSellOrder3();
+        UnmatchedOrderB sellOrder4 = ActivatedOrderBFactory.createSellOrder4();
+        UnmatchedOrderB sellOrder5 = ActivatedOrderBFactory.createSellOrder5();
 
-        List<ActivatedOrderB> activatedOrderBList = List.of(buyOrder1, buyOrder2, buyOrder3, buyOrder4,
+        List<UnmatchedOrderB> unmatchedOrderBList = List.of(buyOrder1, buyOrder2, buyOrder3, buyOrder4,
                 sellOrder1, sellOrder2, sellOrder3, sellOrder4, sellOrder5);
 
-        activatedOrderBStore.saveAll(activatedOrderBList);
+        activatedOrderBStore.saveAll(unmatchedOrderBList);
     }
 
     @Test
@@ -109,13 +109,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(sellOrder5);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
-        assertEquals(0, completedOrderList.size(), "체결 거래 내역 수는 0건이어야 한다.");
+        assertEquals(9, unmatchedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(0, matchedOrderList.size(), "체결 거래 내역 수는 0건이어야 한다.");
     }
 
     @Test
@@ -134,13 +134,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(8, activatedOrderBList.size(), "미체결 거래 내역 수는 8건이어야 한다.");
-        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
+        assertEquals(8, unmatchedOrderBList.size(), "미체결 거래 내역 수는 8건이어야 한다.");
+        assertEquals(2, matchedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
@@ -159,13 +159,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(buyOrder);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
-        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
+        assertEquals(9, unmatchedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(2, matchedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
@@ -184,13 +184,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(9, activatedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
-        assertEquals(2, completedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
+        assertEquals(9, unmatchedOrderBList.size(), "미체결 거래 내역 수는 9건이어야 한다.");
+        assertEquals(2, matchedOrderList.size(), "체결 거래 내역 수는 2건이어야 한다.");
     }
 
     @Test
@@ -209,13 +209,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(buyOrder);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(6, activatedOrderBList.size(), "미체결 거래 내역 수는 6건이어야 한다.");
-        assertEquals(8, completedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
+        assertEquals(6, unmatchedOrderBList.size(), "미체결 거래 내역 수는 6건이어야 한다.");
+        assertEquals(8, matchedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
     }
 
     @Test
@@ -234,13 +234,13 @@ public class MatchingServiceV1BIntegrationTest {
         orderMatchingService.matchOrders(sellOrder);
 
         // 미체결 주문 조회
-        List<ActivatedOrderB> activatedOrderBList = activatedOrderBReader.findAll();
+        List<UnmatchedOrderB> unmatchedOrderBList = activatedOrderBReader.findAll();
 
         // 체결 주문 조회
-        List<CompletedOrder> completedOrderList = completedOrderReader.findAll();
+        List<MatchedOrder> matchedOrderList = completedOrderReader.findAll();
 
-        assertEquals(5, activatedOrderBList.size(), "미체결 거래 내역 수는 5건이어야 한다.");
-        assertEquals(8, completedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
+        assertEquals(5, unmatchedOrderBList.size(), "미체결 거래 내역 수는 5건이어야 한다.");
+        assertEquals(8, matchedOrderList.size(), "체결 거래 내역 수는 8건이어야 한다.");
     }
 
     @Test
@@ -250,7 +250,7 @@ public class MatchingServiceV1BIntegrationTest {
         // 동일 가격 그리고 생성 시간이 다른 두 매수 주문 생성
 
         // 먼저 들어온 주문
-        ActivatedOrderB earlierBuyOrder = ActivatedOrderB.builder()
+        UnmatchedOrderB earlierBuyOrder = UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
@@ -261,7 +261,7 @@ public class MatchingServiceV1BIntegrationTest {
                 .build();
 
         // 나중에 들어온 주문
-        ActivatedOrderB laterBuyOrder = ActivatedOrderB.builder()
+        UnmatchedOrderB laterBuyOrder = UnmatchedOrderB.builder()
                 .userId(UUID.randomUUID())
                 .orderId(UUID.randomUUID())
                 .tradingPair(TRADING_PAIR)
@@ -275,12 +275,12 @@ public class MatchingServiceV1BIntegrationTest {
         activatedOrderBStore.save(laterBuyOrder);
 
         // 동일 조건의 주문 중 top 우선 주문(가격 오름차순, 생성 시간 오름차순) 조회
-        Optional<ActivatedOrderB> topOrderOpt = activatedOrderBReader.findTopByTypeAndTradingPairOrderByPriceDescCreatedAtAsc(
+        Optional<UnmatchedOrderB> topOrderOpt = activatedOrderBReader.findTopByTypeAndTradingPairOrderByPriceDescCreatedAtAsc(
                 OrderType.BUY, TRADING_PAIR);
 
         // 먼저 들어온 주문(earlierBuyOrder)이 반환돼야 함
         assertTrue(topOrderOpt.isPresent(), "최상위 주문이 존재해야 한다.");
-        ActivatedOrderB topOrder = topOrderOpt.get();
+        UnmatchedOrderB topOrder = topOrderOpt.get();
 
         // 두 주문의 가격이 동일하므로, 생성 시간(createdAt)이 더 빠른 주문이 조회돼야 함
         assertEquals(earlierBuyOrder.getCreatedAt(), topOrder.getCreatedAt(), "가격이 동일하면 먼저 들어온 주문(생성 시간이 빠른 주문)이 우선 조회되어야 한다.");

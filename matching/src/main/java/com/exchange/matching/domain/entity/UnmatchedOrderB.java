@@ -1,4 +1,4 @@
-package com.exchange.matching.domain.entiry;
+package com.exchange.matching.domain.entity;
 
 import com.exchange.matching.application.enums.OrderType;
 import jakarta.persistence.*;
@@ -10,19 +10,19 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "activated_orders")
+@Table(name = "unmatched_order_b")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @Builder
-public class ActivatedOrder {
+public class UnmatchedOrderB {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "activated_order_id", nullable = false, unique = true)
+    @Column(name = "unmatched_order_id", nullable = false, unique = true)
     @Comment("주문 고유키")
-    private UUID ActivatedOrderId;
+    private UUID UnmatchedOrderId;
 
     @Column(name = "user_id", nullable = false)
     @Comment("주문자 ID")
@@ -53,4 +53,9 @@ public class ActivatedOrder {
     @Column(name = "created_at", nullable = false)
     @Comment("주문 생성 시간")
     private LocalDateTime createdAt;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Comment("낙관적 락을 위한 버전 필드")
+    private Long version;
 }

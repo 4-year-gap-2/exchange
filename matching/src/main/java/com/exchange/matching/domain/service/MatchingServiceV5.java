@@ -1,6 +1,7 @@
 package com.exchange.matching.domain.service;
 
 import com.exchange.matching.application.command.CreateMatchingCommand;
+import com.exchange.matching.application.enums.MatchingVersion;
 import com.exchange.matching.application.enums.OrderType;
 import com.exchange.matching.domain.event.MatchingEvent;
 import com.exchange.matching.domain.event.MatchingEventType;
@@ -34,6 +35,11 @@ public class MatchingServiceV5 implements MatchingService {
     private final RedisScript<List<Object>> matchingScript;
     private final EventPublisherV5 eventPublisherV5;
     private final MessageSenderV5 messageSenderV5; // Kafka 메시지 전송을 위한 서비스
+
+    @Override
+    public MatchingVersion getVersion() {
+        return MatchingVersion.V5;
+    }
 
     public MatchingServiceV5(RedisTemplate<String, String> redisTemplate,
                              EventPublisherV5 eventPublisherV5,
