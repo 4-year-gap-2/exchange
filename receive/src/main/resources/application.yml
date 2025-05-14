@@ -1,6 +1,6 @@
 spring:
   application:
-    name: receive
+    name: receive-service
 
   kafka:
     host: ${KAFKA_HOST}

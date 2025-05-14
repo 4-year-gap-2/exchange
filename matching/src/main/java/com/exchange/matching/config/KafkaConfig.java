@@ -64,4 +64,14 @@ public class KafkaConfig {
                 kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
                 }));
     }
+
+    /**
+     * Receive 서버 종료시 재시도 Kafka 템플릿
+     */
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, KafkaMatchingEvent> retryQueueListenerContainerFactory() {
+        return kafkaCommonConfig.createAutoCommitListenerFactory(
+                new TypeReference<>() {
+                }, "retry-processor", DEFAULT_CONCURRENCY);
+    }
 }
