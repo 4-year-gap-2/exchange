@@ -1,6 +1,7 @@
 package com.exchange.order.config;
 
 
+import com.exchange.order.infrastructure.dto.KafkaOrderCancelEvent;
 import com.exchange.order.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.context.annotation.Bean;
@@ -18,19 +19,6 @@ public class KafkaConfig {
         this.kafkaCommonConfig = kafkaCommonConfig;
     }
 
-
-//    @Bean
-//    public ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> matchingEventKafkaListenerContainerFactory() {
-//        ConcurrentKafkaListenerContainerFactory<String, KafkaUserBalanceIncreaseEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
-//
-//        factory.setConsumerFactory(
-//                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-//                }, "user-service")
-//        );
-//
-//        return factory;
-//    }
-
     @Bean
     public KafkaTemplate<String, KafkaUserBalanceDecreaseEvent> balanceEventKafkaTemplate() {
         ProducerFactory<String, KafkaUserBalanceDecreaseEvent> factory =
@@ -39,23 +27,12 @@ public class KafkaConfig {
         return new KafkaTemplate<>(factory);
     }
 
-//    @Bean
-//    public ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> matchingCompensatorEventKafkaListenerContainerFactory() {
-//        ConcurrentKafkaListenerContainerFactory<String, MatchCompensatorEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
-//
-//        factory.setConsumerFactory(
-//                kafkaCommonConfig.createCustomConsumerFactory(new TypeReference<>() {
-//                }, "user-service")
-//        );
-//
-//        return factory;
-//    }
-//
-//    @Bean
-//    public KafkaTemplate<String, MatchCompensatorEvent> matchingCompensatorEventKafkaTemplate() {
-//        ProducerFactory<String, MatchCompensatorEvent> factory =
-//                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
-//                });
-//        return new KafkaTemplate<>(factory);
-//    }
+    //주문 취소 큐 주문 -> 매칭
+    @Bean
+    public KafkaTemplate<String, KafkaOrderCancelEvent> cancelEventKafkaTemplate () {
+        ProducerFactory<String, KafkaOrderCancelEvent> factory =
+                kafkaCommonConfig.createCustomProducerFactory(new TypeReference<>() {
+                });
+        return new KafkaTemplate<>(factory);
+    }
 }
