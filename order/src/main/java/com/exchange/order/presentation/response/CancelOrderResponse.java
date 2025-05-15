@@ -2,7 +2,6 @@ package com.exchange.order.presentation.response;
 
 import com.exchange.order.application.enums.OrderType;
 import com.exchange.order.application.result.FindCancelResult;
-import com.exchange.order.application.result.FindOrderResult;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
