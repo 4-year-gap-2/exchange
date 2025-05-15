@@ -12,10 +12,10 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class CancelOrderResponse {
-    private String orderId; //주문 아이디
-    private String userId; //유저 아이디
-    private String orderType; // buy/sell
-    private String quantity; // 수량
+    private UUID orderId; //주문 아이디
+    private UUID userId; //유저 아이디
+    private OrderType orderType; // buy/sell
+    private BigDecimal quantity; // 수량
     private String tradingPair; //거래소 명칭
 
     public static CancelOrderResponse fromResult(FindCancelResult result) {

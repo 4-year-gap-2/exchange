@@ -1,7 +1,6 @@
 package com.exchange.order.application.service;
 
 import com.exchange.order.application.command.CreateOrderCommand;
-import com.exchange.order.application.enums.OrderType;
 import com.exchange.order.application.result.FindCancelResult;
 import com.exchange.order.application.result.FindOrderResult;
 import com.exchange.order.infrastructure.dto.KafkaOrderCancelEvent;
@@ -9,15 +8,13 @@ import com.exchange.order.infrastructure.dto.KafkaUserBalanceDecreaseEvent;
 import com.exchange.order.presentation.request.CancelOrderRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,16 +43,14 @@ public class OrderCommandService {
 
     //주문 취소
     public FindCancelResult cancelOrder(UUID userId, CancelOrderRequest request) {
-        log.info("removeOrderScript Bean 타입: {}", removeOrderScript.getResultType());
-        log.info("redisTemplate Bean 타입: {}", redisTemplate.getClass());
         // 1.유저가 맞 주문 취소한 유저가 해당 는지 확인
-        if (!userId.equals(UUID.fromString(request.getUserId()))) {
+        if (!userId.equals(request.getUserId())) {
             throw new IllegalArgumentException("주문 취소 권한이 없습니다.");
         }
 
         // 2. sorted set 키 설정
         String tradingPair = request.getTradingPair();
-        String orderType = request.getOrderType();
+        String orderType = String.valueOf(request.getOrderType());
         String zsetKey;
         if ("BUY".equals(request.getOrderType())) {
             zsetKey = BUY_ORDER_KEY + request.getTradingPair();
@@ -90,9 +85,9 @@ public class OrderCommandService {
         return FindCancelResult.fromResult(request);
     }
 
-    private String serializeOrderForCancel(String timestamp, String quantity, String userId, String orderId)
+    private String serializeOrderForCancel(long timestamp, BigDecimal quantity, UUID userId, UUID orderId)
     {
-        String timeStr = String.format("%013d", Long.parseLong(timestamp));
+        String timeStr = String.format("%013d", timestamp);
         return timeStr + "|" + quantity + "|" + userId + "|" + orderId;
     }
 }
