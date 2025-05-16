@@ -71,7 +71,7 @@ if #oppositeOrders == 0 then
 
     -- 주문 상세 정보를 해시에 저장
     local orderHashKey = getOrderHashKey(orderId)
-    redis.call("HMSET", orderHashKey,
+    redis.call("HSET", orderHashKey,
         "timestamp", orderTimestamp,
         "quantity", orderQuantity,
         "userId", userId,
@@ -126,7 +126,7 @@ if not isPriceMatched then
 
     -- 주문 상세 정보를 해시에 저장
     local orderHashKey = getOrderHashKey(orderId)
-    redis.call("HMSET", orderHashKey,
+    redis.call("HSET", orderHashKey,
         "timestamp", orderTimestamp,
         "quantity", orderQuantity,
         "userId", userId,
@@ -187,7 +187,7 @@ if remainingOrderQuantity > 0 then
 
     -- 주문 상세 정보를 해시에 저장
     local orderHashKey = getOrderHashKey(orderId)
-    redis.call("HMSET", orderHashKey,
+    redis.call("HSET", orderHashKey,
         "timestamp", orderTimestamp,
         "quantity", remainingOrderQuantity,
         "userId", userId,

@@ -3,6 +3,7 @@ package com.exchange.order_completed.infrastructure.external;
 import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
+import com.exchange.order_completed.application.service.CurrentPriceService;
 import com.exchange.order_completed.application.service.OrderCompletedService;
 import com.exchange.order_completed.infrastructure.dto.CompletedOrderChangeEvent;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
@@ -31,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class KafkaEventConsumer {
 
     private final OrderCompletedService orderCompletedService;
+    private final CurrentPriceService currentPriceService;
 
     @KafkaListener(
             topics = {"matching-to-order_completed.execute-order-matched"},
@@ -47,7 +49,11 @@ public class KafkaEventConsumer {
                 commandList.add(sellCommand);
             }
 
+            // 체결 주문 처리
             orderCompletedService.completeMatchedOrder(commandList);
+
+            // 현재 가격만 업데이트
+            currentPriceService.updateCurrentPrice(commandList);
         } finally {
             ack.acknowledge();
         }

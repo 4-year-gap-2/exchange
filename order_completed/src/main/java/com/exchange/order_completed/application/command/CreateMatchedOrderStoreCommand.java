@@ -5,6 +5,7 @@ import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.postgres.entity.Chart;
 import com.exchange.order_completed.infrastructure.dto.KafkaMatchedOrderStoreEvent;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.Instant;

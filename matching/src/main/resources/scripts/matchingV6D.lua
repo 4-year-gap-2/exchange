@@ -175,7 +175,7 @@ local currentVersion = tonumber(redis.call("HGET", updateKey, "version") or "1")
 local nextVersion = currentVersion + 1
 
 -- 변경 수량을 DB에 업데이트하기 위한 해시맵 생성
-redis.call("HMSET", updateKey,
+redis.call("HSET", updateKey,
     "orderId", oppositeOrder.orderId,
     "userId", oppositeOrder.userId,
     "tradingPair", tradingPair,

@@ -40,6 +40,7 @@ public class EventConsumer {
     public void consume(ConsumerRecord<String, KafkaMatchingEvent> record) {
         // 캐싱된 상태를 즉시 확인 (네트워크 호출 없음)
         if (!healthMonitor.isHealthy()) {
+            log.info("Receive 서버 상태 이상 감지: 처리 불가 메시지를 재시도 큐로 전송합니다.");
             kafkaTemplate.send("matching-to-matching.execute-receiver-unavailable.retry", record.key(), record.value());
             return;
         }

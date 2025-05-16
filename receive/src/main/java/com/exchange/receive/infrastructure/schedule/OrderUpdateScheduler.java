@@ -38,7 +38,7 @@ public class OrderUpdateScheduler {
 
     private static final String ORDER_UPDATES_KEY_PREFIX = "v6d:order:pending-updates:";
     private static final String ORDER_UPDATES_INDEX_KEY = "v6d:order:pending-updates:index";
-    private static final String KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
+    private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
 
     // Lua 스크립트 상수 정의
     private static final String DELETE_IF_VERSION_MATCHES_SCRIPT =
@@ -59,10 +59,8 @@ public class OrderUpdateScheduler {
             Set<String> orderIds = redisTemplate.opsForSet().members(ORDER_UPDATES_INDEX_KEY);
 
             if (orderIds == null || orderIds.isEmpty()) {
-                return; // 처리할 업데이트가 없음
+                return;
             }
-
-            log.info("주문 업데이트 처리 시작: {} 건", orderIds.size());
 
             // 2. 파이프라인으로 모든 주문 데이터 일괄 조회
             Map<String, Map<String, String>> orderDataMap = fetchOrderDataInBatch(orderIds);
@@ -105,7 +103,7 @@ public class OrderUpdateScheduler {
                             .build();
 
                     // Kafka로 전송 및 결과 처리를 위한 CompletableFuture 체인 생성
-                    CompletableFuture<Void> future = kafkaTemplate.send(KAFKA_TOPIC, orderId, event)
+                    CompletableFuture<Void> future = kafkaTemplate.send(UNMATCH_KAFKA_TOPIC, orderId, event)
                             .thenAccept(result -> {
                                 log.info("주문 업데이트 전송 성공: {}, operation: {}, version: {}",
                                         orderId, orderData.get("operation"), version);
@@ -163,7 +161,7 @@ public class OrderUpdateScheduler {
     private Map<String, Map<String, String>> fetchOrderDataInBatch(Set<String> orderIds) {
         Map<String, Map<String, String>> orderDataMap = new HashMap<>();
 
-        // executePipelined를 사용해서 update 데이터 상세 조회
+        // executePipelined를 사용해서 update/delete 데이터 상세 조회
         List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             RedisHashCommands hashCommands = connection.hashCommands();
 

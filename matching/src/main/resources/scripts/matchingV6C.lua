@@ -57,8 +57,8 @@ end
 local function storeOrderDetails(userId, orderId, orderData)
     local userOrdersHashKey = getUserOrdersHashKey(userId)
 
-    -- HMSET을 사용하여 접두어가 있는 필드 이름으로 저장
-    redis.call("HMSET", userOrdersHashKey,
+    -- HSET을 사용하여 접두어가 있는 필드 이름으로 저장
+    redis.call("HSET", userOrdersHashKey,
         orderId..":timestamp", orderData.timestamp,
         orderId..":quantity", orderData.quantity,
         orderId..":price", orderData.price,
