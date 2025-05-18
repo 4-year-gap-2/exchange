@@ -14,6 +14,7 @@ import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
@@ -25,15 +26,13 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.security.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -49,6 +48,7 @@ public class RedisStreamToKafkaService {
     private static final String MATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-matched";
     private static final String UNMATCH_KAFKA_TOPIC = "matching-to-order_completed.execute-order-unmatched";
     private static final String PARTIAL_MATCHED_KAFKA_TOPIC = "user-to-matching.execute-order-delivery.v6d";
+    private static final String COLD_DATA_REQUEST_STREAM_KEY = "v6d:stream:cold_data_request";
 
     private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, Object> kafkaTemplate;
@@ -59,6 +59,7 @@ public class RedisStreamToKafkaService {
     private Subscription matchSubscription;
     private Subscription unmatchSubscription;
     private Subscription partialMatchSubscription;
+    private Subscription coldDataSubscription;
 
     private String consumerGroupName;
     private AtomicInteger pendingCount = new AtomicInteger(0);
@@ -74,6 +75,7 @@ public class RedisStreamToKafkaService {
         createConsumerGroupIfNotExists(MATCH_STREAM_KEY, consumerGroupName);
         createConsumerGroupIfNotExists(UNMATCH_STREAM_KEY, consumerGroupName);
         createConsumerGroupIfNotExists(PARTIAL_MATCHED_STREAM_KEY, consumerGroupName);
+        createConsumerGroupIfNotExists(COLD_DATA_REQUEST_STREAM_KEY, consumerGroupName);
 
         // Listener 컨테이너 설정
         StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
@@ -111,6 +113,12 @@ public class RedisStreamToKafkaService {
                 new PartialStreamListener()
         );
 
+        this.coldDataSubscription = this.listenerContainer.receive(
+                consumer,
+                StreamOffset.create(COLD_DATA_REQUEST_STREAM_KEY, ReadOffset.lastConsumed()),
+                new ColdDataRequestListener()
+        );
+
         // 컨테이너 시작
         this.listenerContainer.start();
         log.info("Redis Stream Consumer 시작 - Group: {}, Consumer: {}", consumerGroupName, consumerName);
@@ -134,6 +142,9 @@ public class RedisStreamToKafkaService {
         }
         if (partialMatchSubscription != null) {
             partialMatchSubscription.cancel();
+        }
+        if (coldDataSubscription != null) {
+            coldDataSubscription.cancel();
         }
         if (listenerContainer != null) {
             listenerContainer.stop();
@@ -225,6 +236,20 @@ public class RedisStreamToKafkaService {
     }
 
     /**
+     * 콜드 데이터 요청 리스너
+     */
+    private class ColdDataRequestListener implements StreamListener<String, MapRecord<String, String, String>> {
+        @Override
+        public void onMessage(MapRecord<String, String, String> message) {
+            try {
+                processColdDataRequest(message);
+            } catch (Exception e) {
+                log.error("콜드 데이터 요청 처리 오류", e);
+            }
+        }
+    }
+
+    /**
      * 매칭 메시지 처리 및 Kafka로 전송
      */
     private void processMatchMessage(MapRecord<String, String, String> message) {
@@ -236,7 +261,6 @@ public class RedisStreamToKafkaService {
             LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
             // 매칭된 주문 정보를 하나의 DTO로 생성
-            // TODO kafka 정확히 한번만 전송 되도록 처리 필요
             KafkaMatchedOrderEvent matchedEvent = KafkaMatchedOrderEvent.builder()
                     .tradingPair(body.get("tradingPair"))
                     .executionPrice(new BigDecimal(body.get("executionPrice")))
@@ -367,5 +391,144 @@ public class RedisStreamToKafkaService {
         } catch (Exception e) {
             log.info("미체결 메시지 처리 오류", e);
         }
+    }
+
+    /**
+     * 콜드 데이터 요청 처리
+     */
+    private void processColdDataRequest(MapRecord<String, String, String> message) {
+        String messageId = message.getId().getValue();
+        Map<String, String> body = message.getValue();
+
+        String tradingPair = body.get("tradingPair");
+        String orderType = body.get("orderType"); // 필요한 반대 주문 타입
+
+        try {
+            // 콜드 데이터 로드
+            loadColdData(tradingPair, orderType);
+
+            // 완료 상태로 변경
+            String statusKey = "v6d:cold_data_status:" + tradingPair;
+            redisTemplate.opsForValue().set(statusKey, "COMPLETED", 60, TimeUnit.SECONDS);
+
+            // 대기 주문 처리
+            processPendingOrders(tradingPair);
+
+            // 메시지 확인
+            redisTemplate.opsForStream().acknowledge(
+                    COLD_DATA_REQUEST_STREAM_KEY, "cold-data-processor-group", messageId);
+
+            log.info("콜드 데이터 처리 완료: {}", tradingPair);
+
+        } catch (Exception e) {
+            log.error("콜드 데이터 처리 중 오류 발생: {}", tradingPair, e);
+
+            // 오류 발생 시 상태 초기화 (다시 요청 가능하도록)
+            String statusKey = "v6d:cold_data_status:" + tradingPair;
+            redisTemplate.delete(statusKey);
+        }
+    }
+
+    /**
+     * 콜드 데이터 로드
+     */
+    private void loadColdData(String tradingPair, String orderType) {
+        log.info("콜드 데이터 로드 시작: {} - {}", tradingPair, orderType);
+//
+//        // DB에서 해당 거래쌍의 활성 주문 조회
+//        List<Map<String, Object>> orders = jdbcTemplate.queryForList(
+//                "SELECT * FROM orders WHERE trading_pair = ? AND order_type = ? AND status = 'ACTIVE'",
+//                tradingPair, orderType);
+//
+//        // Redis에 복원할 키 결정
+//        String orderKey = "BUY".equals(orderType)
+//                ? "v6d:buy_orders:" + tradingPair
+//                : "v6d:sell_orders:" + tradingPair;
+//
+//        String orderbookKey = "BUY".equals(orderType)
+//                ? "v6d:orderbook:" + tradingPair + ":bids"
+//                : "v6d:orderbook:" + tradingPair + ":asks";
+//
+//        // Redis 파이프라인으로 일괄 처리
+//        redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+//            for (Map<String, Object> order : orders) {
+//                String orderId = order.get("order_id").toString();
+//                BigDecimal price = (BigDecimal) order.get("price");
+//                BigDecimal quantity = (BigDecimal) order.get("quantity");
+//                String userId = order.get("user_id").toString();
+//                Timestamp timestamp = (Timestamp) order.get("created_at");
+//
+//                // 주문 정보 구성
+//                String orderDetails = timestamp.getTime() + "|" + quantity + "|" + userId + "|" + orderId;
+//
+//                // 주문 데이터 저장
+//                connection.zAdd(orderKey.getBytes(), price.doubleValue(), orderDetails.getBytes());
+//
+//                // 호가 정보 업데이트
+//                byte[] priceKey = String.valueOf(price).getBytes();
+//                connection.hIncrBy(orderbookKey.getBytes(), priceKey, quantity.longValue());
+//            }
+//            return null;
+//        });
+//
+//        log.info("콜드 데이터 로드 완료: {} 개 주문", orders.size());
+    }
+
+    /**
+     * 대기 주문 처리
+     */
+    private void processPendingOrders(String tradingPair) {
+        log.info("대기 주문 처리 시작: {}", tradingPair);
+//
+//        // 대기 주문 조회
+//        Map<Object, Object> pendingOrders = redisTemplate.opsForHash().entries("v6d:pending_orders");
+//        List<Object> processedKeys = new ArrayList<>();
+//
+//        for (Map.Entry<Object, Object> entry : pendingOrders.entrySet()) {
+//            String orderId = (String) entry.getKey();
+//            String orderValue = (String) entry.getValue();
+//
+//            String[] parts = orderValue.split("\\|");
+//            if (parts.length >= 4 && parts[3].equals(tradingPair)) {
+//                // 주문 데이터 파싱
+//                String orderDetails = parts[0] + "|" + parts[1] + "|" + parts[2];
+//                BigDecimal price = new BigDecimal(parts[1]);
+//                String orderType = parts[2];
+//
+//                // 주문 재처리 실행 (Lua 스크립트 호출)
+//                try {
+//                    Object result = redisTemplate.execute(
+//                            RedisScript.of("return redis.call('EVALSHA', '" +
+//                                            getOrderMatchingScriptSha() + "', 8, ...)",
+//                                    Object.class),
+//                            Arrays.asList(
+//                                    orderType.equals("BUY") ? "v6d:sell_orders:" + tradingPair : "v6d:buy_orders:" + tradingPair,
+//                                    orderType.equals("BUY") ? "v6d:buy_orders:" + tradingPair : "v6d:sell_orders:" + tradingPair,
+//                                    "v6d:stream:matches",
+//                                    "v6d:stream:unmatched",
+//                                    "v6d:stream:partialMatched",
+//                                    "v6d:idempotency:orders",
+//                                    "v6d:orderbook:" + tradingPair + ":bids",
+//                                    "v6d:orderbook:" + tradingPair + ":asks"
+//                            ),
+//                            orderType, price.toString(), parts[1], orderDetails, tradingPair, orderId, UUID.randomUUID().toString());
+//
+//                    // 처리 완료된 주문 마킹
+//                    processedKeys.add(orderId);
+//                    log.info("대기 주문 처리 완료: {}", orderId);
+//
+//                } catch (Exception e) {
+//                    log.error("대기 주문 처리 중 오류: {}", orderId, e);
+//                }
+//            }
+//        }
+//
+//        // 처리 완료된 주문 삭제
+//        if (!processedKeys.isEmpty()) {
+//            redisTemplate.opsForHash().delete("v6d:pending_orders",
+//                    processedKeys.toArray());
+//        }
+//
+//        log.info("대기 주문 처리 완료: {} 개", processedKeys.size());
     }
 }
