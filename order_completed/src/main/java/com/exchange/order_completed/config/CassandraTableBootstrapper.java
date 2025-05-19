@@ -2,6 +2,7 @@ package com.exchange.order_completed.config;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.exchange.order_completed.domain.cassandra.entity.ClosingPriceHistory;
+import com.exchange.order_completed.domain.cassandra.entity.ColdDataOrders;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
 import jakarta.annotation.PostConstruct;
@@ -22,5 +23,6 @@ public class CassandraTableBootstrapper {
         adminTemplate.createTable(true, CqlIdentifier.fromCql("unmatched_order"), UnmatchedOrder.class, new HashMap<>());
         adminTemplate.createTable(true, CqlIdentifier.fromCql("matched_order"), MatchedOrder.class, new HashMap<>());
         adminTemplate.createTable(true, CqlIdentifier.fromCql("closing_price_history"), ClosingPriceHistory.class, new HashMap<>());
+        adminTemplate.createTable(true, CqlIdentifier.fromCql("cold_data_orders"), ColdDataOrders.class, new HashMap<>());
     }
 }

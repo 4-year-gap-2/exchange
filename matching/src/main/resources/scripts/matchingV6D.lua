@@ -1,3 +1,48 @@
+-- 주문 매칭 Lua 스크립트
+-- KEYS[1]: 반대 주문 키 (매수면 SELL_ORDER_KEY, 매도면 BUY_ORDER_KEY)
+-- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
+-- KEYS[3]: 매칭 Stream 키 (v6d:stream:matches)
+-- KEYS[4]: 미체결 Stream 키 (v6d:stream:unmatched)
+-- KEYS[5]: 멱등성 체크를 위한 키 (v6d:idempotency:orders)
+-- KEYS[6]: 멱등성 체크를 위한 키 (v6d:idempotency:orders)
+-- KEYS[7]: 매수 호가 리스트 키 (v6d:orderbook:{tradingPair}:bids)
+-- KEYS[8]: 매도 호가 리스트 키 (v6d:orderbook:{tradingPair}:asks)
+-- KEYS[9]: 콜드 데이터 요청 스트림 키 (v6d:stream:cold_data_request)
+-- KEYS[10]: 콜드 데이터 상태 키 (v6d:cold_data_status:{tradingPair})
+-- KEYS[11]: 대기 주문 키 (v6d:pending_orders)
+-- KEYS[12]: 일일 종가 키 (market:closing_price:{tradingPair})
+
+-- ARGV[1]: 주문 타입 (BUY 또는 SELL)
+-- ARGV[2]: 주문 가격
+-- ARGV[3]: 주문 수량
+-- ARGV[4]: 주문 상세 정보 (timestamp|quantity|userId|orderId 형식)
+-- ARGV[5]: 거래 쌍 (trading pair)
+-- ARGV[6]: 주문 ID
+-- ARGV[7]: 부분 체결을 위한 ID
+-- ARGV[8]: 가격 차이 임계값 (예: 30% = 0.3)
+
+local oppositeOrderKey = KEYS[1]
+local currentOrderKey = KEYS[2]
+local matchStreamKey = KEYS[3]
+local unmatchStreamKey = KEYS[4]
+local partialMatchedStreamKey = KEYS[5]
+local idempotencyKey = KEYS[6]
+local bidOrderbookKey = KEYS[7]
+local askOrderbookKey = KEYS[8]
+local coldDataRequestStreamKey = KEYS[9]
+local coldDataStatusKey = KEYS[10]
+local pendingOrdersKey = KEYS[11]
+local closingPriceKey = KEYS[12]
+
+local orderType = ARGV[1]
+local orderPrice = tonumber(ARGV[2])
+local orderQuantity = tonumber(ARGV[3])
+local orderDetails = ARGV[4]
+local tradingPair = ARGV[5]
+local orderId = ARGV[6]
+local partialOrderId = ARGV[7]
+local priceDiffThreshold = tonumber(ARGV[8])
+
 -- 주문 정보 파싱 함수
 local function parseOrderDetails(details)
     local pos = {}
@@ -32,33 +77,47 @@ local function buildOrderDetails(timestamp, quantity, userId, orderId)
     return timestamp .. "|" .. quantity .. "|" .. userId .. "|" .. orderId
 end
 
--- 주문 매칭 Lua 스크립트
--- KEYS[1]: 반대 주문 키 (매수면 SELL_ORDER_KEY, 매도면 BUY_ORDER_KEY)
--- KEYS[2]: 현재 주문 키 (매수면 BUY_ORDER_KEY, 매도면 SELL_ORDER_KEY)
--- KEYS[3]: 매칭 Stream 키 (v6d:stream:matches)
--- KEYS[4]: 미체결 Stream 키 (v6d:stream:unmatched)
--- KEYS[5]: 멱등성 체크를 위한 키 (v6d:idempotency:orders)
--- ARGV[1]: 주문 타입 (BUY 또는 SELL)
--- ARGV[2]: 주문 가격
--- ARGV[3]: 주문 수량
--- ARGV[4]: 주문 상세 정보 (timestamp|quantity|userId|orderId 형식)
--- ARGV[5]: 거래 쌍 (trading pair)
--- ARGV[6]: 주문 ID
--- ARGV[7]: 부분 체결을 위한 ID
+-- 호가 업데이트 함수
+local function updateOrderbook(price, quantity, isAdd, isAsk)
+    local orderbookKey = isAsk and askOrderbookKey or bidOrderbookKey
 
-local oppositeOrderKey = KEYS[1]
-local currentOrderKey = KEYS[2]
-local matchStreamKey = KEYS[3]
-local unmatchStreamKey = KEYS[4]
-local partialMatchedStreamKey = KEYS[5]
-local idempotencyKey = KEYS[6]
-local orderType = ARGV[1]
-local orderPrice = tonumber(ARGV[2])
-local orderQuantity = tonumber(ARGV[3])
-local orderDetails = ARGV[4]
-local tradingPair = ARGV[5]
-local orderId = ARGV[6]
-local partialOrderId = ARGV[7]
+    if isAdd then
+        -- 호가 추가 또는 업데이트
+        local currentQty = tonumber(redis.call("HGET", orderbookKey, tostring(price)) or "0")
+        local newQty = currentQty + quantity
+
+        if newQty > 0 then
+            redis.call("HSET", orderbookKey, tostring(price), tostring(newQty))
+        else
+            -- 수량이 0이하면 해당 가격대 제거
+            redis.call("HDEL", orderbookKey, tostring(price))
+        end
+    else
+        -- 호가 감소
+        local currentQty = tonumber(redis.call("HGET", orderbookKey, tostring(price)) or "0")
+        local newQty = currentQty - quantity
+
+        if newQty > 0 then
+            redis.call("HSET", orderbookKey, tostring(price), tostring(newQty))
+        else
+            -- 수량이 0이하면 해당 가격대 제거
+            redis.call("HDEL", orderbookKey, tostring(price))
+        end
+    end
+end
+
+-- 콜드 데이터 필요 여부 확인 함수
+local function isColdDataNeeded(orderPrice)
+    -- 가격 비교를 위한 종가 조회
+    local closingPrice = tonumber(redis.call("GET", closingPriceKey) or "0")
+
+    if closingPrice <= 0 then
+        return false -- 종가 정보가 없으면 콜드 데이터 불필요
+    end
+
+    local priceDiff = math.abs(orderPrice - closingPrice) / closingPrice
+    return priceDiff > priceDiffThreshold
+end
 
 -- 멱등성 체크: 이미 처리된 주문인지 확인
 if redis.call("SISMEMBER", idempotencyKey, orderId) == 1 then
@@ -66,7 +125,6 @@ if redis.call("SISMEMBER", idempotencyKey, orderId) == 1 then
     return true
 end
 
--- 미리 계산된 상수
 local isBuy = orderType == "BUY"
 
 -- 반대 주문 가져오기
@@ -74,26 +132,53 @@ local oppositeOrders = redis.call(isBuy and "ZRANGE" or "ZREVRANGE", oppositeOrd
 
 -- 반대 주문이 없는 경우: 미체결 주문으로 처리
 if #oppositeOrders == 0 then
-    -- 현재 주문을 저장
-    redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
 
-    -- 주문 정보 파싱
-    local orderInfo = parseOrderDetails(orderDetails)
+    -- 콜드 데이터가 필요한지 확인
+    if isColdDataNeeded(orderPrice) then
+        -- 주문을 대기 큐에 추가
+        redis.call("HSET", pendingOrdersKey, orderId,
+                  orderDetails .. "|" .. orderPrice .. "|" .. orderType .. "|" .. tradingPair)
 
-    -- 미체결 Stream에 발행
-    local unmatchFields = {
-        ["orderId"] = orderId,
-        ["userId"] = orderInfo.userId,
-        ["tradingPair"] = tradingPair,
-        ["orderType"] = orderType,
-        ["price"] = tostring(orderPrice),
-        ["quantity"] = tostring(orderQuantity),
-        ["timestamp"] = orderInfo.timestamp,
-        ["operation"] = "INSERT"
-    }
-    redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
+        local coldDataStatus = redis.call("GET", coldDataStatusKey)
 
-    -- 멱등성 키추가
+        -- 콜드 데이터 처리 상태 확인
+        if not coldDataStatus then  -- 아직 콜드 데이터를 요청한 적이 없는 경우
+            -- 콜드 데이터 상태 업데이트
+            redis.call("SET", coldDataStatusKey, "REQUESTED")
+
+            -- 콜드 데이터 요청 스트림에 발행
+            local requestFields = {
+                ["tradingPair"] = tradingPair,
+                ["orderType"] = isBuy and "SELL" or "BUY", -- 반대 주문 타입만 요청
+                ["requestTime"] = tostring(redis.call("TIME")[1])
+            }
+            redis.call("XADD", coldDataRequestStreamKey, "MAXLEN", "~", 1000, "*", unpack(flattenMap(requestFields)))
+        end
+    else
+        -- 현재 주문을 저장
+        redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
+
+        -- 주문 정보 파싱
+        local orderInfo = parseOrderDetails(orderDetails)
+
+        -- 호가 리스트 업데이트 - 새 주문 추가
+        updateOrderbook(orderPrice, orderQuantity, true, not isBuy)
+
+        -- 미체결 Stream에 발행
+        local unmatchFields = {
+            ["orderId"] = orderId,
+            ["userId"] = orderInfo.userId,
+            ["tradingPair"] = tradingPair,
+            ["orderType"] = orderType,
+            ["price"] = tostring(orderPrice),
+            ["quantity"] = tostring(orderQuantity),
+            ["timestamp"] = orderInfo.timestamp,
+            ["operation"] = "INSERT"
+        }
+        redis.call("XADD", unmatchStreamKey, "MAXLEN", "~", 100000, "*", unpack(flattenMap(unmatchFields)))
+    end
+
+    -- 멱등성 키 추가
     redis.call("SADD", idempotencyKey, orderId)
     redis.call("EXPIRE", idempotencyKey, 86400)
 
@@ -109,6 +194,9 @@ local isPriceMatched = isBuy and (orderPrice >= oppositeOrderPrice) or (not isBu
 if not isPriceMatched then
     -- 현재 주문을 저장
     redis.call("ZADD", currentOrderKey, orderPrice, orderDetails)
+
+    -- 호가 리스트 업데이트 - 새 주문 추가
+    updateOrderbook(orderPrice, orderQuantity, true, not isBuy)
 
     -- 주문 정보 파싱
     local orderInfo = parseOrderDetails(orderDetails)
@@ -148,6 +236,9 @@ local matchPrice = oppositeOrderPrice
 
 -- 항상 먼저 반대 주문 정보 제거
 redis.call("ZREM", oppositeOrderKey, oppositeOrderDetails)
+
+-- 호가 리스트 업데이트 - 반대 주문 수량 감소
+updateOrderbook(oppositeOrderPrice, matchedQuantity, false, isBuy)
 
 -- 결과 관련 변수 초기화
 local updatedOppositeDetails = ""

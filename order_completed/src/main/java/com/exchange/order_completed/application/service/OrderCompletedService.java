@@ -4,6 +4,7 @@ import com.exchange.order_completed.application.command.ChartCommand;
 import com.exchange.order_completed.application.command.CreateMatchedOrderStoreCommand;
 import com.exchange.order_completed.application.command.CreateUnmatchedOrderStoreCommand;
 import com.exchange.order_completed.common.exception.DuplicateUnmatchedOrderInformationException;
+import com.exchange.order_completed.domain.cassandra.entity.ColdDataOrders;
 import com.exchange.order_completed.domain.cassandra.entity.MatchedOrder;
 import com.exchange.order_completed.domain.cassandra.entity.OrderType;
 import com.exchange.order_completed.domain.cassandra.entity.UnmatchedOrder;
@@ -80,12 +81,13 @@ public class OrderCompletedService {
     }
 
     public void completeUnmatchedOrder(CreateUnmatchedOrderStoreCommand command) {
-        UnmatchedOrder unmatchedOrder = command.toEntity();
+        UnmatchedOrder unmatchedOrder = command.unmatchedOrderToEntity();
+        ColdDataOrders coldDataOrders = command.coldDataOrdersToEntity();
 
         if (command.operationType().equals(OperationType.DELETE)) {
-            unmatchedOrderStore.delete(unmatchedOrder);
+            unmatchedOrderStore.deleteUnmatchedOrderAndColdDataOrders(unmatchedOrder, coldDataOrders);
         } else {
-            unmatchedOrderStore.save(unmatchedOrder);
+            unmatchedOrderStore.saveUnmatchedOrderAndColdDataOrders(unmatchedOrder, coldDataOrders);
         }
     }
 
