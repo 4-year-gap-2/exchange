@@ -315,7 +315,7 @@ public class RedisStreamToKafkaService {
                     ? 9999999999999L - timestamp
                     : timestamp;
 
-            Instant instant = Instant.ofEpochSecond(processedTimestamp);
+            Instant instant = Instant.ofEpochMilli(processedTimestamp);
             LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
 
             KafkaOrderStoreEvent event = KafkaOrderStoreEvent.builder()
