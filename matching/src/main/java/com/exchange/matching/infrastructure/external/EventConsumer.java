@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import com.exchange.matching.util.MetricsCollector;
 
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 public class EventConsumer {
     private final MatchingApplicationService matchingService;
