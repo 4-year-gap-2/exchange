@@ -165,7 +165,6 @@ public class MatchingServiceV6D implements MatchingService {
                 partialOrderId
         );
 
-        // ReactiveRedisTemplate을 사용한 비동기 실행
         return reactiveRedisTemplate
                 .execute(matchingScript, keys, args)
                 .then();

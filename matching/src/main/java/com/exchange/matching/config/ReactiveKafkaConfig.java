@@ -1,4 +1,3 @@
-// 2. Create a ReactiveKafkaConfig class
 package com.exchange.matching.config;
 
 import com.exchange.matching.infrastructure.dto.KafkaMatchingEvent;
